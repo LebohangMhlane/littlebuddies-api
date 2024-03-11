@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+</head>
+<body>
+
+    <form action="https://sandbox.payfast.co.za/eng/process" method="post">
+        <input type="hidden" name="merchant_id" value="{{ merchant_id }}">
+        <input type="hidden" name="merchant_key" value="{{ merchant_key }}">
+        <input type="hidden" name="amount" value="{{ amount }}">
+        <input type="hidden" name="item_name" value="{{ item_name }}">
+        <input type="hidden" name="return_url" value="{{ return_url }}">
+        <input type="hidden" name="cancel_url" value="https://8e0f-41-10-117-107.ngrok-free.app/payment_cancelled/">
+        <input type="hidden" name="notify_url" value="{{ notify_url }}">
+        <input type="hidden" name="payment_method" value="{{ payment_method }}">
+        <input type="submit">
+    </form> 
+    
+</body>
+</html>
