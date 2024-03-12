@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from payfast_payments.views import (PaymentSuccessView, 
                                     PaymentInitializationView, 
@@ -29,4 +29,5 @@ urlpatterns = [
     path('payment_successful/', PaymentSuccessView.as_view(), name="payment_successful_page"),
     path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_page"),
     path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_page"),
+    path("accounts/", include("accounts.urls"), name="account_urls")
 ]

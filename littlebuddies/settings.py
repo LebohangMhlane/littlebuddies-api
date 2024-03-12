@@ -36,6 +36,15 @@ ALLOWED_HOSTS = ["10.0.0.102", "localhost", NGROK_BASE_URL]
 # firebase instance
 FIREBASE_INSTANCE = firebase_module.FirebaseInstance()
 
+# rest framework configuration
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'accounts',
     'payfast_payments',
 ]
 
