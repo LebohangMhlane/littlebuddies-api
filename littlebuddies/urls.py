@@ -1,5 +1,5 @@
 """
-URL configuration for payfast project.
+URL configuration for littlebuddies project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.0/topics/http/urls/
@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from payfast_payments.views import (PaymentSuccessView, 
+from paygate_payments.views import (PaymentSuccessView, 
                                     PaymentInitializationView, 
                                     PaymentCancelledView,
                                     PaymentNotificationView, 
@@ -25,9 +25,9 @@ from payfast_payments.views import (PaymentSuccessView,
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('payment/', PaymentInitializationView.as_view(), name="payment_page"),
-    path('payment_successful/', PaymentSuccessView.as_view(), name="payment_successful_page"),
-    path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_page"),
-    path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_page"),
+    path('initiate_payment/', PaymentInitializationView.as_view(), name="initiate_payment_view"),
+    path('payment_successful/', PaymentSuccessView.as_view(), name="payment_successful_view"),
+    path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_view"),
+    path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_view"),
     path("accounts/", include("accounts.urls"), name="account_urls")
 ]

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class PayfastPaymentsConfig(AppConfig):
+class PayGatePaymentsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'payfast_payments'
+    name = 'paygate_payments'

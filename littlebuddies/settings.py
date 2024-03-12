@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'accounts',
-    'payfast_payments',
+    'paygate_payments',
 ]
 
 MIDDLEWARE = [

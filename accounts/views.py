@@ -13,11 +13,18 @@ class CreateAccountView(APIView):
         pass
 
     def post(self, request, *args, **kwargs):
-        self.create_account(post_data=request.data)
-        return Response({
-            "success": True,
-            "account_created": True,
-        })
+        try:
+            self.create_account(post_data=request.data)
+            return Response({
+                "success": True,
+                "account_created": True,
+            })
+        except Exception as e:
+            return Response({
+                "success": False,
+                "account_created": False,
+                "exception": str(e)
+            })
 
     def create_account(self, post_data=dict):
         user_serializer = UserSerializer(data=post_data)
