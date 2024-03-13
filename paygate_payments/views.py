@@ -1,4 +1,6 @@
+from base64 import decode, encode
 import json
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -6,8 +8,12 @@ from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from cryptography.fernet import Fernet as fernet
 import hashlib
 import requests
+
+from merchants.models import Merchant
+from paygate_payments.app_models.app_models import CheckoutFormPayload
 
 
 class PaymentInitializationView(APIView):
@@ -27,22 +33,20 @@ class PaymentInitializationView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            paygate_data = self.getPayGateData(request=request)
-            paygate_url = "https://secure.paygate.co.za/payweb3/initiate.trans"
-            response = requests.post(
-                paygate_url,
-                data=paygate_data
-            )
+            checkoutFormPayload = CheckoutFormPayload(payload=request.data)
+            merchant = checkoutFormPayload.getMerchant()
+            paygatePayload = self.preparePayGatePayload(checkoutFormPayload, merchant)
+            response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
             if response.status_code == 200:
-                response_data = response.text.split("&")
-                cleaned_response_data = self.cleanResponseData(response_data)
-                data_integrity_secure, verified_data = self.verifyDataIntegrity(
-                    cleaned_response_data, secret=self.getMerchantEncryptionKey()
+                responseData = response.text.split("&")
+                responseAsDict = self.convertResponseToDict(responseData)
+                dataIntegritySecure, verifiedPayload = self.verifyPayloadIntegrity(
+                    responseAsDict, secret=self.getMerchantSecretKey(merchant)
                 )
-                if data_integrity_secure:
+                if dataIntegritySecure:
                     return Response({
-                        "success": True, 
-                        "responseData": verified_data
+                        "success": True,
+                        "responseData": verifiedPayload,
                     }, content_type='application/json', status=200)
                 else:
                     return Response({
@@ -54,7 +58,7 @@ class PaymentInitializationView(APIView):
                 return Response({
                     "success": False, 
                     "responseData": {},
-                    "error": "Server error"
+                    "error": f"Server error: {response.status_code}"
                 }, content_type='application/json', status=500)
         except Exception as e:
             return Response({
@@ -63,72 +67,80 @@ class PaymentInitializationView(APIView):
                 "error": str(e)}, 
                 content_type='application/json', status=500)
     
-    def getPayGateData(self, request):
-        paygate_data = {
-            "PAYGATE_ID": 10011072130,
-            "REFERENCE": "pgtest_123456789",
-            "AMOUNT": 3299,
+    # prepare and return the payload we need to send to paygate to initiate payment:
+    def preparePayGatePayload(self, checkoutFormPayload, merchant):
+        paygatePayload = {
+            "PAYGATE_ID": merchant.paygateId,
+            "REFERENCE": merchant.reference,
+            "AMOUNT": checkoutFormPayload.totalCheckoutAmount,
             "CURRENCY": "ZAR",
             "RETURN_URL": "https://my.return.url/page",
-            # "RETURN_URL": f"{settings.SERVER_URL}/payment_successful/",
-            # "NOTIFY_URL": f"{settings.SERVER_URL}/payment_notification/",
             "TRANSACTION_DATE": "2018-01-01 12:00:00",
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
             "EMAIL": "customer@paygate.co.za",
-            # "PAY_METHOD": "",
-            # "PAY_METHOD_DETAIL": "",
-            # "USER1": "",
-            # "USER2": "",
-            # "USER3": "",
-            # "VAULT": "",
-            # "VAULT_ID": "",
-            # "VAULT_ID": "",
         }
-        encryption_key = self.getMerchantEncryptionKey()
-        paygate_data["CHECKSUM"] = self.generateChecksum(
-            paygate_data=paygate_data, encryption_key=encryption_key
-        )
-        return paygate_data
-
-    def generateChecksum(self, paygate_data, encryption_key = ''):
+        merchantPaygateSecretKey = self.getMerchantSecretKey(merchant)
+        if type(merchantPaygateSecretKey) is not Exception:
+            paygatePayload["CHECKSUM"] = self.generateChecksum(
+                paygate_data=paygatePayload, 
+                merchantPaygateSecretKey=merchantPaygateSecretKey
+            )   
+            return paygatePayload
+        else:
+            return merchantPaygateSecretKey
+        
+    def generateChecksum(self, paygate_data, merchantPaygateSecretKey = ''):
         checksum = ""
         payload = ""
         for key, value in paygate_data.items():
             payload += str(value) 
-        if encryption_key != '':
-            payload += f"{encryption_key}"
+        if merchantPaygateSecretKey != '':
+            payload += f"{merchantPaygateSecretKey}"
             checksum = hashlib.md5(payload.encode('utf-8')).hexdigest()
         return checksum
 
-    def cleanResponseData(self, response_data):
-        cleaned_response_data = {}
+    def convertResponseToDict(self, response_data):
+        convertedResponse = {}
         for data_piece in response_data:
             split_data = data_piece.split("=")
-            cleaned_response_data[split_data[0]] = split_data[1]
-        return cleaned_response_data
+            convertedResponse[split_data[0]] = split_data[1]
+        return convertedResponse
 
-    def verifyDataIntegrity(self, cleaned_response_data:dict, secret="secret"):
-        checksum_to_compare = cleaned_response_data["CHECKSUM"]
-        del cleaned_response_data["CHECKSUM"]
-        values_as_string = "".join(list(cleaned_response_data.values()))
+    def verifyPayloadIntegrity(self, cleanedPayload:dict, secret="secret"):
+        checksum_to_compare = cleanedPayload["CHECKSUM"]
+        del cleanedPayload["CHECKSUM"]
+        values_as_string = "".join(list(cleanedPayload.values()))
         values_as_string += secret
         checksum = hashlib.md5(values_as_string.encode('utf-8')).hexdigest()
-        cleaned_response_data["CHECKSUM"] = checksum_to_compare
+        cleanedPayload["CHECKSUM"] = checksum_to_compare
         if checksum_to_compare == checksum:
-            return (True, cleaned_response_data)
+            return (True, cleanedPayload)   
         else:
-            return (False, cleaned_response_data)
+            return (False, cleanedPayload)
 
-    def getMerchantEncryptionKey(paygate_id:int):
-        merchant_instance = { # for developement purposes only
-            "name": "My Food Store",
-            "secret": "secret",
-        }
-        secret = merchant_instance.get("secret")
+    def getMerchantSecretKey(self, merchant:Merchant):
+        try:
+            fernetToken = merchant.fernetToken.encode('utf-8')[2:-1]
+            fernetInstance = fernet(key=settings.FERNET_KEY)
+            secret = fernetInstance.decrypt(fernetToken).decode("utf-8")
+            return secret
+        except Exception as e:
+            return Exception("Failed to decrypt token")
 
+    def sendInitiatePaymentRequestToPaygate(self, paygatePayload):
+        paygateInitiateUrl = "https://secure.paygate.co.za/payweb3/initiate.trans"
+        response = requests.post(
+            paygateInitiateUrl,
+            data=paygatePayload
+        )
+        return response
 
-        return "secret"
+    def sendProcessPaymentRequestToPaygate(self, request, paygateProcessPayload):
+        del paygateProcessPayload["PAYGATE_ID"]
+        del paygateProcessPayload["REFERENCE"]
+        return Response(paygateProcessPayload)
+        
 
 class PaymentNotificationView(APIView):
     

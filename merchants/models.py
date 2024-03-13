@@ -2,23 +2,21 @@ from django.db import models
 from django.conf import settings
 
 from accounts.models import UserAccount
-
 from cryptography.fernet import Fernet as fernet
 
 
 class Merchant(models.Model):
-
-    user_account = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
+    userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
-    paygate_id = models.CharField(max_length=20, blank=False)
-    reference_number = models.CharField(max_length=10, blank=False)
-    paygate_secret = models.CharField(max_length=32, blank=False, default="")
-    paygate_token = models.CharField(max_length=2000, blank=False)
+    paygateId = models.CharField(max_length=20, blank=False)
+    reference = models.CharField(max_length=10, blank=False)
+    paygateSecret = models.CharField(max_length=32, blank=False, default="")
+    fernetToken = models.CharField(max_length=2000, blank=True)
 
     def __str__(self) -> str:
-        return f"${self.name} - {self.user_account.user.username}"
+        return f"{self.name} - {self.user_account.user.username}"
     
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -28,9 +26,9 @@ class Merchant(models.Model):
     def encryptPaygateSecret(self):
         key = settings.FERNET_KEY
         fernet_instance = fernet(key=key)
-        token = fernet_instance.encrypt(f"{self.paygate_secret}".encode())
-        self.paygate_token = token
-        self.paygate_secret = ""
+        token = fernet_instance.encrypt(f"{self.paygateSecret}".encode())
+        self.fernetToken = token
+        self.paygateSecret = ""
 
 class Product(models.Model):
     pass
