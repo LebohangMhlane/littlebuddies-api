@@ -22,12 +22,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s(fm6%!se-l-&&!a-@n7mwuj+ggovmnvogz)7ch9n)06x!65*m'
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-NGROK_BASE_URL ="de99-41-10-117-107.ngrok-free.app"
+NGROK_BASE_URL ="ebe6-41-10-117-107.ngrok-free.app"
 
 SERVER_URL = f"https://{NGROK_BASE_URL}"
 
@@ -41,7 +43,9 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ]
 }
 
@@ -54,7 +58,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'rest_framework',
+    'merchants',
     'accounts',
     'paygate_payments',
 ]

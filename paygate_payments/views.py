@@ -36,28 +36,32 @@ class PaymentInitializationView(APIView):
             if response.status_code == 200:
                 response_data = response.text.split("&")
                 cleaned_response_data = self.cleanResponseData(response_data)
-                data_integrity_secure = self.verifyDataIntegrity(
+                data_integrity_secure, verified_data = self.verifyDataIntegrity(
                     cleaned_response_data, secret=self.getMerchantEncryptionKey()
                 )
                 if data_integrity_secure:
                     return Response({
                         "success": True, 
-                        "responseData": cleaned_response_data
-                    }, content_type='application/json')
+                        "responseData": verified_data
+                    }, content_type='application/json', status=200)
                 else:
                     return Response({
                         "success": False, 
                         "responseData": {},
                         "error": "Data integrity violated!"
-                    }, content_type='application/json')
+                    }, content_type='application/json', status=500)
             else:
                 return Response({
                     "success": False, 
                     "responseData": {},
                     "error": "Server error"
-                }, content_type='application/json')
+                }, content_type='application/json', status=500)
         except Exception as e:
-            return Response({"success": False, "responseData": {}, "error": str(e)}, content_type='application/json')
+            return Response({
+                "success": False, 
+                "responseData": {}, 
+                "error": str(e)}, 
+                content_type='application/json', status=500)
     
     def getPayGateData(self, request):
         paygate_data = {
@@ -110,12 +114,20 @@ class PaymentInitializationView(APIView):
         values_as_string = "".join(list(cleaned_response_data.values()))
         values_as_string += secret
         checksum = hashlib.md5(values_as_string.encode('utf-8')).hexdigest()
+        cleaned_response_data["CHECKSUM"] = checksum_to_compare
         if checksum_to_compare == checksum:
-            return True
+            return (True, cleaned_response_data)
         else:
-            return False
+            return (False, cleaned_response_data)
 
     def getMerchantEncryptionKey(paygate_id:int):
+        merchant_instance = { # for developement purposes only
+            "name": "My Food Store",
+            "secret": "secret",
+        }
+        secret = merchant_instance.get("secret")
+
+
         return "secret"
 
 class PaymentNotificationView(APIView):

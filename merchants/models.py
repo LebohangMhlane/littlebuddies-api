@@ -1,6 +1,9 @@
 from django.db import models
+from django.conf import settings
 
 from accounts.models import UserAccount
+
+from cryptography.fernet import Fernet as fernet
 
 
 class Merchant(models.Model):
@@ -11,6 +14,23 @@ class Merchant(models.Model):
     address = models.CharField(max_length=1000, blank=False)
     paygate_id = models.CharField(max_length=20, blank=False)
     reference_number = models.CharField(max_length=10, blank=False)
+    paygate_secret = models.CharField(max_length=32, blank=False, default="")
+    paygate_token = models.CharField(max_length=2000, blank=False)
+
+    def __str__(self) -> str:
+        return f"${self.name} - {self.user_account.user.username}"
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.encryptPaygateSecret()
+        super(Merchant, self).save(*args, **kwargs)
+
+    def encryptPaygateSecret(self):
+        key = settings.FERNET_KEY
+        fernet_instance = fernet(key=key)
+        token = fernet_instance.encrypt(f"{self.paygate_secret}".encode())
+        self.paygate_token = token
+        self.paygate_secret = ""
 
 class Product(models.Model):
     pass

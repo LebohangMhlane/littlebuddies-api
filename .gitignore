@@ -1,2 +1,7 @@
 /.pytest_cache
 /.vscode
+.env
+migrations
+*.pyc
+*.sqlite3
+*.cpython-311.pyc
