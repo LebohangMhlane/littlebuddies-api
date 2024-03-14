@@ -9,6 +9,7 @@ class UserAccount(models.Model):
     address = models.CharField(max_length=255, blank=False)
     phone_number = models.PositiveIntegerField(blank=False, null=True, unique=True)
     is_merchant = models.BooleanField(default=False)
+    device_token = models.CharField(max_length=1000, blank=True)
 
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
