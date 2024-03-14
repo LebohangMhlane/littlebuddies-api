@@ -6,12 +6,11 @@ from cryptography.fernet import Fernet as fernet
 
 
 class Merchant(models.Model):
-    userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
+    user_account = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
     paygateId = models.CharField(max_length=20, blank=False)
-    reference = models.CharField(max_length=10, blank=False)
     paygateSecret = models.CharField(max_length=32, blank=False, default="")
     fernetToken = models.CharField(max_length=2000, blank=True)
 
