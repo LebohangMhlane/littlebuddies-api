@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from accounts.serializers.user_account_serializer import UserAccountSerializer
 from accounts.serializers.user_serializer import UserSerializer
 # Create your views here.
 
@@ -14,19 +15,43 @@ class CreateAccountView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            self.create_account(post_data=request.data)
+            self.createUser(receivedPayload=request.data)
             return Response({
                 "success": True,
-                "account_created": True,
+                "accountCreated": True,
             })
         except Exception as e:
             return Response({
                 "success": False,
-                "account_created": False,
+                "accountCreated": False,
                 "exception": str(e)
-            })
+            }, status=500)
 
-    def create_account(self, post_data=dict):
-        user_serializer = UserSerializer(data=post_data)
-        if user_serializer.is_valid():
-            user_serializer.create(validated_data=post_data)
+    def createUser(self, receivedPayload=dict):
+        userPayload, userAccountPayload = self.sortData(receivedPayload)
+        userSerializer = UserSerializer(data=receivedPayload)
+        if userSerializer.is_valid():
+            userInstance = userSerializer.create(validated_data=userPayload)
+            if userInstance:
+                self.createUserAccount(userAccountPayload, userInstance)
+
+    def sortData(self, receivedPayload):
+        userPayload = {
+            "username": receivedPayload["username"],
+            "password": receivedPayload["password"],
+            "firstName": receivedPayload["firstName"],
+            "lastName": receivedPayload["lastName"],
+            "email": receivedPayload["email"],
+        }
+        userAccountPayload = {
+            "address": receivedPayload["address"],
+            "phoneNumber": receivedPayload["phoneNumber"],
+            "isMerchant": receivedPayload["isMerchant"],
+        }
+        return userPayload, userAccountPayload
+    
+    def createUserAccount(self, userAccountPayload, userInstance):
+        userAccountPayload["user"] = userInstance
+        userAccountSerializer = UserAccountSerializer(data=userAccountPayload)
+        if userAccountSerializer.is_valid(raise_exception=True):
+            userAccountSerializer.create(validated_data=userAccountPayload)

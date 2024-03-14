@@ -18,7 +18,7 @@ from paygate_payments.app_models.app_models import CheckoutFormPayload
 
 class PaymentInitializationView(APIView):
 
-    permission_classes = [] # add later
+    permission_classes = [IsAuthenticated] # add later
 
     ngrok_base_url = "https://de99-41-10-117-107.ngrok-free.app" # TODO: for development use only:
 
