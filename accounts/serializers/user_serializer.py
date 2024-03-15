@@ -31,19 +31,22 @@ class UserSerializer(serializers.ModelSerializer):
         pass
 
     def create(self, validated_data):
-        user = User()
-        user.username = validated_data["username"]
-        user.password = make_password(validated_data["password"]) 
-        user.email = validated_data["email"]
-        user.first_name = validated_data["firstName"]
-        user.last_name = validated_data["lastName"]
-        user.save()
-        self.createUserAuthenticationToken(user)
-        return user
+        try:
+            user = User()
+            user.username = validated_data["username"]
+            user.password = make_password(validated_data["password"]) 
+            user.email = validated_data["email"]
+            user.first_name = validated_data["firstName"]
+            user.last_name = validated_data["lastName"]
+            user.save()
+            self.createUserAuthenticationToken(user)
+            return user
+        except Exception as e:
+            raise Exception("Failed to create User")
     
     def createUserAuthenticationToken(self, user):
         try:
             Token.objects.create(user=user)
         except:
-            deleteAllUserRelatedInstances()
+            deleteAllUserRelatedInstances(userPk=user.pk)
             raise Exception("Failed to create user token")

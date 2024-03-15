@@ -1,27 +1,12 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-import requests
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
 from accounts.models import UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
-
 class AccountsTests(GlobalTestCaseConfig, TestCase):
-
-    def setUp(self) -> None:
-        
-        self.userInputData = {
-            "username": "Lebo",
-            "password": "HelloWorld",
-            "firstName": "Lebohang",
-            "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
-            "address": "71 rethman street newgermany",
-            "phoneNumber": "0621837747",
-            "isMerchant": False,
-        }
 
     def test_create_account(self):
         create_account_url = reverse("create_account_view")
@@ -40,7 +25,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_account_failure(self):
         create_account_url = reverse("create_account_view")
-        self.userInputData["phoneNumber"] = "062183774"
+        self.userInputData["phoneNumber"] = "062183774" # deliberate incorrect phone number
         response = self.client.post(
             path=create_account_url,
             content_type=f"application/json",
@@ -79,7 +64,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_unauthorized_navigation(self):
-        authToken = self.createTestAccountAndLogin()
+        self.createTestAccountAndLogin()
         paymentsUrl = reverse("initiate_payment_view")
         response = self.client.get(
             path=paymentsUrl,

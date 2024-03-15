@@ -3,7 +3,6 @@ from rest_framework.response import Response
 
 from accounts.serializers.user_account_serializer import UserAccountSerializer
 from accounts.serializers.user_serializer import UserSerializer
-# Create your views here.
 
 
 class CreateAccountView(APIView):

@@ -1,3 +1,4 @@
+from typing import Iterable
 from django.db import models
 from django.conf import settings
 
@@ -10,6 +11,7 @@ class Merchant(models.Model):
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
+    is_active = models.BooleanField(default=True)
     paygateId = models.CharField(max_length=20, blank=False)
     paygateSecret = models.CharField(max_length=32, blank=False, default="")
     fernetToken = models.CharField(max_length=2000, blank=True)
@@ -30,7 +32,22 @@ class Merchant(models.Model):
         self.paygateSecret = ""
 
 class Product(models.Model):
-    pass
+
+    is_active = models.BooleanField(default=False)
+    merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE, blank=False, null=True)
+    name = models.CharField(max_length=200, blank=False, default="")
+    description = models.CharField(max_length=200, blank=False, default="")
+    original_price = models.PositiveIntegerField(blank=False, default=0)
+    in_stock = models.BooleanField(default=True)
+    image = models.CharField(max_length=800, blank=False, default="")
+    store_reference = models.CharField(max_length=200, blank=False, default="")
+    discount_percentage = models.PositiveIntegerField(blank=False, default=0)
+
+    def __str__(self) -> str:
+        return f"{self.name} - {self.description}"
+    
+    def save(self) -> None:
+        return super().save()
 
 class TransactionHistory(models.Model):
     pass

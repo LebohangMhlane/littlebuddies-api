@@ -10,10 +10,7 @@ class UserAccount(models.Model):
     phone_number = models.PositiveIntegerField(blank=False, null=True, unique=True)
     is_merchant = models.BooleanField(default=False)
     device_token = models.CharField(max_length=1000, blank=True)
+    can_create_merchants = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
-
-
-class UserAccountSettings(models.Model):
-    pass
