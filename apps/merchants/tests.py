@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 
 from global_test_config.global_test_config import GlobalTestCaseConfig
-from merchants.models import Merchant, Product
+from apps.merchants.models import Merchant, Product
 
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 

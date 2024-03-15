@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.reverse import reverse
 from global_test_config.global_test_config import GlobalTestCaseConfig
-from merchants.models import Product
+from apps.merchants.models import Product
 
 class ProductTests(GlobalTestCaseConfig, TestCase):
 

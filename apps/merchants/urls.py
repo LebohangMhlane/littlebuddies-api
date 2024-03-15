@@ -1,6 +1,6 @@
 from django.urls import path
 
-from merchants.views import (CreateMerchantView,
+from apps.merchants.views import (CreateMerchantView,
                             CreateProductView)
 
 urlpatterns = [

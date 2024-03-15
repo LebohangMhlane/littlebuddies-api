@@ -2,7 +2,7 @@ from typing import Iterable
 from django.db import models
 from django.conf import settings
 
-from accounts.models import UserAccount
+from apps.accounts.models import UserAccount
 from cryptography.fernet import Fernet as fernet
 
 

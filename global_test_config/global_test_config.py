@@ -3,7 +3,7 @@
 from django.test import TestCase
 from rest_framework.reverse import reverse
 
-from accounts.models import UserAccount
+from apps.accounts.models import UserAccount
 
 
 class GlobalTestCaseConfig(TestCase):

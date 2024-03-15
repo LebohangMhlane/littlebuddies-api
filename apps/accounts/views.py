@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from accounts.serializers.user_account_serializer import UserAccountSerializer
-from accounts.serializers.user_serializer import UserSerializer
+from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
+from apps.accounts.serializers.user_serializer import UserSerializer
 
 
 class CreateAccountView(APIView):

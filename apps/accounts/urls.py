@@ -17,7 +17,7 @@ Including another URLconf
 from django.urls import path
 from rest_framework.authtoken import views
 
-from accounts.views import (CreateAccountView)
+from apps.accounts.views import (CreateAccountView)
 
 urlpatterns = [
     path('create-account/', CreateAccountView.as_view(), name="create_account_view"),

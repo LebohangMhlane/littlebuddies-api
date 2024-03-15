@@ -60,9 +60,10 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'rest_framework.authtoken',
-    'merchants',
-    'accounts',
-    'paygate_payments',
+    'apps.products',
+    'apps.merchants',
+    'apps.accounts',
+    'apps.paygate',
 ]
 
 MIDDLEWARE = [

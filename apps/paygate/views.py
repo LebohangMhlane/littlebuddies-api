@@ -1,6 +1,4 @@
-from base64 import decode, encode
 import json
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -12,13 +10,13 @@ from cryptography.fernet import Fernet as fernet
 import hashlib
 import requests
 
-from merchants.models import Merchant
-from paygate_payments.app_models.app_models import CheckoutFormPayload
+from apps.merchants.models import Merchant
+from apps.paygate.app_models.app_models import CheckoutFormPayload
 
 
 class PaymentInitializationView(APIView):
 
-    permission_classes = [IsAuthenticated] # add later
+    permission_classes = [IsAuthenticated]
 
     ngrok_base_url = "https://de99-41-10-117-107.ngrok-free.app" # TODO: for development use only:
 

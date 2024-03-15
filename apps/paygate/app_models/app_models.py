@@ -1,5 +1,5 @@
 
-from merchants.models import Merchant
+from apps.merchants.models import Merchant
 
 # what the app sends to the server to initiate payment after checkout:
 class CheckoutFormPayload():

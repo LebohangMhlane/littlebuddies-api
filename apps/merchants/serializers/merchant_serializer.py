@@ -1,7 +1,7 @@
 
 from rest_framework import serializers
-from merchants.models import Merchant
-from accounts.models import UserAccount
+from apps.merchants.models import Merchant
+from apps.accounts.models import UserAccount
 
 
 class MerchantSerializer(serializers.ModelSerializer):

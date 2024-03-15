@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from paygate_payments.views import (PaymentSuccessView, 
+from apps.paygate.views import (PaymentSuccessView, 
                                     PaymentInitializationView, 
                                     PaymentCancelledView,
                                     PaymentNotificationView, 
@@ -29,6 +29,6 @@ urlpatterns = [
     path('payment_successful/', PaymentSuccessView.as_view(), name="payment_successful_view"),
     path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_view"),
     path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_view"),
-    path("accounts/", include("accounts.urls"), name="account_urls"),
-    path("merchants/", include("merchants.urls"), name="merchant_urls")
+    path("accounts/", include("apps.accounts.urls"), name="account_urls"),
+    path("merchants/", include("apps.merchants.urls"), name="merchant_urls")
 ]

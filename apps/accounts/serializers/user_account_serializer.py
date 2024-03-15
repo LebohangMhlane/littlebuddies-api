@@ -1,6 +1,6 @@
 
 import re
-from accounts.models import UserAccount
+from apps.accounts.models import UserAccount
 from rest_framework import serializers
 
 from global_serializer_functions.global_serializer_functions import (

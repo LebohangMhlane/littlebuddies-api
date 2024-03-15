@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
-from accounts.models import UserAccount
+from apps.accounts.models import UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class AccountsTests(GlobalTestCaseConfig, TestCase):

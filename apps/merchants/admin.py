@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from merchants.models import Merchant
+from apps.merchants.models import Merchant
 
 # Register your models here.
 

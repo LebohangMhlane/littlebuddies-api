@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from accounts.models import UserAccount
-from merchants.models import Merchant
-from merchants.serializers.merchant_serializer import MerchantSerializer
-from products.serializers.serializers import ProductSerializer
+from apps.accounts.models import UserAccount
+from apps.merchants.models import Merchant
+from apps.merchants.serializers.merchant_serializer import MerchantSerializer
+from apps.products.serializers.serializers import ProductSerializer
 
 class CreateMerchantView(APIView):
 

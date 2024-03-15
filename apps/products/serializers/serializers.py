@@ -2,7 +2,7 @@
 
 from rest_framework.serializers import ModelSerializer
 
-from merchants.models import Merchant, Product
+from apps.merchants.models import Merchant, Product
 
 class ProductSerializer(ModelSerializer):
 
