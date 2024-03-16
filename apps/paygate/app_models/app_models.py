@@ -2,12 +2,14 @@
 from apps.merchants.models import Merchant
 
 # what the app sends to the server to initiate payment after checkout:
+
 class CheckoutFormPayload():
     merchantId = None
     totalCheckoutAmount = 0
     items = []
     
-    def __init__(self, payload:dict):
+    def __init__(self, payload):
+        payload = payload.copy()
         self.merchantId = int(payload.get("merchantId"))
         self.totalCheckoutAmount = int(payload.get("totalCheckoutAmount"))
         self.items = payload.get("items")

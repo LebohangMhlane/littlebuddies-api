@@ -85,22 +85,16 @@ class GlobalTestCaseConfig(TestCase):
         self.userAccount = userAccount
         return self.authToken
 
-    def createTestMerchant(self):
-        createMerchantPayload = {
-            "userAccountPk": 2,
-            "name": "Pet Food Shop",
-            "email": "petfoodshop@gmail.com",
-            "address": "12 Pet Street Newgermany",
-            "paygateId": "10011072130",
-            "paygateSecret": "secret",
-        }
-        createMerchantUrl = reverse("create_merchant_view")
-        self.client.post(
-            createMerchantUrl,
-            data=createMerchantPayload,
-            HTTP_AUTHORIZATION=f"Token {self.authToken}"
+    def createTestMerchant(self, userAccount:UserAccount):
+        merchant = Merchant.objects.create(
+            user_account=userAccount,
+            name="Pet Food Shop",
+            email="petfoodshop@gmail.com",
+            address="12 Pet Street Newgermany",
+            paygateReference="pgtest_123456789",
+            paygateId="10011072130",
+            paygateSecret="secret"
         )
-        merchant = Merchant.objects.get(name=createMerchantPayload["name"])
         return merchant
 
     def makeUserAccountFullAdmin(self, userAccountPk:int):

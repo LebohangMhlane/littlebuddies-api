@@ -12,6 +12,7 @@ class Merchant(models.Model):
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
     is_active = models.BooleanField(default=True)
+    paygateReference = models.CharField(max_length=1000, blank=False, default="")
     paygateId = models.CharField(max_length=20, blank=False)
     paygateSecret = models.CharField(max_length=32, blank=False, default="")
     fernetToken = models.CharField(max_length=2000, blank=True)

@@ -66,10 +66,10 @@ class PaymentInitializationView(APIView):
                 content_type='application/json', status=500)
     
     # prepare and return the payload we need to send to paygate to initiate payment:
-    def preparePayGatePayload(self, checkoutFormPayload, merchant):
+    def preparePayGatePayload(self, checkoutFormPayload, merchant:Merchant):
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
-            "REFERENCE": merchant.reference,
+            "REFERENCE": merchant.paygateReference,
             "AMOUNT": checkoutFormPayload.totalCheckoutAmount,
             "CURRENCY": "ZAR",
             "RETURN_URL": "https://my.return.url/page",
