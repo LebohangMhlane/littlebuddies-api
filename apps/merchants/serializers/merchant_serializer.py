@@ -9,6 +9,7 @@ class MerchantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Merchant
         fields = "__all__"
+        depth = 2
 
     def is_valid(self, *, raise_exception=False):
         initialData = self.initial_data

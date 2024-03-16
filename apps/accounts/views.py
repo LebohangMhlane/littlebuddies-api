@@ -14,10 +14,11 @@ class CreateAccountView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            self.createUser(receivedPayload=request.data)
+            userAccount = self.createUser(receivedPayload=request.data)
             return Response({
                 "success": True,
                 "accountCreated": True,
+                "userAccount": userAccount.data
             })
         except Exception as e:
             return Response({
@@ -32,7 +33,9 @@ class CreateAccountView(APIView):
         if userSerializer.is_valid():
             userInstance = userSerializer.create(validated_data=userPayload)
             if userInstance:
-                self.createUserAccount(userAccountPayload, userInstance)
+                userAccount = self.createUserAccount(userAccountPayload, userInstance)
+                userAccount = UserAccountSerializer(userAccount, many=False)
+                return userAccount
 
     def sortData(self, receivedPayload):
         userPayload = {
@@ -53,4 +56,5 @@ class CreateAccountView(APIView):
         userAccountPayload["user"] = userInstance
         userAccountSerializer = UserAccountSerializer(data=userAccountPayload)
         if userAccountSerializer.is_valid(raise_exception=True):
-            userAccountSerializer.create(validated_data=userAccountPayload)
+            userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
+            return userAccount

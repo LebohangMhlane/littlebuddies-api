@@ -13,15 +13,16 @@ class CreateMerchantView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            if not self.checkIfUserHasFullPermissions(request.data):
+            if not self.checkIfUserHasFullPermissions(request.user.useraccount):
                 return Response({
                     "success": False,
                     "error": "You don't have permission to create Merchants"
                 }, status=401)
-            self.createMerchant(request.data)
+            merchant = self.createMerchant(request.data)
             return Response({
                 "success": True,
-                "message": "Merchant created successfully"
+                "message": "Merchant created successfully",
+                "merchant": merchant.data
             }, status=200)
         except Exception as e:
             return Response({
@@ -29,9 +30,7 @@ class CreateMerchantView(APIView):
                 "error": str(e)
             }, status=500)
     
-    def checkIfUserHasFullPermissions(self, receivedPayload):
-        userAccountPk = int(receivedPayload["userAccountPk"])
-        userAccount = UserAccount.objects.get(pk=userAccountPk)
+    def checkIfUserHasFullPermissions(self, userAccount):
         if userAccount.user.is_superuser: 
             if userAccount.can_create_merchants: return True
             else: return False
@@ -40,7 +39,8 @@ class CreateMerchantView(APIView):
     def createMerchant(self, receivedPayload):
         merchantSerializer = MerchantSerializer(data=receivedPayload)
         if merchantSerializer.is_valid():
-            merchantSerializer.create(validated_data=receivedPayload)
+            merchant = merchantSerializer.create(validated_data=receivedPayload)
+            return MerchantSerializer(merchant, many=False)
 
 
 class CreateProductView(APIView):

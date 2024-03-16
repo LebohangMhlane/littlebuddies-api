@@ -33,15 +33,40 @@ class GlobalTestCaseConfig(TestCase):
             "isMerchant": False,
         }
         create_account_url = reverse("create_account_view")
-        response = self.client.post(
+        self.client.post(
             path=create_account_url,
             content_type=f"application/json",
             data=userInputData,
         )
-        return response.data
+        testUserAccount = UserAccount.objects.get(
+            user__username=userInputData["username"]
+        )
+        return testUserAccount
+    
+    def createTestMerchantUserAccount(self):
+        userInputData = {
+            "username": "Mike",
+            "password": "HelloWorld",
+            "firstName": "Mike",
+            "lastName": "Myers",
+            "email": "mikemyers@gmail.com",
+            "address": "72 rethman street newgermany",
+            "phoneNumber": "0631837747",
+            "isMerchant": True,
+        }
+        create_account_url = reverse("create_account_view")
+        self.client.post(
+            path=create_account_url,
+            content_type=f"application/json",
+            data=userInputData,
+        )
+        testMerchantUserAccount = UserAccount.objects.get(
+            user__username=userInputData["username"]
+        )
+        return testMerchantUserAccount
     
     def createTestAccountAndLogin(self):
-        self.createTestAccount()
+        userAccount = self.createTestAccount()
         loginUrl = reverse("login")
         loginPayload = {
             "username": self.userInputData["username"],

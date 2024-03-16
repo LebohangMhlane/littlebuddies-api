@@ -12,6 +12,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAccount
         fields = "__all__"
+        depth = 2
 
     def is_valid(self, *, raise_exception=True):
         initialData = self.initial_data
@@ -36,6 +37,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
             userAccount.user = validated_data["user"]
             userAccount.address = validated_data["address"]
             userAccount.phone_number = validated_data["phoneNumber"]
+            userAccount.is_merchant = validated_data["isMerchant"]
             userAccount.save()
             return userAccount
         except:
