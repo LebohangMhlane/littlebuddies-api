@@ -17,13 +17,13 @@ class CreateAccountView(APIView):
             userAccount = self.createUser(receivedPayload=request.data)
             return Response({
                 "success": True,
-                "accountCreated": True,
+                "message": "Account created successfully",
                 "userAccount": userAccount.data
             })
         except Exception as e:
             return Response({
                 "success": False,
-                "accountCreated": False,
+                "message": "Failed to create account",
                 "exception": str(e)
             }, status=500)
 

@@ -4,7 +4,10 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 
 from apps.accounts.models import UserAccount
+from apps.merchants.models import Merchant
 
+
+# test functions shared by all tests
 
 class GlobalTestCaseConfig(TestCase):
 
@@ -84,21 +87,21 @@ class GlobalTestCaseConfig(TestCase):
 
     def createTestMerchant(self):
         createMerchantPayload = {
-            "userAccountPk": 1,
+            "userAccountPk": 2,
             "name": "Pet Food Shop",
             "email": "petfoodshop@gmail.com",
             "address": "12 Pet Street Newgermany",
             "paygateId": "10011072130",
             "paygateSecret": "secret",
         }
-        token = self.createTestAccountAndLogin()
-        self.makeUserAccountFullAdmin(createMerchantPayload["userAccountPk"])
         createMerchantUrl = reverse("create_merchant_view")
         self.client.post(
             createMerchantUrl,
             data=createMerchantPayload,
-            HTTP_AUTHORIZATION=f"Token {token}"
+            HTTP_AUTHORIZATION=f"Token {self.authToken}"
         )
+        merchant = Merchant.objects.get(name=createMerchantPayload["name"])
+        return merchant
 
     def makeUserAccountFullAdmin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)

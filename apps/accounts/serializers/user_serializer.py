@@ -4,10 +4,10 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
-from global_serializer_functions.global_serializer_functions import deleteAllUserRelatedInstances
+from global_serializer_functions.global_serializer_functions import SerializerFunctions
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
     
     class Meta:
         model = User
@@ -20,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
             self.usernameIsValid(initialData["username"])):
             return True
         else:
+            self.deleteAllUserRelatedInstances()
             raise Exception("Invalid User Data")
             
     def emailIsValid(self, email):
@@ -42,11 +43,13 @@ class UserSerializer(serializers.ModelSerializer):
             self.createUserAuthenticationToken(user)
             return user
         except Exception as e:
+            if user.pk:
+                self.deleteAllUserRelatedInstances(userPk=user.pk)
             raise Exception("Failed to create User")
     
     def createUserAuthenticationToken(self, user):
         try:
             Token.objects.create(user=user)
         except:
-            deleteAllUserRelatedInstances(userPk=user.pk)
+            self.deleteAllUserRelatedInstances(userPk=user.pk)
             raise Exception("Failed to create user token")

@@ -15,8 +15,8 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             content_type=f"application/json",
             data=self.userInputData,
         )
-        user = User.objects.all().first()
-        userAccount = UserAccount.objects.all().first()
+        user = User.objects.get(username=response.data["userAccount"]["user"]["username"])
+        userAccount = UserAccount.objects.get(pk=response.data["userAccount"]["id"])
         token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(token != None)
@@ -34,6 +34,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         user = User.objects.all().first()
         userAccount = UserAccount.objects.all().first()
         self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.data["exception"], "Invalid phone number")
         self.assertEqual(user, None)
         self.assertEqual(userAccount, None)
 

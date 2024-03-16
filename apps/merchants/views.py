@@ -1,24 +1,24 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from apps.accounts.models import UserAccount
 from apps.merchants.models import Merchant
 from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 from apps.products.serializers.serializers import ProductSerializer
 
-class CreateMerchantView(APIView):
+from global_view_functions.global_view_functions import GlobalViewFunctions
+
+class CreateMerchantView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         pass
 
     def post(self, request, *args, **kwargs):
         try:
-            if not self.checkIfUserHasFullPermissions(request.user.useraccount):
-                return Response({
-                    "success": False,
-                    "error": "You don't have permission to create Merchants"
-                }, status=401)
-            merchant = self.createMerchant(request.data)
+            exceptionString = "You don't have permission to create merchants"
+            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
+                merchant = self.createMerchant(request.data)
+                if merchant:
+                    self.notifyAllOfMerchantCreation()
             return Response({
                 "success": True,
                 "message": "Merchant created successfully",
@@ -27,20 +27,52 @@ class CreateMerchantView(APIView):
         except Exception as e:
             return Response({
                 "success": False,
-                "error": str(e)
-            }, status=500)
-    
-    def checkIfUserHasFullPermissions(self, userAccount):
-        if userAccount.user.is_superuser: 
-            if userAccount.can_create_merchants: return True
-            else: return False
-        else: return False
+                "message": "Failed to create merchant",
+                "exception": str(e)
+            }, status=401)
 
     def createMerchant(self, receivedPayload):
         merchantSerializer = MerchantSerializer(data=receivedPayload)
         if merchantSerializer.is_valid():
             merchant = merchantSerializer.create(validated_data=receivedPayload)
             return MerchantSerializer(merchant, many=False)
+        
+    def notifyAllOfMerchantCreation(self):
+        # notify all relevant parties of the creation of a new merchant:
+        pass
+
+
+class DeactivateMerchantView(APIView, GlobalViewFunctions):
+
+    def get(self, request):
+        pass
+
+    def post(self, request):
+        try:
+            exceptionString = "You don't have permission to deactivate a merchant"
+            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
+                if self.deactivateMerchant(request.data["merchantId"]):
+                    self.notifyAllOfDeactivation()
+                    return Response({
+                        "success": True,
+                        "message": "merchant deactivated successfully"
+                    }, status=200)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "failed to deactivate merchant",
+                "exception": str(e)
+            }, status=500)
+    
+    def deactivateMerchant(self, merchantId):
+        merchant = Merchant.objects.get(pk=int(merchantId))
+        merchant.is_active = False
+        merchant.save()
+        return True
+        
+    def notifyAllOfDeactivation(self):
+        # send emails to relevant parties notifiying them of the deactivation:
+        pass
 
 
 class CreateProductView(APIView):

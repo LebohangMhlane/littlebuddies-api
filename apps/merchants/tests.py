@@ -49,3 +49,46 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEquals(response.status_code, 401)
         merchant = Merchant.objects.filter(name=createMerchantPayload["name"]).first()
         self.assertEquals(merchant, None)
+
+    def test_deactivate_merchant(self):
+        testAccountToken = self.createTestAccountAndLogin()
+        self.makeUserAccountFullAdmin(self.userAccount.pk)
+        self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchant()
+        self.assertEquals(merchant.is_active, True)
+
+        payload = {
+            "merchantId": 1,
+        }
+        deleteMerchantUrl = reverse("deactivate_merchant_view")
+        response = self.client.post(
+            deleteMerchantUrl,
+            data=payload,
+            HTTP_AUTHORIZATION=f"Token {testAccountToken}"
+        )
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(response.data["success"])
+        merchant = Merchant.objects.get(pk=payload["merchantId"])
+        self.assertEquals(merchant.is_active, False)
+
+    def test_deactivate_merchant_failure(self):
+        testAccountToken = self.createTestAccountAndLogin()
+        self.makeUserAccountFullAdmin(self.userAccount.pk)
+        self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchant()
+        self.assertEquals(merchant.is_active, True)
+
+        payload = {
+            "merchantId": 100, # id doesn't exist
+        }
+        deleteMerchantUrl = reverse("deactivate_merchant_view")
+        response = self.client.post(
+            deleteMerchantUrl,
+            data=payload,
+            HTTP_AUTHORIZATION=f"Token {testAccountToken}"
+        )
+        self.assertEquals(response.status_code, 500)
+        self.assertEqual(response.data["message"], "failed to deactivate merchant")
+        self.assertFalse(response.data["success"])
+        merchant = Merchant.objects.get(pk=1)
+        self.assertEquals(merchant.is_active, True)
