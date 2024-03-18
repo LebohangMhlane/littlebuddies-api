@@ -7,20 +7,21 @@ from cryptography.fernet import Fernet as fernet
 
 
 class Merchant(models.Model):
-    user_account = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
+    userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
-    is_active = models.BooleanField(default=True)
+    isActive = models.BooleanField(default=True)
     paygateReference = models.CharField(max_length=1000, blank=False, default="")
     paygateId = models.CharField(max_length=20, blank=False)
     paygateSecret = models.CharField(max_length=32, blank=False, default="")
     fernetToken = models.CharField(max_length=2000, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.name} - {self.user_account.user.username}"
+        return f"{self.name} - {self.userAccount.user.username}"
     
     def save(self, *args, **kwargs):
+        self.verifyUserAccount(self.userAccount)
         if not self.pk:
             self.encryptPaygateSecret()
         super(Merchant, self).save(*args, **kwargs)
@@ -31,18 +32,22 @@ class Merchant(models.Model):
         token = fernet_instance.encrypt(f"{self.paygateSecret}".encode())
         self.fernetToken = token
         self.paygateSecret = ""
+    
+    def verifyUserAccount(self, userAccount: UserAccount):
+        if not userAccount.isMechant:
+            raise Exception("User account is not a merchant")
 
 class Product(models.Model):
 
-    is_active = models.BooleanField(default=False)
+    isActive = models.BooleanField(default=False)
     merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE, blank=False, null=True)
     name = models.CharField(max_length=200, blank=False, default="")
     description = models.CharField(max_length=200, blank=False, default="")
-    original_price = models.PositiveIntegerField(blank=False, default=0)
-    in_stock = models.BooleanField(default=True)
+    originalPrice = models.PositiveIntegerField(blank=False, default=0)
+    inStock = models.BooleanField(default=True)
     image = models.CharField(max_length=800, blank=False, default="")
-    store_reference = models.CharField(max_length=200, blank=False, default="")
-    discount_percentage = models.PositiveIntegerField(blank=False, default=0)
+    storeReference = models.CharField(max_length=200, blank=False, default="")
+    discountPercentage = models.PositiveIntegerField(blank=False, default=0)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.description}"

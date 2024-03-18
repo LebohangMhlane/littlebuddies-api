@@ -1,9 +1,10 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from apps.merchants.models import Merchant
 from apps.merchants.serializers.merchant_serializer import MerchantSerializer
-from apps.products.serializers.serializers import ProductSerializer
 
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -67,7 +68,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
     
     def deactivateMerchant(self, merchantId):
         merchant = Merchant.objects.get(pk=int(merchantId))
-        merchant.is_active = False
+        merchant.isActive = False
         merchant.save()
         return True
         
@@ -84,13 +85,15 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
     def post(self, request):
         try:
             exceptionString = "You don't have permission to update a merchant"
-            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
-                if self.updateMerchant(valuesToUpdate=request.data):
-                    self.notifyAllOfUpdate()
-                    return Response({
-                        "success": True,
-                        "message": "merchant deactivated successfully"
-                    }, status=200)
+            if self.checkIfUserHasFullPermissions(request, exceptionString):
+                updatedMerchant = self.updateMerchant(request)
+                merchantSerializer = MerchantSerializer(updatedMerchant, many=False)
+                self.notifyAllOfUpdate()
+                return Response({
+                    "success": True,
+                    "message": "Merchant updated successfully",
+                    "updatedMerchant": merchantSerializer.data
+                }, status=200)
         except Exception as e:
             return Response({
                 "success": False,
@@ -98,11 +101,19 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
                 "exception": str(e)
             }, status=500)
     
-    def updateMerchant(self, merchantId, valuesToUpdate):
-        merchant = Merchant.objects.get(pk=int(merchantId))
-        merchant.is_active = False
+    def updateMerchant(self, request):
+        receivedPayload = request.data.copy()
+        merchant = Merchant.objects.get(pk=int(receivedPayload["merchantPk"]))
+        del receivedPayload["merchantPk"]
+        for key, value in receivedPayload.items():
+            self.validateKey(key)
+            merchant.__setattr__(key, value)
         merchant.save()
-        return True
+        return merchant
+    
+    def validateKey(self, key):
+        if (key == "fernetToken"):
+            raise Exception("FernetToken cannot be modified")
         
     def notifyAllOfUpdate(self):
         # send emails to relevant parties notifiying them of the deactivation:

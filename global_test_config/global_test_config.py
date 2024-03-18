@@ -87,7 +87,7 @@ class GlobalTestCaseConfig(TestCase):
 
     def createTestMerchant(self, userAccount:UserAccount):
         merchant = Merchant.objects.create(
-            user_account=userAccount,
+            userAccount=userAccount,
             name="Pet Food Shop",
             email="petfoodshop@gmail.com",
             address="12 Pet Street Newgermany",
@@ -101,7 +101,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
-        userAccount.can_create_merchants = True
+        userAccount.canCreateMerchant = True
         userAccount.save()
         return userAccount
 
