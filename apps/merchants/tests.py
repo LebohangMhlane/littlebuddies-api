@@ -4,6 +4,7 @@ from rest_framework.reverse import reverse
 from global_test_config.global_test_config import GlobalTestCaseConfig
 from apps.merchants.models import Merchant
 
+
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_merchant(self):
@@ -24,10 +25,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             data=createMerchantPayload,
             HTTP_AUTHORIZATION=f"Token {token}"
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         merchant = Merchant.objects.filter(name=createMerchantPayload["name"]).first()
-        self.assertEquals(merchant.userAccount.pk, merchantUserAccount.pk)
-        self.assertEquals(response.data["merchant"]["name"], createMerchantPayload["name"])
+        self.assertEqual(merchant.userAccount.pk, merchantUserAccount.pk)
+        self.assertEqual(response.data["merchant"]["name"], createMerchantPayload["name"])
         self.assertTrue(self.userAccount.pk != response.data["merchant"]["userAccount"]["id"])
 
     def test_unauthorized_create_merchant(self):
@@ -56,7 +57,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(testMerchantUserAccount)
         self.assertEquals(merchant.isActive, True)
-
         payload = {
             "merchantId": 1,
         }

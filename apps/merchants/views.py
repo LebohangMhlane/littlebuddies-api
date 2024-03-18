@@ -49,14 +49,13 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
-            exceptionString = "You don't have permission to deactivate a merchant"
-            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
-                if self.deactivateMerchant(request.data["merchantId"]):
-                    self.notifyAllOfDeactivation()
-                    return Response({
-                        "success": True,
-                        "message": "merchant deactivated successfully"
-                    }, status=200)
+            if request.user.useraccount.canCreateMerchants:
+                self.deactivateMerchant(request.data["merchantId"])
+                self.notifyAllOfDeactivation()
+                return Response({
+                    "success": True,
+                    "message": "merchant deactivated successfully"
+                }, status=200)
         except Exception as e:
             return Response({
                 "success": False,
@@ -68,7 +67,6 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
         merchant = Merchant.objects.get(pk=int(merchantId))
         merchant.isActive = False
         merchant.save()
-        return True
         
     def notifyAllOfDeactivation(self):
         # send emails to relevant parties notifiying them of the deactivation:

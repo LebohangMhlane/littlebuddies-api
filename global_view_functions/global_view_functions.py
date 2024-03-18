@@ -2,21 +2,26 @@
 
 # functions shared by all views:
 
-from apps.accounts.models import UserAccount
 from apps.merchants.models import Merchant
 
 
 class GlobalViewFunctions():
 
-    def checkIfUserHasFullPermissions(self, request, exceptionString=""):
-        userAccount = UserAccount.objects.get(pk=request.user.useraccount.pk)
-        if userAccount.user.is_superuser: 
-            if userAccount.canCreateMerchants: return True
-            else: raise Exception(exceptionString)
-        else: raise Exception(exceptionString)
+    def checkIfUserIsSuperAdmin(self, request, exceptionString=None):
+        if not request.user.is_superuser and not (
+            request.user.useraccount.canCreateMerchants):
+            raise Exception("Only super admins can perform this action" 
+                if not exceptionString else exceptionString
+            )
+        return True
+    
+    def checkIfUserIsMerchantAdmin(self, request, exceptionString):
+        if not request.user.useraccount.isMerchant:
+            raise Exception("You don't have merchant authority to perform this action")
 
-    def checkIfUserBelongsToMerchant(self, request, exceptionString):
-        merchant = Merchant.objects.get(pk=request.data["merchantPk"])
-        if merchant.userAccount == request.user.useraccount:
+    def checkIfMerchantsMatch(self, request, merchantFromProduct):
+        userAccount = request.user.useraccount
+        merchant = Merchant.objects.get(userAccount=userAccount)
+        if merchant == merchantFromProduct: 
             return True
-        else: return False
+        else: raise Exception("The product being deleted doesn't belong to this merchant")

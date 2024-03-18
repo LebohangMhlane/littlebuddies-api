@@ -110,7 +110,7 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
     def validateKey(self, key, request):
         if (key == "canCreateMerchants" or key == "isMerchant"):
             exceptionString = f"You don't have permission to modify {key}"
-            self.checkIfUserHasFullPermissions(request, exceptionString)
+            self.checkIfUserIsSuperAdmin(request, exceptionString)
         
     def notifyAllOfUpdate(self):
         # send emails to relevant parties notifiying them of the deactivation:

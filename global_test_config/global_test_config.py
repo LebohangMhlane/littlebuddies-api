@@ -4,7 +4,7 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant
+from apps.merchants.models import Merchant, Product
 
 
 # test functions shared by all tests
@@ -12,16 +12,9 @@ from apps.merchants.models import Merchant
 class GlobalTestCaseConfig(TestCase):
 
     def setUp(self) -> None:
-
-        self.userInputData = {
+        self.loginPayload = {
             "username": "Lebo",
             "password": "HelloWorld",
-            "firstName": "Lebohang",
-            "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
-            "address": "71 rethman street newgermany",
-            "phoneNumber": "0621837747",
-            "isMerchant": False,
         }
         
     def createTestAccount(self):
@@ -71,19 +64,35 @@ class GlobalTestCaseConfig(TestCase):
     def createTestAccountAndLogin(self):
         userAccount = self.createTestAccount()
         loginUrl = reverse("login")
-        loginPayload = {
-            "username": self.userInputData["username"],
-            "password": self.userInputData["password"],
-        }
         response = self.client.post(
             path=loginUrl,
             content_type=f"application/json",
-            data=loginPayload,
+            data=self.loginPayload,
         )
         self.authToken = response.data["token"]
-        userAccount = UserAccount.objects.get(user__username=loginPayload["username"])
+        userAccount = UserAccount.objects.get(user__username=self.loginPayload["username"])
         self.userAccount = userAccount
         return self.authToken
+    
+    # TODO: complete login flavours
+
+    def loginAsMerchant(self):
+        loginUrl = reverse("login")
+        loginPayload = {
+            "username": "Mike",
+            "password": "HelloWorld",
+        }
+        response = self.client.post(
+            loginUrl,
+            data=loginPayload
+        )
+        self.authToken = response.data["token"]
+
+    def loginAsCustomer(self):
+        pass
+
+    def loginAsSuperAdmin(self):
+        pass
 
     def createTestMerchant(self, userAccount:UserAccount):
         merchant = Merchant.objects.create(
@@ -105,4 +114,16 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
+    def createTestProduct(self, merchant):
+        product = Product.objects.create(
+            merchant=merchant,
+            name="Bob's Dog Food",
+            description="High quality dog food",
+            originalPrice=450,
+            image="image",
+            inStock=True,
+            storeReference="ID2342",
+            discountPercentage=0,
+        )
+        return product
     

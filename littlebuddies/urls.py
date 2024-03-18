@@ -33,5 +33,5 @@ urlpatterns = [
     path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_view"),
     path("accounts/", include("apps.accounts.urls"), name="account_urls"),
     path("merchants/", include("apps.merchants.urls"), name="merchant_urls"),
-    path('products/', CreateProductView.as_view(), name="create_product_view"),
+    path('products/', include("apps.products.urls"), name="create_product_view"),
 ]

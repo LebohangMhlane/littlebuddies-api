@@ -51,9 +51,6 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} - {self.description}"
-    
-    def save(self) -> None:
-        return super().save()
 
 class TransactionHistory(models.Model):
     pass
