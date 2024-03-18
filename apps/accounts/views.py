@@ -63,6 +63,23 @@ class CreateAccountView(APIView, GlobalViewFunctions):
             return userAccount
         
 
+class DeactivateAccountView(APIView, GlobalViewFunctions):
+
+    def get(self, request):
+        self.deactivateAccount(request)
+        return Response({
+            "success": True,
+            "message": "Account deactivated successfully",
+        }, status=200)
+    
+    def deactivateAccount(self, request):
+        userAccount = request.user.useraccount
+        user = request.user
+        user.is_active = False
+        user.save()
+        userAccount.save()
+
+
 class UpdateAccountView(APIView, GlobalViewFunctions):
 
     def post(self, request):

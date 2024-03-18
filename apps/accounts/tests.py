@@ -89,5 +89,16 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             payload["phoneNumber"]
         )
 
+    def test_deactivate_account(self):
+        authToken = self.createTestAccountAndLogin()
+        deactivateAccountUrl = reverse("deactivate_account_view")
+        response = self.client.get(
+            deactivateAccountUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}",
+        )
+        self.assertEqual(response.data["message"], "Account deactivated successfully")
+        userAccount = UserAccount.objects.get(pk=self.userAccount.pk)
+        self.assertTrue(userAccount.isActive == False)
+        self.assertTrue(userAccount.user.is_active == False)
 
 

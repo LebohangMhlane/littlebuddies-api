@@ -11,6 +11,11 @@ class UserAccount(models.Model):
     isMerchant = models.BooleanField(default=False)
     deviceToken = models.CharField(max_length=1000, blank=True)
     canCreateMerchants = models.BooleanField(default=False)
+    isActive = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
+    
+    def save(self):
+        self.isActive = self.user.is_active
+        return super().save()
