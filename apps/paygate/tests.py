@@ -1,4 +1,3 @@
-import json
 from django.test import TestCase
 from rest_framework.reverse import reverse
 
@@ -14,7 +13,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchant(merchantUserAccount)
 
         checkoutFormPayload = {
-            "userAccountPk": str(self.userAccount.pk),
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "1000",
             "items": "[1, 3]",

@@ -11,7 +11,7 @@ class GlobalViewFunctions():
     def checkIfUserHasFullPermissions(self, request, exceptionString=""):
         userAccount = UserAccount.objects.get(pk=request.user.useraccount.pk)
         if userAccount.user.is_superuser: 
-            if userAccount.canCreateMerchant: return True
+            if userAccount.canCreateMerchants: return True
             else: raise Exception(exceptionString)
         else: raise Exception(exceptionString)
 

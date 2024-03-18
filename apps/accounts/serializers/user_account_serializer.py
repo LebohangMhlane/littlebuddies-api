@@ -32,8 +32,8 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
             userAccount = UserAccount()
             userAccount.user = validated_data["user"]
             userAccount.address = validated_data["address"]
-            userAccount.phone_number = validated_data["phoneNumber"]
-            userAccount.isMechant = validated_data["isMerchant"]
+            userAccount.phoneNumber = validated_data["phoneNumber"]
+            userAccount.isMerchant = validated_data["isMerchant"]
             userAccount.save()
             return userAccount
         except:

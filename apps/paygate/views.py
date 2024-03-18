@@ -44,24 +44,17 @@ class PaymentInitializationView(APIView):
                 if dataIntegritySecure:
                     return Response({
                         "success": True,
-                        "responseData": verifiedPayload,
+                        "message": "Paygate response was successful",
+                        "paygatePayload": verifiedPayload,
                     }, content_type='application/json', status=200)
                 else:
-                    return Response({
-                        "success": False, 
-                        "responseData": {},
-                        "error": "Data integrity violated!"
-                    }, content_type='application/json', status=500)
+                    raise Exception("Data integrity not secure")
             else:
-                return Response({
-                    "success": False, 
-                    "responseData": {},
-                    "error": f"Server error: {response.status_code}"
-                }, content_type='application/json', status=500)
+                raise Exception("Response from Paygate was 500")
         except Exception as e:
             return Response({
                 "success": False, 
-                "responseData": {}, 
+                "message": "Failed to initialize Paygate payment",
                 "error": str(e)}, 
                 content_type='application/json', status=500)
     
@@ -139,7 +132,6 @@ class PaymentInitializationView(APIView):
         del paygateProcessPayload["REFERENCE"]
         return Response(paygateProcessPayload)
         
-
 class PaymentNotificationView(APIView):
     
     def get(self, request, *args):

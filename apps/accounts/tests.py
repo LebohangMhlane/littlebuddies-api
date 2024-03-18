@@ -72,7 +72,22 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-
+    def test_update_account(self):
+        authToken = self.createTestAccountAndLogin()
+        updateAccountUrl = reverse("update_account_view")
+        payload = {
+            "phoneNumber": "0733084465"
+        }
+        self.assertTrue(payload["phoneNumber"] != self.userAccount.phoneNumber)
+        response = self.client.post(
+            path=updateAccountUrl,
+            data=payload,
+            HTTP_AUTHORIZATION=f"Token {authToken}",
+        )
+        receivedPhoneNumber = f"0{response.data['updatedAccount']['phoneNumber']}"
+        self.assertEqual(receivedPhoneNumber, 
+            payload["phoneNumber"]
+        )
 
 
 

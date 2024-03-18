@@ -3,9 +3,12 @@ from rest_framework.response import Response
 
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
+from apps.merchants.models import Merchant
+from apps.merchants.serializers.merchant_serializer import MerchantSerializer
+from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
-class CreateAccountView(APIView):
+class CreateAccountView(APIView, GlobalViewFunctions):
 
     permission_classes = []
 
@@ -58,3 +61,40 @@ class CreateAccountView(APIView):
         if userAccountSerializer.is_valid(raise_exception=True):
             userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
             return userAccount
+        
+
+class UpdateAccountView(APIView, GlobalViewFunctions):
+
+    def post(self, request):
+        try:
+            updatedAccount = self.updateAccount(request)
+            userAccountSerializer = UserAccountSerializer(updatedAccount, many=False)
+            return Response({
+                "success": True,
+                "message": "Account updated successfully",
+                "updatedAccount": userAccountSerializer.data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to update Account",
+                "exception": str(e)
+            }, status=500)
+        
+    def updateAccount(self, request):
+        receivedPayload = request.data.copy()
+        userAccount = request.user.useraccount
+        for key, value in receivedPayload.items():
+            self.validateKey(key, request)
+            userAccount.__setattr__(key, value)
+        userAccount.save()
+        return userAccount
+    
+    def validateKey(self, key, request):
+        if (key == "canCreateMerchants" or key == "isMerchant"):
+            exceptionString = f"You don't have permission to modify {key}"
+            self.checkIfUserHasFullPermissions(request, exceptionString)
+        
+    def notifyAllOfUpdate(self):
+        # send emails to relevant parties notifiying them of the deactivation:
+        pass

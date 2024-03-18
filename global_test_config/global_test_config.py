@@ -101,7 +101,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
-        userAccount.canCreateMerchant = True
+        userAccount.canCreateMerchants = True
         userAccount.save()
         return userAccount
 

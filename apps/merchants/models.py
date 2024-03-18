@@ -34,7 +34,7 @@ class Merchant(models.Model):
         self.paygateSecret = ""
     
     def verifyUserAccount(self, userAccount: UserAccount):
-        if not userAccount.isMechant:
+        if not userAccount.isMerchant:
             raise Exception("User account is not a merchant")
 
 class Product(models.Model):
