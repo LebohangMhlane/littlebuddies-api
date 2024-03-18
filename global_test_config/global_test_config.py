@@ -103,5 +103,6 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.user.save()
         userAccount.can_create_merchants = True
         userAccount.save()
+        return userAccount
 
     

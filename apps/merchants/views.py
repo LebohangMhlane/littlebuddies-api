@@ -7,6 +7,7 @@ from apps.products.serializers.serializers import ProductSerializer
 
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
+
 class CreateMerchantView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
@@ -60,7 +61,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
         except Exception as e:
             return Response({
                 "success": False,
-                "message": "failed to deactivate merchant",
+                "message": "Failed to deactivate merchant",
                 "exception": str(e)
             }, status=500)
     
@@ -75,40 +76,39 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
         pass
 
 
-class CreateProductView(APIView):
-    
+class UpdateMerchant(APIView, GlobalViewFunctions):
+
     def get(self, request):
         pass
 
     def post(self, request):
         try:
-            if not self.checkIfUserIsMerchant(request):
-                return Response({
-                    "success": False,
-                    "message": "You are not authorized to create a product"
-                }, status=401)
-            else:
-                product = self.createProduct(request)
-            return Response({
-                "success": True,
-                "message": "Product created successfully",
-                "product": product.data
-            }, status=200)
+            exceptionString = "You don't have permission to update a merchant"
+            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
+                if self.updateMerchant(valuesToUpdate=request.data):
+                    self.notifyAllOfUpdate()
+                    return Response({
+                        "success": True,
+                        "message": "merchant deactivated successfully"
+                    }, status=200)
         except Exception as e:
             return Response({
                 "success": False,
-                "message": str(e)
+                "message": "Failed to deactivate merchant",
+                "exception": str(e)
             }, status=500)
     
-    def checkIfUserIsMerchant(self, request):
-        merchantPk = request.data["merchantPk"]
-        merchant = Merchant.objects.get(pk=merchantPk)
-        if merchant.user_account == request.user.useraccount:
-            return True
-        else: return False
+    def updateMerchant(self, merchantId, valuesToUpdate):
+        merchant = Merchant.objects.get(pk=int(merchantId))
+        merchant.is_active = False
+        merchant.save()
+        return True
+        
+    def notifyAllOfUpdate(self):
+        # send emails to relevant parties notifiying them of the deactivation:
+        pass
 
-    def createProduct(self, request):
-        productSerializer = ProductSerializer(data=request.data)
-        if productSerializer.is_valid():
-            product = productSerializer.create(request.data)
-            return ProductSerializer(product, many=False)
+
+
+
+

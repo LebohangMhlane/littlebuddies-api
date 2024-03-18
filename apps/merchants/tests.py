@@ -73,11 +73,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_deactivate_merchant_failure(self):
         testAccountToken = self.createTestAccountAndLogin()
-        self.makeUserAccountFullAdmin(self.userAccount.pk)
-        self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant()
+        _ = self.makeUserAccountFullAdmin(self.userAccount.pk)
+        testMerchantUserAccount = self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchant(testMerchantUserAccount)
         self.assertEquals(merchant.is_active, True)
-
         payload = {
             "merchantId": 100, # id doesn't exist
         }
@@ -88,7 +87,24 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {testAccountToken}"
         )
         self.assertEquals(response.status_code, 500)
-        self.assertEqual(response.data["message"], "failed to deactivate merchant")
+        self.assertEqual(response.data["message"], "Failed to deactivate merchant")
         self.assertFalse(response.data["success"])
         merchant = Merchant.objects.get(pk=1)
         self.assertEquals(merchant.is_active, True)
+
+    def testUpdateMerchant(self):
+        testAccountToken = self.createTestAccountAndLogin()
+        _ = self.makeUserAccountFullAdmin(self.userAccount.pk)
+        testMerchantUserAccount = self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchant(testMerchantUserAccount)
+        payload = {
+            "merchantId": 1,
+            "name": "World of pets",
+            "address": "32 rethman street newgermany",
+        }
+        updateMerchantUrl = reverse("update_merchant_view")
+        response = self.client.post(
+            updateMerchantUrl,
+            data=payload,
+            HTTP_AUTHORIZATION=f"Token {testAccountToken}"
+        )

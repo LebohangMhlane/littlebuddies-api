@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.paygate.views import (PaymentSuccessView, 
-                                    PaymentInitializationView, 
-                                    PaymentCancelledView,
-                                    PaymentNotificationView, 
-                                    )
+                                PaymentInitializationView, 
+                                PaymentCancelledView,
+                                PaymentNotificationView, 
+                                )
+from apps.products.views import CreateProductView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,5 +32,6 @@ urlpatterns = [
     path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_view"),
     path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_view"),
     path("accounts/", include("apps.accounts.urls"), name="account_urls"),
-    path("merchants/", include("apps.merchants.urls"), name="merchant_urls")
+    path("merchants/", include("apps.merchants.urls"), name="merchant_urls"),
+    path('products/', CreateProductView.as_view(), name="create_product_view"),
 ]
