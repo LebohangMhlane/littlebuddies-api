@@ -1,4 +1,5 @@
 import json
+import datetime
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -11,7 +12,9 @@ import hashlib
 import requests
 
 from apps.merchants.models import Merchant
-from apps.paygate.app_models.app_models import CheckoutFormPayload
+from apps.paygate.app_models.app_models import CheckoutFormData
+from apps.transactions.models import Transaction
+from apps.transactions.serializers.transaction_serializer import TransactionSerializer
 
 
 class PaymentInitializationView(APIView):
@@ -31,9 +34,9 @@ class PaymentInitializationView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            checkoutFormPayload = CheckoutFormPayload(payload=request.data)
-            merchant = checkoutFormPayload.getMerchant()
-            paygatePayload = self.preparePayGatePayload(checkoutFormPayload, merchant)
+            checkoutFormData = CheckoutFormData(payload=request.data)
+            merchant = checkoutFormData.getMerchant()
+            paygatePayload, reference = self.preparePayGatePayload(checkoutFormData, merchant, request)
             response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
             if response.status_code == 200:
                 responseData = response.text.split("&")
@@ -42,28 +45,33 @@ class PaymentInitializationView(APIView):
                     responseAsDict, secret=self.getMerchantSecretKey(merchant)
                 )
                 if dataIntegritySecure:
+                    transaction = self.createATransaction(request, checkoutFormData, merchant, reference)
+                    if transaction:
+                        transactionSerializer = TransactionSerializer(transaction, many=False)
                     return Response({
                         "success": True,
                         "message": "Paygate response was successful",
                         "paygatePayload": verifiedPayload,
+                        "transaction": transactionSerializer.data
                     }, content_type='application/json', status=200)
                 else:
                     raise Exception("Data integrity not secure")
             else:
-                raise Exception("Response from Paygate was 500")
+                raise Exception(f"Response from Paygate was {response.status_code}")
         except Exception as e:
             return Response({
-                "success": False, 
+                "success": False,
                 "message": "Failed to initialize Paygate payment",
                 "error": str(e)}, 
                 content_type='application/json', status=500)
     
-    # prepare and return the payload we need to send to paygate to initiate payment:
-    def preparePayGatePayload(self, checkoutFormPayload, merchant:Merchant):
+    # prepare and return the payload we need to send to paygate to initiate a payment:
+    def preparePayGatePayload(self, checkoutFormData, merchant:Merchant, request):
+        reference = self.createReference(merchant, checkoutFormData, request)
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
-            "REFERENCE": merchant.paygateReference,
-            "AMOUNT": checkoutFormPayload.totalCheckoutAmount,
+            "REFERENCE": reference,
+            "AMOUNT": checkoutFormData.totalCheckoutAmount,
             "CURRENCY": "ZAR",
             "RETURN_URL": "https://my.return.url/page",
             "TRANSACTION_DATE": "2018-01-01 12:00:00",
@@ -72,14 +80,12 @@ class PaymentInitializationView(APIView):
             "EMAIL": "customer@paygate.co.za",
         }
         merchantPaygateSecretKey = self.getMerchantSecretKey(merchant)
-        if type(merchantPaygateSecretKey) is not Exception:
-            paygatePayload["CHECKSUM"] = self.generateChecksum(
-                paygate_data=paygatePayload, 
-                merchantPaygateSecretKey=merchantPaygateSecretKey
-            )   
-            return paygatePayload
-        else:
-            return merchantPaygateSecretKey
+        paygatePayload["CHECKSUM"] = self.generateChecksum(
+            paygate_data=paygatePayload, 
+            merchantPaygateSecretKey=merchantPaygateSecretKey
+        )   
+        return paygatePayload, reference
+        
         
     def generateChecksum(self, paygate_data, merchantPaygateSecretKey = ''):
         checksum = ""
@@ -117,7 +123,7 @@ class PaymentInitializationView(APIView):
             secret = fernetInstance.decrypt(fernetToken).decode("utf-8")
             return secret
         except Exception as e:
-            return Exception("Failed to decrypt token")
+            raise Exception(f"Failed to decrypt token: {str(e)}")
 
     def sendInitiatePaymentRequestToPaygate(self, paygatePayload):
         paygateInitiateUrl = "https://secure.paygate.co.za/payweb3/initiate.trans"
@@ -126,11 +132,50 @@ class PaymentInitializationView(APIView):
             data=paygatePayload
         )
         return response
+    
+    # TODO: generate your own reference for production environment
+    def createReference(self, checkoutFormData, merchant, request):
+        paygateTestReference = "pgtest_123456789"
+        return paygateTestReference
 
-    def sendProcessPaymentRequestToPaygate(self, request, paygateProcessPayload):
-        del paygateProcessPayload["PAYGATE_ID"]
-        del paygateProcessPayload["REFERENCE"]
-        return Response(paygateProcessPayload)
+    def createATransaction(self, request, checkoutFormData:CheckoutFormData, merchant, reference): 
+        products = list(eval(checkoutFormData.products))
+        productCount = len(list(eval(checkoutFormData.products)))
+        def aDuplicateTransaction():
+            return Transaction.objects.filter(
+                customer=request.user.useraccount,
+                merchant__id=checkoutFormData.merchantId,
+                amount=checkoutFormData.totalCheckoutAmount,
+                productsPurchased__id__in=products,
+                numberOfProducts=productCount,
+                discountTotal=checkoutFormData.discountTotal,
+                completed=False
+            ).exists()
+        if not aDuplicateTransaction():
+            transaction = Transaction.objects.create(
+                reference=reference,
+                customer=request.user.useraccount,
+                merchant=merchant,
+                amount=checkoutFormData.totalCheckoutAmount,
+                numberOfProducts=productCount,
+                completed=False,
+                discountTotal=checkoutFormData.discountTotal,
+                dateCreated=datetime.datetime.now(),
+            )
+            transaction.productsPurchased.set(products)
+            transaction.save()
+            return transaction
+        else:
+            transaction = Transaction.objects.get(
+                customer=request.user.useraccount,
+                merchant__id=checkoutFormData.merchantId,
+                amount=checkoutFormData.totalCheckoutAmount,
+                productsPurchased__id__in=products,
+                numberOfProducts=productCount,
+                discountTotal=checkoutFormData.discountTotal,
+                completed=False
+            )
+            return transaction
         
 class PaymentNotificationView(APIView):
     
