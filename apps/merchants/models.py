@@ -37,20 +37,6 @@ class Merchant(models.Model):
         if not userAccount.isMerchant:
             raise Exception("User account is not a merchant")
 
-class Product(models.Model):
-
-    isActive = models.BooleanField(default=False)
-    merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE, blank=False, null=True)
-    name = models.CharField(max_length=200, blank=False, default="")
-    description = models.CharField(max_length=200, blank=False, default="")
-    originalPrice = models.PositiveIntegerField(blank=False, default=0)
-    inStock = models.BooleanField(default=True)
-    image = models.CharField(max_length=800, blank=False, default="")
-    storeReference = models.CharField(max_length=200, blank=False, default="")
-    discountPercentage = models.PositiveIntegerField(blank=False, default=0)
-
-    def __str__(self) -> str:
-        return f"{self.name} - {self.description}"
 
 class TransactionHistory(models.Model):
     pass

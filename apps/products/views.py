@@ -2,22 +2,27 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from apps.merchants.models import Product
+from apps.products.models import Product
 from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
 
 class CreateProductView(APIView, GlobalViewFunctions):
+
+    exceptionString1 = "You don't have permission to create a product"
     
     def get(self, request):
         pass
 
     def post(self, request):
         try:
-            exceptionString = "You don't have permission to create a product"
-            self.checkIfMerchantsMatch(request, exceptionString)
-            product = self.createProduct(request)
+            if self.checkIfUserIsMerchant(request):
+                if self.checkIfUserMatchesMerchant(request):
+                    product = self.createProduct(request)
+            elif self.checkIfUserIsSuperAdmin(request):
+                product = self.createProduct(request)
+            else: raise Exception(self.exceptionString1)
             return Response({
                 "success": True,
                 "message": "Product created successfully",
@@ -33,22 +38,22 @@ class CreateProductView(APIView, GlobalViewFunctions):
     def createProduct(self, request):
         productSerializer = ProductSerializer(data=request.data)
         if productSerializer.is_valid():
-            product = productSerializer.create(request.data)
+            product = productSerializer.create(request.data, request)
             return ProductSerializer(product, many=False)
         
 
 class DeleteProductView(APIView, GlobalViewFunctions):
-    
+
     def get(self, request, **kwargs):
         try:
-            exceptionString = "You do not have permission to delete a product"
-            if (self.checkIfUserIsSuperAdmin(request, exceptionString) 
-                or self.checkIfMerchantsMatch(request)):
+            if self.checkIfUserIsSuperAdmin(request) or self.checkIfUserIsMerchant(request):
                 self.deleteProduct(request, kwargs)
-            return Response({
-                "success": True,
-                "message": "Product deleted successfully",
-            })
+                self.notifyAllOfItemCreation(None)
+                return Response({
+                    "success": True,
+                    "message": "Product deleted successfully",
+                })
+            else: raise Exception(self.exceptionString1)
         except Exception as e:
             return Response({
                 "success": False,
@@ -59,5 +64,8 @@ class DeleteProductView(APIView, GlobalViewFunctions):
     def deleteProduct(self, request, kwargs):
         productPk = kwargs["productPk"]
         product = Product.objects.get(pk=productPk)
-        self.checkIfMerchantsMatch(request, product.merchant)
-        product.delete()
+        if self.checkIfUserIsMerchant(request):
+            if self.checkIfUserMatchesProductMerchant(request, product.merchant):
+                product.delete()
+            else: raise Exception("Merchant account does not match product merchant account")
+        else: product.delete()

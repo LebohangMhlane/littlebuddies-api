@@ -7,21 +7,30 @@ from apps.merchants.models import Merchant
 
 class GlobalViewFunctions():
 
-    def checkIfUserIsSuperAdmin(self, request, exceptionString=None):
-        if not request.user.is_superuser and not (
-            request.user.useraccount.canCreateMerchants):
-            raise Exception("Only super admins can perform this action" 
-                if not exceptionString else exceptionString
-            )
-        return True
-    
-    def checkIfUserIsMerchantAdmin(self, request, exceptionString):
-        if not request.user.useraccount.isMerchant:
-            raise Exception("You don't have merchant authority to perform this action")
+    exceptionString1 = "You do not have permission to delete a product"
 
-    def checkIfMerchantsMatch(self, request, merchantFromProduct):
-        userAccount = request.user.useraccount
-        merchant = Merchant.objects.get(userAccount=userAccount)
-        if merchant == merchantFromProduct: 
+    exceptionString2 = "You don't have permission to update a merchant"
+
+    exceptionString3 = "You don't have permission to create merchants"
+
+    def checkIfUserIsSuperAdmin(self, request):
+        if request.user.is_superuser and request.user.useraccount.canCreateMerchants:
             return True
-        else: raise Exception("The product being deleted doesn't belong to this merchant")
+        return False
+    
+    def checkIfUserIsMerchant(self, request):
+        if request.user.useraccount.isMerchant: return True
+        return False
+
+    def checkIfUserMatchesMerchant(self, request):
+        merchant = Merchant.objects.get(pk=request.data["merchantPk"])
+        if merchant.userAccount == request.user.useraccount: return True
+        else: return False
+
+    def checkIfUserMatchesProductMerchant(self, request, productMerchant:Merchant):
+        userAccount = request.user.useraccount
+        if userAccount == productMerchant.userAccount: return True
+        return False
+
+    def notifyAllOfItemCreation(self, instance):
+        pass

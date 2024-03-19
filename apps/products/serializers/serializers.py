@@ -2,7 +2,9 @@
 
 from rest_framework.serializers import ModelSerializer
 
-from apps.merchants.models import Merchant, Product
+from apps.accounts.models import UserAccount
+from apps.merchants.models import Merchant
+from apps.products.models import Product
 
 class ProductSerializer(ModelSerializer):
 
@@ -28,19 +30,21 @@ class ProductSerializer(ModelSerializer):
         initialData["discountPercentage"] = int(initialData["discountPercentage"])
         return initialData
     
-    def create(self, validated_data):
+    def create(self, validated_data, request):
         try:
             merchant = Merchant.objects.get(pk=validated_data["merchantPk"])
+            userAccount = request.user.useraccount
             product = Product()
             product.merchant = merchant
             product.name = validated_data["name"]
             product.description = validated_data["description"]
-            product.original_price = validated_data["originalPrice"]
-            product.in_stock = bool(validated_data["inStock"])
+            product.originalPrice = validated_data["originalPrice"]
+            product.inStock = bool(validated_data["inStock"])
             product.image = validated_data["image"]
-            product.store_reference = validated_data["storeReference"]
-            product.discount_percentage = validated_data["discountPercentage"]
+            product.storeReference = validated_data["storeReference"]
+            product.discountPercentage = validated_data["discountPercentage"]
+            product.createdBy = userAccount
             product.save()
         except Exception as e:
-            raise ("Failed to create a product")
+            raise Exception("Failed to create a product")
         return product

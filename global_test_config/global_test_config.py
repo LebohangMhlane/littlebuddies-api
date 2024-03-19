@@ -4,7 +4,8 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant, Product
+from apps.merchants.models import Merchant
+from apps.products.models import Product
 
 
 # test functions shared by all tests
@@ -17,7 +18,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
         }
         
-    def createTestAccount(self):
+    def createNormalTestAccount(self):
         userInputData = {
             "username": "Lebo",
             "password": "HelloWorld",
@@ -61,8 +62,8 @@ class GlobalTestCaseConfig(TestCase):
         )
         return testMerchantUserAccount
     
-    def createTestAccountAndLogin(self):
-        userAccount = self.createTestAccount()
+    def createNormalTestAccountAndLogin(self):
+        userAccount = self.createNormalTestAccount()
         loginUrl = reverse("login")
         response = self.client.post(
             path=loginUrl,
@@ -87,6 +88,7 @@ class GlobalTestCaseConfig(TestCase):
             data=loginPayload
         )
         self.authToken = response.data["token"]
+        return self.authToken
 
     def loginAsCustomer(self):
         pass
@@ -106,7 +108,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         return merchant
 
-    def makeUserAccountFullAdmin(self, userAccountPk:int):
+    def makeUserAccountSuperAdmin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
@@ -114,7 +116,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createTestProduct(self, merchant):
+    def createTestProduct(self, merchant, merchantAccount):
         product = Product.objects.create(
             merchant=merchant,
             name="Bob's Dog Food",
@@ -124,6 +126,7 @@ class GlobalTestCaseConfig(TestCase):
             inStock=True,
             storeReference="ID2342",
             discountPercentage=0,
+            createdBy=merchantAccount
         )
         return product
     

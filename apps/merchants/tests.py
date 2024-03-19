@@ -16,8 +16,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateId": "10011072130",
             "paygateSecret": "secret",
         }
-        token = self.createTestAccountAndLogin()
-        self.makeUserAccountFullAdmin(self.userAccount.pk)
+        token = self.createNormalTestAccountAndLogin()
+        self.makeUserAccountSuperAdmin(self.userAccount.pk)
         merchantUserAccount = self.createTestMerchantUserAccount()
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
@@ -40,23 +40,23 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateId": "10011072130",
             "paygateSecret": "secret",
         }
-        token = self.createTestAccountAndLogin()
+        token = self.createNormalTestAccountAndLogin()
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
             createMerchantUrl,
             data=createMerchantPayload,
             HTTP_AUTHORIZATION=f"Token {token}"
         )
-        self.assertEquals(response.status_code, 401)
+        self.assertEqual(response.status_code, 401)
         merchant = Merchant.objects.filter(name=createMerchantPayload["name"]).first()
-        self.assertEquals(merchant, None)
+        self.assertEqual(merchant, None)
 
     def test_deactivate_merchant(self):
-        testAccountToken = self.createTestAccountAndLogin()
-        self.makeUserAccountFullAdmin(self.userAccount.pk)
+        testAccountToken = self.createNormalTestAccountAndLogin()
+        self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(testMerchantUserAccount)
-        self.assertEquals(merchant.isActive, True)
+        self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 1,
         }
@@ -66,17 +66,17 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             data=payload,
             HTTP_AUTHORIZATION=f"Token {testAccountToken}"
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data["success"])
         merchant = Merchant.objects.get(pk=payload["merchantId"])
-        self.assertEquals(merchant.isActive, False)
+        self.assertEqual(merchant.isActive, False)
 
     def test_deactivate_merchant_failure(self):
-        testAccountToken = self.createTestAccountAndLogin()
-        _ = self.makeUserAccountFullAdmin(self.userAccount.pk)
+        testAccountToken = self.createNormalTestAccountAndLogin()
+        _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(testMerchantUserAccount)
-        self.assertEquals(merchant.isActive, True)
+        self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 100, # id doesn't exist
         }
@@ -86,19 +86,19 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             data=payload,
             HTTP_AUTHORIZATION=f"Token {testAccountToken}"
         )
-        self.assertEquals(response.status_code, 500)
+        self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data["message"], "Failed to deactivate merchant")
         self.assertFalse(response.data["success"])
         merchant = Merchant.objects.get(pk=1)
-        self.assertEquals(merchant.isActive, True)
+        self.assertEqual(merchant.isActive, True)
 
     def testUpdateMerchant(self):
-        testAccountToken = self.createTestAccountAndLogin()
-        _ = self.makeUserAccountFullAdmin(self.userAccount.pk)
+        testAccountToken = self.createNormalTestAccountAndLogin()
+        _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(testMerchantUserAccount)
-        self.assertEquals(merchant.name, "Pet Food Shop")
-        self.assertEquals(merchant.address, "12 Pet Street Newgermany")
+        self.assertEqual(merchant.name, "Pet Food Shop")
+        self.assertEqual(merchant.address, "12 Pet Street Newgermany")
         payload = {
             "merchantPk": 1,
             "name": "World of pets",
@@ -111,5 +111,5 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {testAccountToken}"
         )
         updatedMerchant = response.data["updatedMerchant"]
-        self.assertEquals(updatedMerchant["name"], "World of pets")
-        self.assertEquals(updatedMerchant["address"], "32 rethman street newgermany")
+        self.assertEqual(updatedMerchant["name"], "World of pets")
+        self.assertEqual(updatedMerchant["address"], "32 rethman street newgermany")

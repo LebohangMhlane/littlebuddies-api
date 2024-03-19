@@ -10,26 +10,46 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_account(self):
         create_account_url = reverse("create_account_view")
+        userInputData = {
+            "username": "Lebo",
+            "password": "HelloWorld",
+            "firstName": "Lebohang",
+            "lastName": "Mhlane",
+            "email": "lebohang@gmail.com",
+            "address": "71 rethman street newgermany",
+            "phoneNumber": "0621837747",
+            "isMerchant": False,
+        }
         response = self.client.post(
             path=create_account_url,
             content_type=f"application/json",
-            data=self.userInputData,
+            data=userInputData,
         )
         user = User.objects.get(username=response.data["userAccount"]["user"]["username"])
         userAccount = UserAccount.objects.get(pk=response.data["userAccount"]["id"])
         token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(token != None)
-        self.assertEqual(user.username, self.userInputData["username"])
-        self.assertEqual(userAccount.user.username, self.userInputData["username"])
+        self.assertEqual(user.username, userInputData["username"])
+        self.assertEqual(userAccount.user.username, userInputData["username"])
 
     def test_create_account_failure(self):
+        userInputData = {
+            "username": "Lebo",
+            "password": "HelloWorld",
+            "firstName": "Lebohang",
+            "lastName": "Mhlane",
+            "email": "lebohang@gmail.com",
+            "address": "71 rethman street newgermany",
+            "phoneNumber": "0621837747",
+            "isMerchant": False,
+        }
         create_account_url = reverse("create_account_view")
-        self.userInputData["phoneNumber"] = "062183774" # deliberate incorrect phone number
+        userInputData["phoneNumber"] = "062183774" # deliberate incorrect phone number
         response = self.client.post(
             path=create_account_url,
             content_type=f"application/json",
-            data=self.userInputData,
+            data=userInputData,
         )
         user = User.objects.all().first()
         userAccount = UserAccount.objects.all().first()
@@ -39,24 +59,34 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(userAccount, None)
 
     def test_log_in(self):
-        response = self.createTestAccount()
+        userInputData = {
+            "username": "Lebo",
+            "password": "HelloWorld",
+            "firstName": "Lebohang",
+            "lastName": "Mhlane",
+            "email": "lebohang@gmail.com",
+            "address": "71 rethman street newgermany",
+            "phoneNumber": "0621837747",
+            "isMerchant": False,
+        }
+        response = self.createNormalTestAccount()
         loginUrl = reverse("login")
         loginPayload = {
-            "username": self.userInputData["username"],
-            "password": self.userInputData["password"],
+            "username": userInputData["username"],
+            "password": userInputData["password"],
         }
         response = self.client.post(
             path=loginUrl,
             content_type=f"application/json",
             data=loginPayload,
         )
-        user = User.objects.get(username=self.userInputData["username"])
+        user = User.objects.get(username=userInputData["username"])
         token = Token.objects.get(user=user)
         tokenInResponse = response.data["token"]
         self.assertEqual(token.key, tokenInResponse)
 
     def test_authorized_navigation(self):
-        authToken = self.createTestAccountAndLogin()
+        authToken = self.createNormalTestAccountAndLogin()
         paymentsUrl = reverse("initiate_payment_view")
         response = self.client.get(
             path=paymentsUrl,
@@ -65,7 +95,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_unauthorized_navigation(self):
-        self.createTestAccountAndLogin()
+        self.createNormalTestAccountAndLogin()
         paymentsUrl = reverse("initiate_payment_view")
         response = self.client.get(
             path=paymentsUrl,
@@ -73,7 +103,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_update_account(self):
-        authToken = self.createTestAccountAndLogin()
+        authToken = self.createNormalTestAccountAndLogin()
         updateAccountUrl = reverse("update_account_view")
         payload = {
             "phoneNumber": "0733084465"
@@ -90,7 +120,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         )
 
     def test_deactivate_account(self):
-        authToken = self.createTestAccountAndLogin()
+        authToken = self.createNormalTestAccountAndLogin()
         deactivateAccountUrl = reverse("deactivate_account_view")
         response = self.client.get(
             deactivateAccountUrl,

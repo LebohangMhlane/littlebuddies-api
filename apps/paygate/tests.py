@@ -8,7 +8,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
 
     def test_initiate_payment(self):
 
-        testUserAccountLoginToken = self.createTestAccountAndLogin()
+        testUserAccountLoginToken = self.createNormalTestAccountAndLogin()
         merchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(merchantUserAccount)
 

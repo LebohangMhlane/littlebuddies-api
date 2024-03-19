@@ -14,8 +14,7 @@ class CreateMerchantView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            exceptionString = "You don't have permission to create merchants"
-            if self.checkIfUserHasFullPermissions(request.user.useraccount, exceptionString):
+            if self.checkIfUserIsSuperAdmin(request):
                 merchant = self.createMerchant(request.data)
                 if merchant:
                     self.notifyAllOfMerchantCreation()
@@ -38,7 +37,7 @@ class CreateMerchantView(APIView, GlobalViewFunctions):
             return MerchantSerializer(merchant, many=False)
         
     def notifyAllOfMerchantCreation(self):
-        # notify all relevant parties of the creation of a new merchant:
+        # TODO: notify all relevant parties of the creation of a new merchant:
         pass
 
 
@@ -69,7 +68,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
         merchant.save()
         
     def notifyAllOfDeactivation(self):
-        # send emails to relevant parties notifiying them of the deactivation:
+        # TODO: send emails to relevant parties notifiying them of the deactivation:
         pass
 
 
@@ -80,8 +79,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
-            exceptionString = "You don't have permission to update a merchant"
-            if self.checkIfUserHasFullPermissions(request, exceptionString):
+            if self.checkIfUserIsSuperAdmin(request):
                 updatedMerchant = self.updateMerchant(request)
                 merchantSerializer = MerchantSerializer(updatedMerchant, many=False)
                 self.notifyAllOfUpdate()
@@ -90,6 +88,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
                     "message": "Merchant updated successfully",
                     "updatedMerchant": merchantSerializer.data
                 }, status=200)
+            else: raise Exception(self.exceptionString2)
         except Exception as e:
             return Response({
                 "success": False,
