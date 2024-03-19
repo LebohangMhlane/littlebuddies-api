@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from apps.accounts.models import UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
+
 class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_account(self):
@@ -18,6 +19,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "email": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
+            "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
             "isMerchant": False,
         }
         response = self.client.post(
@@ -42,6 +44,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "email": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
+            "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
             "isMerchant": False,
         }
         create_account_url = reverse("create_account_view")
@@ -62,12 +65,6 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         userInputData = {
             "username": "Lebo",
             "password": "HelloWorld",
-            "firstName": "Lebohang",
-            "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
-            "address": "71 rethman street newgermany",
-            "phoneNumber": "0621837747",
-            "isMerchant": False,
         }
         response = self.createNormalTestAccount()
         loginUrl = reverse("login")

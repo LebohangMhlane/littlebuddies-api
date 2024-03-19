@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.merchants',
     'apps.accounts',
     'apps.paygate',
+    'apps.transactions',
 ]
 
 MIDDLEWARE = [

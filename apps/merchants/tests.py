@@ -92,7 +92,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchant = Merchant.objects.get(pk=1)
         self.assertEqual(merchant.isActive, True)
 
-    def testUpdateMerchant(self):
+    def test_update_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
         _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()

@@ -8,8 +8,9 @@ class UserAccount(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=255, blank=False)
     phoneNumber = models.PositiveIntegerField(blank=False, null=True, unique=True)
+    phoneNumberVerified = models.BooleanField(default=False)
     isMerchant = models.BooleanField(default=False)
-    deviceToken = models.CharField(max_length=1000, blank=True)
+    deviceToken = models.CharField(max_length=1000, blank=False)
     canCreateMerchants = models.BooleanField(default=False)
     isActive = models.BooleanField(default=True)
 

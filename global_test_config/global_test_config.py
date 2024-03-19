@@ -28,6 +28,7 @@ class GlobalTestCaseConfig(TestCase):
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "isMerchant": False,
+            "deviceToken": "fhewofhew89f394ry34f7g4f"
         }
         create_account_url = reverse("create_account_view")
         self.client.post(

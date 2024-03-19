@@ -1,4 +1,3 @@
-from typing import Iterable
 from django.db import models
 from django.conf import settings
 
@@ -38,5 +37,3 @@ class Merchant(models.Model):
             raise Exception("User account is not a merchant")
 
 
-class TransactionHistory(models.Model):
-    pass

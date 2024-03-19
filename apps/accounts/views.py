@@ -49,6 +49,7 @@ class CreateAccountView(APIView, GlobalViewFunctions):
             "email": receivedPayload["email"],
         }
         userAccountPayload = {
+            "deviceToken": receivedPayload["deviceToken"],
             "address": receivedPayload["address"],
             "phoneNumber": receivedPayload["phoneNumber"],
             "isMerchant": receivedPayload["isMerchant"],
