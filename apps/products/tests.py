@@ -113,7 +113,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(testMerchantUserAccount)
-        product = self.createTestProduct(merchant, testMerchantUserAccount)
+        product = self.createTestProduct(merchant, testMerchantUserAccount, name="Bob's Cat Food")
         deleteProductUrl = reverse("delete_product_view", kwargs={"productPk": product.pk})
         payload = {
             "productPk": 1,

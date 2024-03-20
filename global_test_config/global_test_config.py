@@ -1,6 +1,8 @@
 
 
 from django.test import TestCase
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
 from rest_framework.reverse import reverse
 
 from apps.accounts.models import UserAccount
@@ -31,13 +33,43 @@ class GlobalTestCaseConfig(TestCase):
             "deviceToken": "fhewofhew89f394ry34f7g4f"
         }
         create_account_url = reverse("create_account_view")
-        self.client.post(
+        response = self.client.post(
             path=create_account_url,
             content_type=f"application/json",
             data=userInputData,
         )
         testUserAccount = UserAccount.objects.get(
             user__username=userInputData["username"]
+        )
+        return testUserAccount
+    
+    def createTestCustomer(self):
+        userInputData = {
+            "username": "customer",
+            "password": "HelloWorld",
+            "firstName": "Customer",
+            "lastName": "IWantToOrder",
+            "email": "customer@gmail.com",
+            "address": "21 everywhere street, The world",
+            "phoneNumber": "0631837747",
+            "isMerchant": False,
+            "deviceToken": "fhewofhew89f394ry34f7g4f",
+            "phoneNumberVerified": True,
+        }
+        customer = User.objects.create(
+            username=userInputData["username"],
+            password=make_password(userInputData["password"]),
+            first_name=userInputData["firstName"],
+            last_name=userInputData["lastName"],
+            email=userInputData["email"],
+        )
+        testUserAccount = UserAccount.objects.create(
+            user=customer,
+            address=userInputData["address"],
+            phoneNumber=userInputData["phoneNumber"],
+            isMerchant=userInputData["isMerchant"],
+            deviceToken=userInputData["deviceToken"],
+            phoneNumberVerified=userInputData["phoneNumberVerified"]
         )
         return testUserAccount
     
@@ -49,19 +81,17 @@ class GlobalTestCaseConfig(TestCase):
             "lastName": "Myers",
             "email": "mikemyers@gmail.com",
             "address": "72 rethman street newgermany",
-            "phoneNumber": "0631837747",
+            "phoneNumber": "0631837737",
             "isMerchant": True,
             "deviceToken": "fhwefhf2h3f9we7yfwefy32"
         }
         create_account_url = reverse("create_account_view")
-        self.client.post(
+        response = self.client.post(
             path=create_account_url,
             content_type=f"application/json",
             data=userInputData,
         )
-        testMerchantUserAccount = UserAccount.objects.get(
-            user__username=userInputData["username"]
-        )
+        testMerchantUserAccount = UserAccount.objects.get(user__username=userInputData["username"])
         return testMerchantUserAccount
     
     def createNormalTestAccountAndLogin(self):
@@ -73,7 +103,6 @@ class GlobalTestCaseConfig(TestCase):
             data=self.loginPayload,
         )
         self.authToken = response.data["token"]
-        userAccount = UserAccount.objects.get(user__username=self.loginPayload["username"])
         self.userAccount = userAccount
         return self.authToken
     
@@ -93,7 +122,17 @@ class GlobalTestCaseConfig(TestCase):
         return self.authToken
 
     def loginAsCustomer(self):
-        pass
+        loginUrl = reverse("login")
+        loginPayload = {
+            "username": "customer",
+            "password": "HelloWorld",
+        }
+        response = self.client.post(
+            loginUrl,
+            data=loginPayload
+        )
+        self.authToken = response.data["token"]
+        return self.authToken
 
     def loginAsSuperAdmin(self):
         pass

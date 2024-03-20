@@ -16,6 +16,6 @@ class UserAccount(models.Model):
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
     
-    def save(self):
+    def save(self, *args, **kwargs):
         self.isActive = self.user.is_active
-        return super().save()
+        super(UserAccount, self).save(*args, **kwargs)

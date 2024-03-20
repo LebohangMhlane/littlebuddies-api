@@ -23,15 +23,15 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
     
     def create(self, validated_data):
         try:
-            userAccount = UserAccount()
-            userAccount.user = validated_data["user"]
-            userAccount.address = validated_data["address"]
-            userAccount.phoneNumber = validated_data["phoneNumber"]
-            userAccount.isMerchant = validated_data["isMerchant"]
-            userAccount.deviceToken = validated_data["deviceToken"]
-            userAccount.save()
+            userAccount = UserAccount.objects.create(
+                user = validated_data["user"],
+                address = validated_data["address"],
+                phoneNumber = validated_data["phoneNumber"],
+                isMerchant = validated_data["isMerchant"],
+                deviceToken = validated_data["deviceToken"],
+            )
             return userAccount
-        except:
+        except Exception as e:
             self.deleteAllUserRelatedInstances(validated_data["user"].pk)
             raise Exception("Failed to create User Account")
 
