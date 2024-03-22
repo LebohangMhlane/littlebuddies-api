@@ -1,19 +1,21 @@
 from django.test import TestCase
+
 from rest_framework.reverse import reverse
 
 from apps.transactions.models import Transaction
+
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 
 class PayGateTests(GlobalTestCaseConfig, TestCase):
 
-    def test_initiate_payment(self):
+    def test_initiate_payment_as_customer(self):
         createTestCustomer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchant(merchantUserAccount)
         _ = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food")
-        _ = self.createTestProduct(merchant, merchantUserAccount, name="Bob's cat food")
+        _ = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food")
         checkoutFormData = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "1000",
@@ -33,7 +35,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
         self.assertEqual(response.data["transaction"]["productsPurchased"][0]["name"], "Bob's dog food")
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
-        self.assertEqual(response.data["transaction"]["customer"]["address"], "21 everywhere street, The world")
+        self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
     def test_paygate_notification(self):
         # TODO: test paygate notification view

@@ -35,5 +35,14 @@ class Merchant(models.Model):
     def verifyUserAccount(self, userAccount: UserAccount):
         if not userAccount.isMerchant:
             raise Exception("User account is not a merchant")
+        
+    def getMerchantSecretKey(self):
+        try:
+            fernetToken = self.fernetToken.encode('utf-8')[2:-1]
+            fernetInstance = fernet(key=settings.FERNET_KEY)
+            secret = fernetInstance.decrypt(fernetToken).decode("utf-8")
+            return secret
+        except Exception as e:
+            raise Exception(f"Failed to decrypt token: {str(e)}")
 
 

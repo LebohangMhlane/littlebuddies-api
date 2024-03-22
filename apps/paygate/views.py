@@ -1,27 +1,34 @@
 import json
 import datetime
+import hashlib
+from django.http import HttpResponse
+import requests
+
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from cryptography.fernet import Fernet as fernet
-import hashlib
-import requests
 
 from apps.merchants.models import Merchant
-from apps.paygate.app_models.app_models import CheckoutFormData
+from apps.paygate.app_models.app_models import CheckoutFormPayload
 from apps.transactions.models import Transaction
 from apps.transactions.serializers.transaction_serializer import TransactionSerializer
+from global_view_functions.global_view_functions import GlobalViewFunctions
+
+from global_test_config.global_test_config import GlobalTestCaseConfig
 
 
-class PaymentInitializationView(APIView):
+class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConfig):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [] # TODO: add later
 
-    ngrok_base_url = "https://de99-41-10-117-107.ngrok-free.app" # TODO: for development use only:
+    ngrok_base_url = "https://6628-41-10-121-222.ngrok-free.app/" # TODO: for development use only:
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -34,18 +41,23 @@ class PaymentInitializationView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            checkoutFormData = CheckoutFormData(payload=request.data)
-            merchant = checkoutFormData.getMerchant()
-            paygatePayload, reference = self.preparePayGatePayload(checkoutFormData, merchant, request)
-            response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
+            checkoutFormData = CheckoutFormPayload(payload=request.data)
+            merchant = self.getMerchant(checkoutFormData.merchantId)
+            paygatePayload, reference = self.preparePayGatePayload(
+                checkoutFormData, merchant, request
+            )
+            if checkoutFormData.verifyPurchase(checkoutFormData):
+                response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
             if response.status_code == 200:
                 responseData = response.text.split("&")
                 responseAsDict = self.convertResponseToDict(responseData)
                 dataIntegritySecure, verifiedPayload = self.verifyPayloadIntegrity(
-                    responseAsDict, secret=self.getMerchantSecretKey(merchant)
+                    responseAsDict, secret=merchant.getMerchantSecretKey()
                 )
                 if dataIntegritySecure:
-                    transaction = self.createATransaction(request, checkoutFormData, merchant, reference)
+                    transaction = self.createATransaction(
+                        request, checkoutFormData, merchant, reference, verifiedPayload
+                    )
                     if transaction:
                         transactionSerializer = TransactionSerializer(transaction, many=False)
                     return Response({
@@ -62,30 +74,35 @@ class PaymentInitializationView(APIView):
             return Response({
                 "success": False,
                 "message": "Failed to initialize Paygate payment",
-                "error": str(e)}, 
+                "error": str(e)},
                 content_type='application/json', status=500)
     
     # prepare and return the payload we need to send to paygate to initiate a payment:
     def preparePayGatePayload(self, checkoutFormData, merchant:Merchant, request):
-        reference = self.createReference(merchant, checkoutFormData, request)
+        reference = self.createReference(merchant, request)
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
             "REFERENCE": reference,
             "AMOUNT": checkoutFormData.totalCheckoutAmount,
             "CURRENCY": "ZAR",
-            "RETURN_URL": "https://my.return.url/page",
+            "RETURN_URL": f"{self.ngrok_base_url}/payment_notification/",
             "TRANSACTION_DATE": "2018-01-01 12:00:00",
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
-            "EMAIL": "customer@paygate.co.za",
+            "EMAIL": merchant.userAccount.user.email,
         }
-        merchantPaygateSecretKey = self.getMerchantSecretKey(merchant)
+        merchantPaygateSecretKey = merchant.getMerchantSecretKey()
         paygatePayload["CHECKSUM"] = self.generateChecksum(
             paygate_data=paygatePayload, 
             merchantPaygateSecretKey=merchantPaygateSecretKey
         )   
         return paygatePayload, reference
-        
+    
+    # TODO: we need to generate a reference for production:
+    def createReference(self, merchant:Merchant, request):
+        merchantTransactionCount = Transaction.objects.filter(merchant=merchant).count()
+        reference = f"Transaction{merchant.id}{request.user.useraccount.phoneNumber}{request.user.pk}{merchantTransactionCount}"
+        return reference
         
     def generateChecksum(self, paygate_data, merchantPaygateSecretKey = ''):
         checksum = ""
@@ -104,27 +121,6 @@ class PaymentInitializationView(APIView):
             convertedResponse[split_data[0]] = split_data[1]
         return convertedResponse
 
-    def verifyPayloadIntegrity(self, cleanedPayload:dict, secret="secret"):
-        checksum_to_compare = cleanedPayload["CHECKSUM"]
-        del cleanedPayload["CHECKSUM"]
-        values_as_string = "".join(list(cleanedPayload.values()))
-        values_as_string += secret
-        checksum = hashlib.md5(values_as_string.encode('utf-8')).hexdigest()
-        cleanedPayload["CHECKSUM"] = checksum_to_compare
-        if checksum_to_compare == checksum:
-            return (True, cleanedPayload)   
-        else:
-            return (False, cleanedPayload)
-
-    def getMerchantSecretKey(self, merchant:Merchant):
-        try:
-            fernetToken = merchant.fernetToken.encode('utf-8')[2:-1]
-            fernetInstance = fernet(key=settings.FERNET_KEY)
-            secret = fernetInstance.decrypt(fernetToken).decode("utf-8")
-            return secret
-        except Exception as e:
-            raise Exception(f"Failed to decrypt token: {str(e)}")
-
     def sendInitiatePaymentRequestToPaygate(self, paygatePayload):
         paygateInitiateUrl = "https://secure.paygate.co.za/payweb3/initiate.trans"
         response = requests.post(
@@ -132,27 +128,26 @@ class PaymentInitializationView(APIView):
             data=paygatePayload
         )
         return response
-    
-    # TODO: generate your own reference for production environment
-    def createReference(self, checkoutFormData, merchant, request):
-        paygateTestReference = "pgtest_123456789"
-        return paygateTestReference
 
-    def createATransaction(self, request, checkoutFormData:CheckoutFormData, merchant, reference): 
-        products = list(eval(checkoutFormData.products))
-        productCount = len(list(eval(checkoutFormData.products)))
-        def aDuplicateTransaction():
+    def createATransaction(
+            self, request, checkoutFormData, merchant, reference, verifiedPayload
+        ):
+        productCount = len(checkoutFormData.products)
+        def findDuplicateTransaction():
             return Transaction.objects.filter(
+                payRequestId=verifiedPayload["PAY_REQUEST_ID"],
+                reference=reference,
                 customer=request.user.useraccount,
                 merchant__id=checkoutFormData.merchantId,
                 amount=checkoutFormData.totalCheckoutAmount,
-                productsPurchased__id__in=products,
+                productsPurchased__id__in=checkoutFormData.products,
                 numberOfProducts=productCount,
                 discountTotal=checkoutFormData.discountTotal,
                 completed=False
             ).exists()
-        if not aDuplicateTransaction():
+        if not findDuplicateTransaction():
             transaction = Transaction.objects.create(
+                payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
                 merchant=merchant,
@@ -162,39 +157,83 @@ class PaymentInitializationView(APIView):
                 discountTotal=checkoutFormData.discountTotal,
                 dateCreated=datetime.datetime.now(),
             )
-            transaction.productsPurchased.set(products)
+            transaction.productsPurchased.set(checkoutFormData.products)
             transaction.save()
             return transaction
         else:
-            transaction = Transaction.objects.get(
+            transaction = Transaction.objects.filter(
+                payRequestId=verifiedPayload["PAY_REQUEST_ID"],
+                reference=reference,
                 customer=request.user.useraccount,
                 merchant__id=checkoutFormData.merchantId,
                 amount=checkoutFormData.totalCheckoutAmount,
-                productsPurchased__id__in=products,
+                productsPurchased__id__in=checkoutFormData.products,
                 numberOfProducts=productCount,
                 discountTotal=checkoutFormData.discountTotal,
                 completed=False
-            )
+            ).first()
             return transaction
         
-class PaymentNotificationView(APIView):
+class PaymentNotificationView(APIView, GlobalViewFunctions):
+
+    permission_classes = []
     
     def get(self, request, *args):
         return render(
-            request=request, 
+            request=request,
             template_name="payfast_templates/payment_notification_page.html"
         )
 
     def post(self, request, *args, **kwargs):
-
-        settings.FIREBASE_INSTANCE.sendNotification()
-
-        print(json.dumps(request.data, indent=4))
-        return Response({
-            "notification_received": True,
-        })
+        try:
+            updatedTransaction = self.verifyAndUpdateTransaction(request.data)
+            if updatedTransaction.completed:
+                settings.FIREBASE_INSTANCE.sendNotification(
+                    updatedTransaction.merchant,
+                    updatedTransaction.customer,
+                    updatedTransaction.payRequestId
+                )
+            print(json.dumps(request.data, indent=4))
+        except Exception as e:
+            pass
+        return HttpResponse("OK")
+    
+    def verifyAndUpdateTransaction(self, receivedPayload):
+        def setTransactionStatus(transactionStatus, transaction:Transaction):
+            if transactionStatus == 0:
+                transaction.notDone = True
+            elif transactionStatus == 1:
+                    transaction.completed = True
+            elif transactionStatus == 2:
+                    transaction.declined = True
+            elif transactionStatus == 3:
+                    transaction.cancelled = True
+            elif transactionStatus == 4:
+                transaction.userCancelled = True
+            elif transactionStatus == 5:
+                transaction.receievedByPaygate = True
+            elif transactionStatus == 7:
+                transaction.settlementVoided = True
+            return transaction
+        payRequestId = receivedPayload["PAY_REQUEST_ID"]
+        transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
+        try:
+            dataIntegritySecure, validatedPayload = self.verifyPayloadIntegrity(
+                receivedPayload, secret=transaction.merchant.getMerchantSecretKey()
+            ) # TODO: investigate checksum check failure in this step:
+            payRequestId = validatedPayload["PAY_REQUEST_ID"]
+            transactionStatus = int(validatedPayload["TRANSACTION_STATUS"])
+            transaction = setTransactionStatus(transactionStatus, transaction)
+            transaction.save()
+            return transaction
+        except Exception as e:
+            # we cannot return an error response to paygate in this view
+            pass
+        
 
 class PaymentSuccessView(APIView):
+
+    permission_classes = []
 
     def get(self, request, *args, **kwargs):
         return render(

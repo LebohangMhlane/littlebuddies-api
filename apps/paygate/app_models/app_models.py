@@ -1,9 +1,9 @@
 
 from apps.merchants.models import Merchant
 
-# what the app sends to the server to initiate payment after checkout:
+# what the mobile app sends to the server to initiate payment after checkout:
 
-class CheckoutFormData():
+class CheckoutFormPayload():
     merchantId = None
     totalCheckoutAmount = 0
     products = []
@@ -15,11 +15,11 @@ class CheckoutFormData():
         self.totalCheckoutAmount = int(payload.get("totalCheckoutAmount"))
         self.products = payload.get("items")
         self.discountTotal = int(payload.get("discountTotal"))
-
-    def getMerchant(self) -> Merchant:
-        if self.merchantId is not None:
-            merchant = Merchant.objects.get(id=self.merchantId)
-            return merchant
         
     def convertAmountToDecimal(self):
         return float(self.amount)
+    
+    def verifyPurchase(self, checkoutFormData):
+        # TODO: verify the purchase:
+        return True
+    

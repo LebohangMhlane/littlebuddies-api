@@ -29,7 +29,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-NGROK_BASE_URL ="ebe6-41-10-117-107.ngrok-free.app"
+NGROK_BASE_URL ="6628-41-10-121-222.ngrok-free.app"
 
 SERVER_URL = f"https://{NGROK_BASE_URL}"
 
