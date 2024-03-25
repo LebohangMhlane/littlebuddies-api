@@ -35,6 +35,7 @@ class FirebaseInstance():
             )
             response = messaging.send(message)
             print('Successfully sent message:', response)
+            return True
         except Exception as e:
             print(str(e))
             pass

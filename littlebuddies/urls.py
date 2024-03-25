@@ -22,7 +22,6 @@ from apps.paygate.views import (PaymentSuccessView,
                                 PaymentCancelledView,
                                 PaymentNotificationView, 
                                 )
-from apps.products.views import CreateProductView
 
 
 urlpatterns = [

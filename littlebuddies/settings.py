@@ -29,6 +29,10 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Paygate stuff
+
+PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
+
 NGROK_BASE_URL ="b38c-41-10-119-195.ngrok-free.app"
 
 SERVER_URL = f"https://{NGROK_BASE_URL}"

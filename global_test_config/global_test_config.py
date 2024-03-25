@@ -157,16 +157,16 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createTestProduct(self, merchant, merchantUserAccount, name):
+    def createTestProduct(self, merchant, merchantUserAccount, name, price, discountPercent=0):
         product = Product.objects.create(
             merchant=merchant,
             name=name,
             description="High quality dog food",
-            originalPrice=450,
+            originalPrice=price,
             image="image",
             inStock=True,
             storeReference="ID2342",
-            discountPercentage=0,
+            discountPercentage=discountPercent,
             createdBy=merchantUserAccount,
             isActive=True,
         )
