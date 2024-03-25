@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase
 
 from rest_framework.reverse import reverse
@@ -16,21 +17,21 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchant(merchantUserAccount)
         _ = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food")
         _ = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food")
-        checkoutFormData = {
+        checkoutFormPayload = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "1000",
-            "items": "[1, 2]",
+            "products": "[1, 2]",
             "discountTotal": "0",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         response = self.client.post(
             initiate_payment_url,
-            data=checkoutFormData,
+            data=checkoutFormPayload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
         self.assertIsNotNone(transaction)
-        self.assertTrue(transaction.amount == int(checkoutFormData["totalCheckoutAmount"]))
+        self.assertTrue(transaction.amount == int(checkoutFormPayload["totalCheckoutAmount"]))
         self.assertEqual(response.data["message"], "Paygate response was successful")
         self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
         self.assertEqual(response.data["transaction"]["productsPurchased"][0]["name"], "Bob's dog food")

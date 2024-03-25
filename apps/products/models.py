@@ -3,8 +3,6 @@ from django.db import models
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Merchant
 
-
-
 class Product(models.Model):
 
     isActive = models.BooleanField(default=False)

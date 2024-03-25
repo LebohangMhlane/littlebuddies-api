@@ -16,18 +16,18 @@ class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
     def is_valid(self, *, raise_exception=False):
         initialData = self.initial_data
         if(
-            self.emailIsValid(initialData["email"]), 
-            self.usernameIsValid(initialData["username"])):
+            self.validateEmail(initialData["email"]), 
+            self.validateUsername(initialData["username"])):
             return True
         else:
             self.deleteAllUserRelatedInstances()
             raise Exception("Invalid User Data")
             
-    def emailIsValid(self, email):
+    def validateEmail(self, email):
         # TODO: implement email validation:
         pass
 
-    def usernameIsValid(self, username):
+    def validateUsername(self, username):
         # TODO: implement username validation:
         pass
 

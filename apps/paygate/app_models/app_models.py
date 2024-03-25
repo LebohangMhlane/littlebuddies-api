@@ -1,25 +1,57 @@
 
-from apps.merchants.models import Merchant
+from apps.products.models import Product
 
 # what the mobile app sends to the server to initiate payment after checkout:
 
 class CheckoutFormPayload():
     merchantId = None
-    totalCheckoutAmount = 0
+    totalCheckoutAmount = 0.00
     products = []
     discountTotal = 0
     
     def __init__(self, payload):
         payload = payload.copy()
         self.merchantId = int(payload.get("merchantId"))
-        self.totalCheckoutAmount = int(payload.get("totalCheckoutAmount"))
-        self.products = payload.get("items")
+        self.totalCheckoutAmount = round(payload.get("totalCheckoutAmount"), 2)
+        self.products = self.convertAndReturnProductsList(payload.get("products"))
         self.discountTotal = int(payload.get("discountTotal"))
         
     def convertAmountToDecimal(self):
         return float(self.amount)
     
-    def verifyPurchase(self, checkoutFormData):
-        # TODO: verify the purchase:
-        return True
+    def verifyPurchase(self):
+
+        def checkProductExistence():
+            productsExistCount = Product.objects.filter(
+                id__in=self.products, merchant__id=self.merchantId, isActive=True
+            ).count()
+            if productsExistCount == len(self.products):
+                return True
+            raise Exception("This store no longer sells this/these products")
+        
+        def checkifPricesMatch():
+            products = Product.objects.filter(
+                id__in=self.products, merchant__id=self.merchantId, isActive=True
+            )
+            totalAmount = 0
+            for product in products:
+                discountAmount = (product.discountPercentage / 100) * product.originalPrice
+                discountedPrice = product.originalPrice - discountAmount
+                totalAmount = totalAmount + discountedPrice
+            if (totalAmount == self.totalCheckoutAmount and
+                discountAmount == self.discountTotal):
+                return True
+            raise Exception("Total product prices do not match the checkout amount")
+
+        if checkProductExistence() and checkifPricesMatch():
+            return True
+    
+    # this function only exists because the test case payload 
+    # requires conversion and the payload from the mobile app doesn't
+    def convertAndReturnProductsList(self, products):
+        try:
+            products = eval(products)
+            return products
+        except Exception as e:
+            return products
     

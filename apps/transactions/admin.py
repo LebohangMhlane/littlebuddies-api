@@ -4,5 +4,5 @@ from apps.transactions.models import Transaction
 
 # Register your models here.
 
-
 admin.site.register(Transaction)
+

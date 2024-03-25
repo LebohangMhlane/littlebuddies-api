@@ -8,7 +8,6 @@ from apps.merchants.models import Merchant
 from apps.products.models import Product
 
 
-
 class Transaction(models.Model):
 
     payRequestId = models.CharField(max_length=36, blank=False, null=True)
@@ -29,7 +28,6 @@ class Transaction(models.Model):
     userCancelled = models.BooleanField(default=False)
     dateCreated = models.DateTimeField(auto_now_add=True)
     dateCompleted = models.DateTimeField(auto_now=True)
-
 
     def __str__(self) -> str:
         return f"{self.customer.user.first_name} {self.customer.user.last_name} to {self.merchant.name}"

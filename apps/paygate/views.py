@@ -13,8 +13,6 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from cryptography.fernet import Fernet as fernet
-
 from apps.merchants.models import Merchant
 from apps.paygate.app_models.app_models import CheckoutFormPayload
 from apps.transactions.models import Transaction
@@ -28,7 +26,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
 
     permission_classes = [] # TODO: add later
 
-    ngrok_base_url = "https://6628-41-10-121-222.ngrok-free.app/" # TODO: for development use only:
+    ngrok_base_url = "https://b38c-41-10-119-195.ngrok-free.app" # TODO: for development use only:
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -41,12 +39,12 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
 
     def post(self, request, *args, **kwargs):
         try:
-            checkoutFormData = CheckoutFormPayload(payload=request.data)
-            merchant = self.getMerchant(checkoutFormData.merchantId)
-            paygatePayload, reference = self.preparePayGatePayload(
-                checkoutFormData, merchant, request
-            )
-            if checkoutFormData.verifyPurchase(checkoutFormData):
+            checkoutFormPayload = CheckoutFormPayload(payload=request.data)
+            merchant = self.getMerchant(checkoutFormPayload.merchantId)
+            if checkoutFormPayload.verifyPurchase():
+                paygatePayload, reference = self.preparePayGatePayload(
+                    checkoutFormPayload, merchant, request
+                )
                 response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
             if response.status_code == 200:
                 responseData = response.text.split("&")
@@ -56,7 +54,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 )
                 if dataIntegritySecure:
                     transaction = self.createATransaction(
-                        request, checkoutFormData, merchant, reference, verifiedPayload
+                        request, checkoutFormPayload, merchant, reference, verifiedPayload
                     )
                     if transaction:
                         transactionSerializer = TransactionSerializer(transaction, many=False)
@@ -78,15 +76,16 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 content_type='application/json', status=500)
     
     # prepare and return the payload we need to send to paygate to initiate a payment:
-    def preparePayGatePayload(self, checkoutFormData, merchant:Merchant, request):
+    # refer to docs: https://docs.paygate.co.za/?php#initiate
+    def preparePayGatePayload(self, checkoutFormPayload, merchant:Merchant, request):
         reference = self.createReference(merchant, request)
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
             "REFERENCE": reference,
-            "AMOUNT": checkoutFormData.totalCheckoutAmount,
+            "AMOUNT": f"{str(checkoutFormPayload.totalCheckoutAmount).replace('.', '')}0", # paygate doesn't use decimals
             "CURRENCY": "ZAR",
             "RETURN_URL": f"{self.ngrok_base_url}/payment_notification/",
-            "TRANSACTION_DATE": "2018-01-01 12:00:00",
+            "TRANSACTION_DATE": "2018-01-01 12:00:00", # TODO: implement real time date
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
             "EMAIL": merchant.userAccount.user.email,
@@ -98,7 +97,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         )   
         return paygatePayload, reference
     
-    # TODO: we need to generate a reference for production:
     def createReference(self, merchant:Merchant, request):
         merchantTransactionCount = Transaction.objects.filter(merchant=merchant).count()
         reference = f"Transaction{merchant.id}{request.user.useraccount.phoneNumber}{request.user.pk}{merchantTransactionCount}"
@@ -130,19 +128,19 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         return response
 
     def createATransaction(
-            self, request, checkoutFormData, merchant, reference, verifiedPayload
+            self, request, checkoutFormPayload, merchant, reference, verifiedPayload
         ):
-        productCount = len(checkoutFormData.products)
+        productCount = len(checkoutFormPayload.products)
         def findDuplicateTransaction():
             return Transaction.objects.filter(
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
-                merchant__id=checkoutFormData.merchantId,
-                amount=checkoutFormData.totalCheckoutAmount,
-                productsPurchased__id__in=checkoutFormData.products,
+                merchant__id=checkoutFormPayload.merchantId,
+                amount=checkoutFormPayload.totalCheckoutAmount,
+                productsPurchased__id__in=checkoutFormPayload.products,
                 numberOfProducts=productCount,
-                discountTotal=checkoutFormData.discountTotal,
+                discountTotal=checkoutFormPayload.discountTotal,
                 completed=False
             ).exists()
         if not findDuplicateTransaction():
@@ -151,13 +149,13 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 reference=reference,
                 customer=request.user.useraccount,
                 merchant=merchant,
-                amount=checkoutFormData.totalCheckoutAmount,
+                amount=checkoutFormPayload.totalCheckoutAmount,
                 numberOfProducts=productCount,
                 completed=False,
-                discountTotal=checkoutFormData.discountTotal,
+                discountTotal=checkoutFormPayload.discountTotal,
                 dateCreated=datetime.datetime.now(),
             )
-            transaction.productsPurchased.set(checkoutFormData.products)
+            transaction.productsPurchased.set(checkoutFormPayload.products)
             transaction.save()
             return transaction
         else:
@@ -165,11 +163,11 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
-                merchant__id=checkoutFormData.merchantId,
-                amount=checkoutFormData.totalCheckoutAmount,
-                productsPurchased__id__in=checkoutFormData.products,
+                merchant__id=checkoutFormPayload.merchantId,
+                amount=checkoutFormPayload.totalCheckoutAmount,
+                productsPurchased__id__in=checkoutFormPayload.products,
                 numberOfProducts=productCount,
-                discountTotal=checkoutFormData.discountTotal,
+                discountTotal=checkoutFormPayload.discountTotal,
                 completed=False
             ).first()
             return transaction
@@ -188,6 +186,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
         try:
             updatedTransaction = self.verifyAndUpdateTransaction(request.data)
             if updatedTransaction.completed:
+                self.createAnOrder(updatedTransaction)
                 settings.FIREBASE_INSTANCE.sendNotification(
                     updatedTransaction.merchant,
                     updatedTransaction.customer,
@@ -229,7 +228,21 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
         except Exception as e:
             # we cannot return an error response to paygate in this view
             pass
-        
+
+    def createAnOrder(self, transaction):
+        try:
+            order = Order.objects.create(
+                transaction=transaction,
+                status="PENDING",
+            )
+            self.sendOrderEmail(transaction, order)
+        except Exception as e:
+            # send an email relating to the order regardless of database related errors:
+            # admin should create an order manually in the database should things go wrong here:
+            self.sendOrderEmail(transaction)
+
+    def sendOrderEmail(self, completedTransaction, order):
+        pass
 
 class PaymentSuccessView(APIView):
 
