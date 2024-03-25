@@ -11,7 +11,7 @@ class CheckoutFormPayload():
     discountTotal = 0
     
     def __init__(self, payload):
-        payload = payload.dict()
+        payload = payload.copy()
         self.merchantId = int(payload.get("merchantId"))
         self.totalCheckoutAmount = float(payload["totalCheckoutAmount"]),
         self.products = self.convertAndReturnProductsList(payload.get("products"))
