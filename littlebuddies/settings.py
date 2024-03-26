@@ -12,8 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
-
-from integrations.firebase import firebase_module
+from firebase_app.firebase_app import FirebaseApp
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,18 +28,19 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# firebase stuff
+
+FIREBASE_APP = FirebaseApp()
+
 # Paygate stuff
 
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
-NGROK_BASE_URL ="b38c-41-10-119-195.ngrok-free.app"
+APP_URL = "9938-41-10-119-195.ngrok-free.app" # using ngrok server during development
 
-SERVER_URL = f"https://{NGROK_BASE_URL}"
+SERVER_URL = f"https://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.102", "localhost", NGROK_BASE_URL]
-
-# firebase instance
-FIREBASE_INSTANCE = firebase_module.FirebaseInstance()
+ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL]
 
 # rest framework configuration
 REST_FRAMEWORK = {
@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'apps.paygate',
     'apps.transactions',
     'apps.orders',
+    'apps.integrations',
 ]
 
 MIDDLEWARE = [

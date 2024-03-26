@@ -53,7 +53,7 @@ class GlobalTestCaseConfig(TestCase):
             "address": "21 everywhere street, The world",
             "phoneNumber": "0631837747",
             "isMerchant": False,
-            "deviceToken": "fhewofhew89f394ry34f7g4f",
+            "deviceToken": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
             "phoneNumberVerified": True,
         }
         customer = User.objects.create(

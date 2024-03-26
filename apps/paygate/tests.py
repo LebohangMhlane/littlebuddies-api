@@ -81,7 +81,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
-    @patch("littlebuddies.settings.FIREBASE_INSTANCE.sendNotification")
+    @patch("apps.integrations.firebase.firebase_module.FirebaseInstance.sendNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
     def test_paygate_notification(self, mockedResponse, mockedSendNotification):
 

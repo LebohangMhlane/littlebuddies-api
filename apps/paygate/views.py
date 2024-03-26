@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.integrations.firebase_instance.firebase_instance_module import FirebaseInstance
 from apps.merchants.models import Merchant
 from apps.orders.models import Order
 from apps.paygate.app_models.app_models import CheckoutFormPayload
@@ -84,9 +85,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
             "REFERENCE": reference,
-            "AMOUNT": f"{str(checkoutFormPayload.totalCheckoutAmount).replace('.', '')}0", # paygate doesn't use decimals
+            "AMOUNT": f"{str(checkoutFormPayload.totalCheckoutAmount[0]).replace('.', '')}0", # paygate doesn't use decimals
             "CURRENCY": "ZAR",
-            "RETURN_URL": f"{self.ngrok_base_url}/payment_notification/",
+            "RETURN_URL": f"{settings.SERVER_URL}/payment_notification/",
             "TRANSACTION_DATE": "2018-01-01 12:00:00", # TODO: implement real time date
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
@@ -186,21 +187,19 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            updatedTransaction = self.verifyAndUpdateTransaction(request.data)
+            updatedTransaction = self.verifyAndUpdateTransactionStatus(request.data)
             if updatedTransaction.completed:
                 self.createAnOrder(updatedTransaction)
-                if settings.DEBUG == False:
-                    notificationSent = settings.FIREBASE_INSTANCE.sendNotification(
-                        updatedTransaction.merchant,
-                        updatedTransaction.customer,
-                        updatedTransaction.payRequestId
-                    )
+            if settings.DEBUG == True: # we may not want to trigger notifications during development
+                _ = FirebaseInstance().sendNotification(
+                    updatedTransaction
+                )
             print(json.dumps(request.data, indent=4))
         except Exception as e:
             pass
         return HttpResponse("OK")
     
-    def verifyAndUpdateTransaction(self, receivedPayload):
+    def verifyAndUpdateTransactionStatus(self, receivedPayload):
         def setTransactionStatus(transactionStatus, transaction:Transaction):
             if transactionStatus == 0:
                 transaction.notDone = True

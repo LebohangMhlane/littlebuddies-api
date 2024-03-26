@@ -35,6 +35,21 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         super(Transaction, self).save(*args, **kwargs)
 
+    # TODO: use an enum for these later:
+    def getTransactionStatus(self):
+        possibleStatuses = {
+            "Transaction Completed": self.completed,
+            "Transaction Cancelled": self.cancelled,
+            "Transaction Failed": self.failed,
+            "Transaction Declined": self.declined,
+            "Not Done": self.notDone,
+            "Recieved By Paygate": self.receievedByPaygate,
+            "Settlement Voided": self.settlementVoided,
+            "Customer Cancelled": self.userCancelled,
+        }
+        currentStatus = [key for key, value in possibleStatuses.items() if value is True]
+        return currentStatus[0]
+
 
 class TransactionHistory(models.Model):
 
