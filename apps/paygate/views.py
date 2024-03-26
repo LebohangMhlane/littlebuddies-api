@@ -190,7 +190,6 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             updatedTransaction = self.verifyAndUpdateTransactionStatus(request.data)
             if updatedTransaction.completed:
                 self.createAnOrder(updatedTransaction)
-            if settings.DEBUG == True: # we may not want to trigger notifications during development
                 _ = FirebaseInstance().sendTransactionStatusNotification(
                     updatedTransaction
                 )

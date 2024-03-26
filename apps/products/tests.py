@@ -8,7 +8,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_product_as_merchant(self):
         testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchant(testMerchantAccount)
+        self.createTestMerchantBusiness(testMerchantAccount)
         _ = self.loginAsMerchant()
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
@@ -36,7 +36,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         _ = self.createNormalTestAccountAndLogin()
         self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchant(testMerchantAccount)
+        self.createTestMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
             "merchantPk": 1,
@@ -73,7 +73,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         _ = self.createNormalTestAccountAndLogin()
         self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchant(testMerchantAccount)
+        self.createTestMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -97,7 +97,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         }
         _ = self.createNormalTestAccountAndLogin()
         testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchant(testMerchantAccount)
+        self.createTestMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -112,7 +112,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         _ = self.createNormalTestAccountAndLogin()
         self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(testMerchantUserAccount)
+        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         product = self.createTestProduct(merchant, testMerchantUserAccount, name="Bob's Cat Food", price=200.0)
         deleteProductUrl = reverse("delete_product_view", kwargs={"productPk": product.pk})
         payload = {

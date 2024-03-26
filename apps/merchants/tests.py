@@ -57,7 +57,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         testAccountToken = self.createNormalTestAccountAndLogin()
         self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(testMerchantUserAccount)
+        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 1,
@@ -77,7 +77,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         testAccountToken = self.createNormalTestAccountAndLogin()
         _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(testMerchantUserAccount)
+        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 100, # id doesn't exist
@@ -98,7 +98,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         testAccountToken = self.createNormalTestAccountAndLogin()
         _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(testMerchantUserAccount)
+        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.name, "Pet Food Shop")
         self.assertEqual(merchant.address, "12 Pet Street Newgermany")
         payload = {
@@ -125,7 +125,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         customer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(merchantUserAccount)
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {

@@ -19,7 +19,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         createTestCustomer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(merchantUserAccount)
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {
@@ -52,7 +52,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         createTestCustomer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(merchantUserAccount)
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100, 50)
         checkoutFormPayload = {
@@ -85,7 +85,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         customer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchant(merchantUserAccount)
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {

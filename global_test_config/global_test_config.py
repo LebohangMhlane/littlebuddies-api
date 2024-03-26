@@ -142,7 +142,7 @@ class GlobalTestCaseConfig(TestCase):
     def loginAsSuperAdmin(self):
         pass
 
-    def createTestMerchant(self, userAccount:UserAccount):
+    def createTestMerchantBusiness(self, userAccount:UserAccount):
         merchant = MerchantBusiness.objects.create(
             userAccount=userAccount,
             name="Pet Food Shop",
