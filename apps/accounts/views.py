@@ -3,8 +3,6 @@ from rest_framework.response import Response
 
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
-from apps.merchants.models import MerchantBusiness
-from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 

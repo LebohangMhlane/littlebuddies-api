@@ -46,6 +46,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
             "isMerchant": False,
+            "isSuperUser": False,
         }
         create_account_url = reverse("create_account_view")
         userInputData["phoneNumber"] = "062183774" # deliberate incorrect phone number
@@ -66,7 +67,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "username": "Lebo",
             "password": "HelloWorld",
         }
-        response = self.createNormalTestAccount()
+        response = self.createTestAdminAccount()
         loginUrl = reverse("login")
         loginPayload = {
             "username": userInputData["username"],
