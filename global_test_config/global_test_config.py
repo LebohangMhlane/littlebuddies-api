@@ -6,11 +6,16 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.reverse import reverse
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.products.models import Product
 
 
 # test functions shared by all tests
+
+class MockedPaygateResponse():
+
+    status_code = 200
+    text = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&CHECKSUM=b41a77f83a275a849f23e30b4666e837"
 
 class GlobalTestCaseConfig(TestCase):
 
@@ -138,7 +143,7 @@ class GlobalTestCaseConfig(TestCase):
         pass
 
     def createTestMerchant(self, userAccount:UserAccount):
-        merchant = Merchant.objects.create(
+        merchant = MerchantBusiness.objects.create(
             userAccount=userAccount,
             name="Pet Food Shop",
             email="petfoodshop@gmail.com",

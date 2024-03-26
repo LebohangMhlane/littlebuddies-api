@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 
 # Register your models here.
 
-admin.site.register(Merchant)
+admin.site.register(MerchantBusiness)

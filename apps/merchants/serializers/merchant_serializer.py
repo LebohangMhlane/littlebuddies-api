@@ -1,13 +1,13 @@
 
 from rest_framework import serializers
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.accounts.models import UserAccount
 
 
 class MerchantSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Merchant
+        model = MerchantBusiness
         fields = "__all__"
         depth = 2
 
@@ -20,7 +20,7 @@ class MerchantSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         try:
-            merchant = Merchant()
+            merchant = MerchantBusiness()
             merchant.userAccount = UserAccount.objects.get(pk=validated_data["userAccountPk"])
             merchant.name = validated_data["name"]
             merchant.email = validated_data["email"]

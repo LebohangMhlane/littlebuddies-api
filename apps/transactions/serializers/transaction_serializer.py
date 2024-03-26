@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.accounts.models import UserAccount
 from apps.transactions.models import Transaction
 

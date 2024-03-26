@@ -1,12 +1,12 @@
 from django.db import models
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 
 class Product(models.Model):
 
     isActive = models.BooleanField(default=False)
-    merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE, blank=False, null=True)
+    merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, blank=False, null=True)
     name = models.CharField(max_length=200, blank=False, default="")
     description = models.CharField(max_length=200, blank=False, default="")
     originalPrice = models.PositiveIntegerField(blank=False, default=0)

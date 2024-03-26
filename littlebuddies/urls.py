@@ -23,7 +23,6 @@ from apps.paygate.views import (PaymentSuccessView,
                                 PaymentNotificationView, 
                                 )
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('initiate_payment/', PaymentInitializationView.as_view(), name="initiate_payment_view"),

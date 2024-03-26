@@ -3,7 +3,7 @@
 # functions shared by all views:
 
 import hashlib
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 
 
 class GlobalViewFunctions():
@@ -27,8 +27,8 @@ class GlobalViewFunctions():
         else:
             return (False, cleanedPayload)
 
-    def getMerchant(self, merchantId) -> Merchant:
-        merchant = Merchant.objects.get(id=merchantId)
+    def getMerchant(self, merchantId) -> MerchantBusiness:
+        merchant = MerchantBusiness.objects.get(id=merchantId)
         return merchant
 
     def checkIfUserIsSuperAdmin(self, request):
@@ -41,11 +41,11 @@ class GlobalViewFunctions():
         return False
 
     def checkIfUserMatchesMerchant(self, request):
-        merchant = Merchant.objects.get(pk=request.data["merchantPk"])
+        merchant = MerchantBusiness.objects.get(pk=request.data["merchantPk"])
         if merchant.userAccount == request.user.useraccount: return True
         else: return False
 
-    def checkIfUserMatchesProductMerchant(self, request, productMerchant:Merchant):
+    def checkIfUserMatchesProductMerchant(self, request, productMerchant:MerchantBusiness):
         userAccount = request.user.useraccount
         if userAccount == productMerchant.userAccount: return True
         return False

@@ -3,7 +3,7 @@
 from rest_framework.serializers import ModelSerializer
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.products.models import Product
 
 class ProductSerializer(ModelSerializer):
@@ -17,7 +17,7 @@ class ProductSerializer(ModelSerializer):
         initialData = self.initial_data
         initialData = self.cleanFieldsWithNumericalValues(initialData)
         for key, value in initialData.items():
-            if value is None or value is "": 
+            if value is None or value == "": 
                 raise Exception("Fields must not be empty")
         if initialData["originalPrice"] <= 0: 
             raise Exception("Original price cannot be 0 or negative")
@@ -32,7 +32,7 @@ class ProductSerializer(ModelSerializer):
     
     def create(self, validated_data, request):
         try:
-            merchant = Merchant.objects.get(pk=validated_data["merchantPk"])
+            merchant = MerchantBusiness.objects.get(pk=validated_data["merchantPk"])
             userAccount = request.user.useraccount
             product = Product()
             product.merchant = merchant

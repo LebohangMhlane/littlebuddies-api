@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from apps.merchants.models import Merchant
+from apps.integrations.firebase_instance.firebase_instance_module import FirebaseInstance
+from apps.merchants.models import MerchantBusiness
 from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 
+from apps.orders.models import Order
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
@@ -63,7 +65,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
             }, status=500)
     
     def deactivateMerchant(self, merchantId):
-        merchant = Merchant.objects.get(pk=int(merchantId))
+        merchant = MerchantBusiness.objects.get(pk=int(merchantId))
         merchant.isActive = False
         merchant.save()
         
@@ -98,7 +100,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
     
     def updateMerchant(self, request):
         receivedPayload = request.data.copy()
-        merchant = Merchant.objects.get(pk=int(receivedPayload["merchantPk"]))
+        merchant = MerchantBusiness.objects.get(pk=int(receivedPayload["merchantPk"]))
         del receivedPayload["merchantPk"]
         for key, value in receivedPayload.items():
             self.validateKey(key)
@@ -114,6 +116,35 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
         # send emails to relevant parties notifiying them of the deactivation:
         pass
 
+
+class AcknowledgedOrderView(APIView, GlobalViewFunctions):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            if self.checkIfUserIsMerchant(request):
+                orderPk = kwargs["orderPk"]
+                order = Order.objects.filter(pk=orderPk).first()
+                notificationSent = self.sendNotificationOfOrderAcknowledgement(order)
+                if not notificationSent:
+                    self.sendAcknowledgementEmail(order)
+            else: raise Exception("You're not permitted to use this feature")
+            return Response({
+                "success": True,
+                "message": "Order acknowledged successfully",
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "sucess": False,
+                "message": "Failed to acknowledge order",
+                "error": str(e)
+            }, status=500)
+        
+    def sendNotificationOfOrderAcknowledgement(self, order):
+        notificationSent = FirebaseInstance().sendOrderAcknowledgementNotification(order)
+        return notificationSent
+    
+    def sendAcknowledgementEmail(self):
+        pass
 
 
 

@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.integrations.firebase_instance.firebase_instance_module import FirebaseInstance
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.orders.models import Order
 from apps.paygate.app_models.app_models import CheckoutFormPayload
 from apps.transactions.models import Transaction
@@ -80,7 +80,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     
     # prepare and return the payload we need to send to paygate to initiate a payment:
     # refer to docs: https://docs.paygate.co.za/?php#initiate
-    def preparePayGatePayload(self, checkoutFormPayload, merchant:Merchant, request):
+    def preparePayGatePayload(self, checkoutFormPayload, merchant:MerchantBusiness, request):
         reference = self.createReference(merchant, request)
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
@@ -100,7 +100,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         )   
         return paygatePayload, reference
     
-    def createReference(self, merchant:Merchant, request):
+    def createReference(self, merchant:MerchantBusiness, request):
         merchantTransactionCount = Transaction.objects.filter(merchant=merchant).count()
         reference = f"Transaction{merchant.id}{request.user.useraccount.phoneNumber}{request.user.pk}{merchantTransactionCount}"
         return reference
@@ -191,7 +191,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             if updatedTransaction.completed:
                 self.createAnOrder(updatedTransaction)
             if settings.DEBUG == True: # we may not want to trigger notifications during development
-                _ = FirebaseInstance().sendNotification(
+                _ = FirebaseInstance().sendTransactionStatusNotification(
                     updatedTransaction
                 )
             print(json.dumps(request.data, indent=4))

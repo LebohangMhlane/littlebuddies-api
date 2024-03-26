@@ -7,12 +7,7 @@ from unittest.mock import patch
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
 
-from global_test_config.global_test_config import GlobalTestCaseConfig
-
-class MockedPaygateResponse():
-
-    status_code = 200
-    text = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&CHECKSUM=b41a77f83a275a849f23e30b4666e837"
+from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 
 class PayGateTests(GlobalTestCaseConfig, TestCase):
 
@@ -81,7 +76,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
-    @patch("apps.integrations.firebase.firebase_module.FirebaseInstance.sendNotification")
+    @patch("apps.integrations.firebase_instance.firebase_instance_module.FirebaseInstance.FirebaseInstance.sendNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
     def test_paygate_notification(self, mockedResponse, mockedSendNotification):
 

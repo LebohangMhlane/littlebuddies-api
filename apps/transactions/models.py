@@ -4,7 +4,7 @@ from django.db import models
 
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Merchant
+from apps.merchants.models import MerchantBusiness
 from apps.products.models import Product
 
 
@@ -13,7 +13,7 @@ class Transaction(models.Model):
     payRequestId = models.CharField(max_length=36, blank=False, null=True)
     reference = models.CharField(max_length=255, blank=False, null=True)
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
-    merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE)
+    merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE)
     productsPurchased = models.ManyToManyField(Product, blank=True)
     numberOfProducts = models.PositiveIntegerField(default=0)
     amount = models.PositiveIntegerField(default=0, blank=False)

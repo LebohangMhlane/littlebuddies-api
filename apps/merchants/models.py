@@ -5,7 +5,7 @@ from apps.accounts.models import UserAccount
 from cryptography.fernet import Fernet as fernet
 
 
-class Merchant(models.Model):
+class MerchantBusiness(models.Model):
     userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
@@ -23,7 +23,7 @@ class Merchant(models.Model):
         self.verifyUserAccount(self.userAccount)
         if not self.pk:
             self.encryptPaygateSecret()
-        super(Merchant, self).save(*args, **kwargs)
+        super(MerchantBusiness, self).save(*args, **kwargs)
 
     def encryptPaygateSecret(self):
         key = settings.FERNET_KEY
