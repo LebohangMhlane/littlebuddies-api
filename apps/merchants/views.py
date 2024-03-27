@@ -6,6 +6,7 @@ from apps.merchants.models import MerchantBusiness
 from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 
 from apps.orders.models import Order
+from apps.orders.serializers.order_serializer import OrderSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
@@ -149,6 +150,35 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
     def sendAcknowledgementEmail(self):
         pass
 
+
+class FulfillOrderView(APIView, GlobalViewFunctions):
+
+    def get(self, request, **kwargs):
+        try:
+            orderPk = kwargs["orderPk"]
+            if self.checkIfUserIsMerchant(request):
+                order = self.fulfillOrder(orderPk)
+                orderSerializer = OrderSerializer(order, many=False)
+            else: raise Exception("You don't have permission to access this feature.")
+            return Response({
+                "success": True,
+                "message": "Order fulfilled successfully",
+                "order": orderSerializer.data,
+            })
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to fulfill order",
+                "error": str(e)
+            })
+        
+    def fulfillOrder(self, orderPk):
+        order = Order.objects.filter(pk=orderPk).first()
+        if order:
+            order.status = Order.DELIVERED
+            order.save()
+            return order
+        else: raise Exception("This order was not found")
 
 
 

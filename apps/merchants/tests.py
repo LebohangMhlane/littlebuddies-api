@@ -3,6 +3,7 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 
 from apps.orders.models import Order
+from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.merchants.models import MerchantBusiness
 
@@ -164,7 +165,61 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["message"], "Order acknowledged successfully")
         self.assertTrue(order.acknowledged)
     
-    def test_fulfill_order(self):
-        pass
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
+    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
+    def test_fulfill_order(self, mockedResponse, mockedSendNotification):
+        
+        mockedResponse.return_value = MockedPaygateResponse()
+
+        _ = self.createTestCustomer()
+        authToken = self.loginAsCustomer()
+        merchantUserAccount = self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
+        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        checkoutFormPayload = {
+            "merchantId": str(merchant.pk),
+            "totalCheckoutAmount": "300.0",
+            "products": "[1, 2]",
+            "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
+        }
+        initiate_payment_url = reverse("initiate_payment_view")
+        _ = self.client.post(
+            initiate_payment_url,
+            data=checkoutFormPayload,
+            HTTP_AUTHORIZATION=f"Token {authToken}",
+        )
+        paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        paymentNotificationUrl = reverse("payment_notification_view")
+        _ = self.client.post(
+            paymentNotificationUrl,
+            data=paymentNotificationResponse,
+            content_type='application/x-www-form-urlencoded'
+        )
+
+        # merchant should now acknowledge the order at this point:
+        order = Order.objects.all().first()
+        acknowlegeOrderUrl = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
+        merchantAuthToken = self.loginAsMerchant()
+        acknowlegeOrderResponse = self.client.get(
+            acknowlegeOrderUrl,
+            data=checkoutFormPayload,
+            HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
+        )
+
+        fulfillOrderUrl = reverse("fulfill_order_view", kwargs={"orderPk": order.pk})
+        fulfillOrderResponse = self.client.get(
+            fulfillOrderUrl,
+            HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
+        )
+        orderFromResponse = fulfillOrderResponse.data["order"]
+        self.assertEqual(orderFromResponse["status"], Order.DELIVERED)
+        self.assertTrue(orderFromResponse["acknowledged"])
+        self.assertEqual(orderFromResponse["transaction"]["status"], Transaction.COMPLETED)
+        
+
 
 

@@ -20,6 +20,8 @@ class MockedPaygateResponse():
 
 class GlobalTestCaseConfig(TestCase):
 
+    # TODO: remember to clean up test cases and move all repetitive tasks here:
+
     def setUp(self) -> None:
         self.loginPayload = {
             "username": "Lebo",
