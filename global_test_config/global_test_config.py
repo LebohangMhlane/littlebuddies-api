@@ -25,7 +25,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
         }
         
-    def createTestAdminAccount(self):
+    def createNormalTestAccount(self):
         userInputData = {
             "username": "Lebo",
             "password": "HelloWorld",
@@ -100,7 +100,7 @@ class GlobalTestCaseConfig(TestCase):
         return testMerchantUserAccount
     
     def createNormalTestAccountAndLogin(self):
-        userAccount = self.createTestAdminAccount()
+        userAccount = self.createNormalTestAccount()
         loginUrl = reverse("login")
         response = self.client.post(
             path=loginUrl,

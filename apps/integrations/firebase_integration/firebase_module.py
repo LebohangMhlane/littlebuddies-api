@@ -10,7 +10,6 @@ class FirebaseInstance():
 
     def sendTransactionStatusNotification(self, updatedTransaction:Transaction):
         try:
-            deviceToken = updatedTransaction.customer.deviceToken
             transactionStatus = updatedTransaction.getTransactionStatus()
             message = messaging.Message(
                 notification=messaging.Notification(
@@ -24,7 +23,7 @@ class FirebaseInstance():
                     'transactionStatus': transactionStatus,
                     'time': str(datetime.datetime.now()),
                 },
-                token=deviceToken,
+                token = updatedTransaction.customer.deviceToken,
             )
             response = messaging.send(message)
             print('Successfully sent message:', response)
@@ -35,14 +34,13 @@ class FirebaseInstance():
 
     def sendOrderAcknowledgementNotification(self, order:Order):
         try:
-            deviceToken = order.transaction.customer.deviceToken
             message = messaging.Message(
                 notification=messaging.Notification(
                     title=f"{order.transaction.merchant.name} has acknowlegded your order!",
                     body="You will receive your order soon."
                 ),
                 data={},
-                token=deviceToken,
+                token = order.transaction.customer.deviceToken,
             )
             response = messaging.send(message)
             print('Successfully sent acknowledgement notification:', response)

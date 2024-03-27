@@ -67,7 +67,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "username": "Lebo",
             "password": "HelloWorld",
         }
-        response = self.createTestAdminAccount()
+        response = self.createNormalTestAccount()
         loginUrl = reverse("login")
         loginPayload = {
             "username": userInputData["username"],
