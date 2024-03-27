@@ -25,7 +25,7 @@ class CreateAccountView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to create account",
-                "exception": str(e)
+                "error": str(e)
             }, status=500)
 
     def createUser(self, receivedPayload=dict):
@@ -94,7 +94,7 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to update Account",
-                "exception": str(e)
+                "error": str(e)
             }, status=500)
         
     def updateAccount(self, request):

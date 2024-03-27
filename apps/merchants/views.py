@@ -29,7 +29,7 @@ class CreateMerchantView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to create merchant",
-                "exception": str(e)
+                "error": str(e)
             }, status=401)
 
     def createMerchant(self, receivedPayload):
@@ -61,7 +61,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to deactivate merchant",
-                "exception": str(e)
+                "error": str(e)
             }, status=500)
     
     def deactivateMerchant(self, merchantId):
@@ -95,7 +95,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to deactivate merchant",
-                "exception": str(e)
+                "error": str(e)
             }, status=500)
     
     def updateMerchant(self, request):

@@ -58,7 +58,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         user = User.objects.all().first()
         userAccount = UserAccount.objects.all().first()
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.data["exception"], "Invalid phone number")
+        self.assertEqual(response.data["error"], "Invalid phone number")
         self.assertEqual(user, None)
         self.assertEqual(userAccount, None)
 

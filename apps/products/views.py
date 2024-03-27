@@ -32,7 +32,7 @@ class CreateProductView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to create product",
-                "exception": str(e)
+                "error": str(e)
             }, status=500)
 
     def createProduct(self, request):
@@ -58,7 +58,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
             return Response({
                 "success": False,
                 "message": "Failed to delete Product",
-                "exception": str(e)
+                "error": str(e)
             })
 
     def deleteProduct(self, request, kwargs):
