@@ -16,7 +16,8 @@ from rest_framework.response import Response
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
 from apps.merchants.models import MerchantBusiness
 from apps.orders.models import Order
-from apps.paygate.app_models.app_models import CheckoutFormPayload
+from apps.orders.serializers.order_serializer import OrderSerializer
+from apps.paygate.app_models.app_models import CheckoutForm
 from apps.transactions.models import Transaction
 from apps.transactions.serializers.transaction_serializer import TransactionSerializer
 
@@ -42,35 +43,38 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
 
     def post(self, request, *args, **kwargs):
         try:
-            checkoutFormPayload = CheckoutFormPayload(payload=request.data)
-            merchant = self.getMerchant(checkoutFormPayload.merchantId)
-            if checkoutFormPayload.verifyPurchase():
+            checkoutForm = CheckoutForm(payload=request.data)
+            merchant = self.getMerchant(checkoutForm.merchantId)
+            if checkoutForm.verifyPurchase():
                 paygatePayload, reference = self.preparePayGatePayload(
-                    checkoutFormPayload, merchant, request
+                    checkoutForm, merchant, request
                 )
-                response = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
-            if response.status_code == 200:
-                responseData = response.text.split("&")
+                paygateResponse = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
+            if paygateResponse.status_code == 200:
+                responseData = paygateResponse.text.split("&")
                 responseAsDict = self.convertResponseToDict(responseData)
                 dataIntegritySecure, verifiedPayload = self.verifyPayloadIntegrity(
                     responseAsDict, secret=merchant.getMerchantSecretKey()
                 )
                 if dataIntegritySecure:
                     transaction = self.createATransaction(
-                        request, checkoutFormPayload, merchant, reference, verifiedPayload
+                        request, checkoutForm, merchant, reference, verifiedPayload
                     )
                     if transaction:
+                        order = self.createAnOrder(transaction, checkoutForm)
+                        orderSerializer = OrderSerializer(order, many=False)
                         transactionSerializer = TransactionSerializer(transaction, many=False)
                     return Response({
                         "success": True,
                         "message": "Paygate response was successful",
                         "paygatePayload": verifiedPayload,
-                        "transaction": transactionSerializer.data
+                        "transaction": transactionSerializer.data,
+                        "order": orderSerializer.data
                     }, content_type='application/json', status=200)
                 else:
                     raise Exception("Data integrity not secure")
             else:
-                raise Exception(f"Response from Paygate was {response.status_code}")
+                raise Exception(f"Response from Paygate was {paygateResponse.status_code}")
         except Exception as e:
             return Response({
                 "success": False,
@@ -144,7 +148,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 productsPurchased__id__in=checkoutFormPayload.products,
                 numberOfProducts=productCount,
                 discountTotal=checkoutFormPayload.discountTotal,
-                completed=False
+                status=Transaction.PENDING
             ).exists()
         if not findDuplicateTransaction():
             transaction = Transaction.objects.create(
@@ -154,7 +158,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 merchant=merchant,
                 amount=checkoutFormPayload.totalCheckoutAmount[0],
                 numberOfProducts=productCount,
-                completed=False,
+                status=Transaction.PENDING,
                 discountTotal=checkoutFormPayload.discountTotal,
                 dateCreated=datetime.datetime.now(),
             )
@@ -171,28 +175,36 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 productsPurchased__id__in=checkoutFormPayload.products,
                 numberOfProducts=productCount,
                 discountTotal=checkoutFormPayload.discountTotal,
-                completed=False
+                status=Transaction.PENDING
             ).first()
             return transaction
-        
+
+    def createAnOrder(self, transaction, checkoutForm:CheckoutForm):
+        try:
+            order = Order.objects.create(
+                transaction=transaction,
+                status=Order.PAYMENT_PENDING,
+                delivery=checkoutForm.delivery,
+                deliveryDate=checkoutForm.deliveryDate,
+                address=checkoutForm.address,
+            )
+            return order
+        except Exception as e:
+            raise Exception("Failed to create order")
+
 class PaymentNotificationView(APIView, GlobalViewFunctions):
 
     permission_classes = []
     
-    def get(self, request, *args):
-        return render(
-            request=request,
-            template_name="payfast_templates/payment_notification_page.html"
-        )
-
     def post(self, request, *args, **kwargs):
         try:
             updatedTransaction = self.verifyAndUpdateTransactionStatus(request.data)
-            if updatedTransaction.completed:
-                self.createAnOrder(updatedTransaction)
+            if updatedTransaction.status == updatedTransaction.COMPLETED:
+                order = self.updateOrder(updatedTransaction)
                 _ = FirebaseInstance().sendTransactionStatusNotification(
                     updatedTransaction
                 )
+                self.sendOrderEmails(updatedTransaction, order)
             print(json.dumps(request.data, indent=4))
         except Exception as e:
             pass
@@ -201,27 +213,26 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
     def verifyAndUpdateTransactionStatus(self, receivedPayload):
         def setTransactionStatus(transactionStatus, transaction:Transaction):
             if transactionStatus == 0:
-                transaction.notDone = True
+                transaction.status = Transaction.NOT_DONE
             elif transactionStatus == 1:
-                    transaction.completed = True
+                    transaction.status = Transaction.COMPLETED
             elif transactionStatus == 2:
-                    transaction.declined = True
+                    transaction.status = Transaction.DECLINED
             elif transactionStatus == 3:
-                    transaction.cancelled = True
+                    transaction.status = Transaction.CANCELLED
             elif transactionStatus == 4:
-                transaction.userCancelled = True
+                transaction.status = Transaction.CUSTOMER_CANCELLED
             elif transactionStatus == 5:
-                transaction.receievedByPaygate = True
+                transaction.statues = Transaction.RECEIVED_BY_PAYGATE
             elif transactionStatus == 7:
-                transaction.settlementVoided = True
+                transaction.status = Transaction.SETTLEMENT_VOIDED
             return transaction
-        payRequestId = receivedPayload["PAY_REQUEST_ID"]
-        transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
         try:
+            payRequestId = receivedPayload["PAY_REQUEST_ID"]
+            transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
             dataIntegritySecure, validatedPayload = self.verifyPayloadIntegrity(
                 receivedPayload, secret=transaction.merchant.getMerchantSecretKey()
             ) # TODO: investigate checksum check failure in this step:
-            payRequestId = validatedPayload["PAY_REQUEST_ID"]
             transactionStatus = int(validatedPayload["TRANSACTION_STATUS"])
             transaction = setTransactionStatus(transactionStatus, transaction)
             transaction.save()
@@ -230,20 +241,15 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             # we cannot return an error response to paygate in this view
             pass
 
-    def createAnOrder(self, transaction):
-        try:
-            order = Order.objects.create(
-                transaction=transaction,
-                status="PENDING",
-            )
-            self.sendOrderEmail(order)
-        except Exception as e:
-            # send an email relating to the order:
-            # admin or cloud functions should create an order manually in the database should things go wrong here:
-            # ensuring the order is received regardless of database related errors
-            self.sendOrderEmail(transaction)
+    def updateOrder(self, transaction):
+        order = Order.objects.filter(transaction=transaction).first()
+        if order:
+            order.status = order.PENDING_DELIVERY
+            order.save()
+            return order
+        return None
 
-    def sendOrderEmail(self, transactionOrOrder):
+    def sendOrderEmails(self, updatedTransaction, order):
         pass
 
 class PaymentSuccessView(APIView):

@@ -1,5 +1,6 @@
 
 
+from datetime import datetime, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
@@ -175,3 +176,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         return product
     
+    def makeDate(self, daysFromNow):
+        date = datetime.now() + timedelta(days=daysFromNow)
+        date = date.strftime("%d %B %Y")
+        return date

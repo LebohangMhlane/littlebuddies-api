@@ -5,6 +5,7 @@ from rest_framework import permissions
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
+from apps.transactions.models import Transaction
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
@@ -34,12 +35,15 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
 
     def getOrdersAsMerchant(self, request):
         userAccount = request.user.useraccount
-        orders = Order.objects.filter(transaction__merchant__userAccount__pk=userAccount.pk)
+        orders = Order.objects.filter(
+            transaction__merchant__userAccount__pk=userAccount.pk, 
+            transaction__status=Transaction.COMPLETED
+        )
         if orders:
             return orders
 
     def getOrdersAsCustomer(self, request):
         userAccount = request.user.useraccount
-        orders = Order.objects.filter(transaction__customer__id=userAccount.pk, status="PENDING")
+        orders = Order.objects.filter(transaction__customer__id=userAccount.pk, status=Order.PENDING_DELIVERY)
         if orders:
             return orders

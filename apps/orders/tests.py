@@ -25,6 +25,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "300.0",
             "products": "[1, 2]",
             "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
@@ -44,7 +47,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(products[0].id, p1.id)
         self.assertEqual(products[1].id, p2.id)
         self.assertEqual(order.transaction.merchant.id, int(checkoutFormPayload["merchantId"]))
-        self.assertEqual(order.status, "PENDING")
+        self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
 
 
@@ -68,6 +71,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "300.0",
             "products": "[1, 2]",
             "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
         initiatePaymentResponse = self.client.post(
@@ -124,6 +130,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "300.0",
             "products": "[1, 2]",
             "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
         initiatePaymentResponse = self.client.post(

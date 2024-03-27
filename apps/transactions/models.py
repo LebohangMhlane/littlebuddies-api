@@ -10,6 +10,16 @@ from apps.products.models import Product
 
 class Transaction(models.Model):
 
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    FAILED = "FAILED"
+    DECLINED = "DECLINED"
+    NOT_DONE = "NOT_DONE"
+    RECEIVED_BY_PAYGATE = "RECEIVED_BY_PAYGATE"
+    SETTLEMENT_VOIDED = "SETTLEMENT_VOIDED"
+    CUSTOMER_CANCELLED = "CUSTOMER_CANCELLED"
+
     payRequestId = models.CharField(max_length=36, blank=False, null=True)
     reference = models.CharField(max_length=255, blank=False, null=True)
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
@@ -18,14 +28,7 @@ class Transaction(models.Model):
     numberOfProducts = models.PositiveIntegerField(default=0)
     amount = models.PositiveIntegerField(default=0, blank=False)
     discountTotal = models.PositiveIntegerField(default=0, blank=False)
-    completed = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
-    failed = models.BooleanField(default=False)
-    declined = models.BooleanField(default=False)
-    notDone = models.BooleanField(default=False)
-    receievedByPaygate = models.BooleanField(default=False)
-    settlementVoided = models.BooleanField(default=False)
-    userCancelled = models.BooleanField(default=False)
+    status = models.CharField(max_length=50, blank=False, default=PENDING)
     dateCreated = models.DateTimeField(auto_now_add=True)
     dateCompleted = models.DateTimeField(auto_now=True)
 
@@ -35,20 +38,8 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         super(Transaction, self).save(*args, **kwargs)
 
-    # TODO: use an enum for these later:
     def getTransactionStatus(self):
-        possibleStatuses = {
-            "Transaction Completed": self.completed,
-            "Transaction Cancelled": self.cancelled,
-            "Transaction Failed": self.failed,
-            "Transaction Declined": self.declined,
-            "Not Done": self.notDone,
-            "Recieved By Paygate": self.receievedByPaygate,
-            "Settlement Voided": self.settlementVoided,
-            "Customer Cancelled": self.userCancelled,
-        }
-        currentStatus = [key for key, value in possibleStatuses.items() if value is True]
-        return currentStatus[0]
+        return self.status
 
 
 class TransactionHistory(models.Model):

@@ -1,13 +1,12 @@
 from django.test import TestCase
-
 from rest_framework.reverse import reverse
 
 from unittest.mock import patch
+from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
 
-from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 
 class PayGateTests(GlobalTestCaseConfig, TestCase):
 
@@ -27,6 +26,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "300.0",
             "products": "[1, 2]",
             "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
         response = self.client.post(
@@ -60,6 +62,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "250.0",
             "products": "[1, 2]",
             "discountTotal": "50",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
         response = self.client.post(
@@ -76,9 +81,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
+    # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_paygate_notification(self, mockedResponse, mockedSendNotification):
+    def test_paygate_notification(self, mockedResponse):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
@@ -112,7 +117,8 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(products[0].id, p1.id)
         self.assertEqual(products[1].id, p2.id)
         self.assertEqual(order.transaction.merchant.id, int(checkoutFormPayload["merchantId"]))
-        self.assertEqual(order.status, "PENDING")
+        self.assertEqual(order.status, Order.PENDING_DELIVERY)
+        self.assertEqual(order.transaction.status, Transaction.COMPLETED)
         self.assertEqual(order.transaction.customer.id, customer.id)
 
 

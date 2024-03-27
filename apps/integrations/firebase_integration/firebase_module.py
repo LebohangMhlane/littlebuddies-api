@@ -15,7 +15,7 @@ class FirebaseInstance():
                 notification=messaging.Notification(
                     title=f"Order from {updatedTransaction.merchant.name} successfully placed!",
                     body="You will receive another notification when the store has acknowleged your order."
-                ) if updatedTransaction.completed else messaging.Notification(
+                ) if updatedTransaction.status == updatedTransaction.COMPLETED else messaging.Notification(
                     title=f"Order from {updatedTransaction.merchant.name} failed.",
                     body=f"Reason: {transactionStatus}"
                 ),

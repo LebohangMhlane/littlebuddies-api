@@ -133,7 +133,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "totalCheckoutAmount": "300.0",
             "products": "[1, 2]",
             "discountTotal": "0",
-        } 
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
+        }
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
             initiate_payment_url,

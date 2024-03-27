@@ -14,7 +14,7 @@ payfast_data = {
 paygate_credentials = {
     "PayGate ID": 10011072130,
     "Password":	"secret",
-    "Currencies":	"ZAR"
+    "Currencies":"ZAR"
 }
 
 additional_paygate_fields = {

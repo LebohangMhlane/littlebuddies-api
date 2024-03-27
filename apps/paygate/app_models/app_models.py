@@ -1,14 +1,16 @@
 
 from apps.products.models import Product
-from django.conf import settings
 
 # what the mobile app sends to the server to initiate payment after checkout:
 
-class CheckoutFormPayload():
+class CheckoutForm():
     merchantId = 0
     totalCheckoutAmount = 0.0
     products = []
     discountTotal = 0
+    delivery = True
+    deliveryDate = ""
+    address = ""
     
     def __init__(self, payload):
         payload = payload.copy()
@@ -16,12 +18,15 @@ class CheckoutFormPayload():
         self.totalCheckoutAmount = float(payload["totalCheckoutAmount"]),
         self.products = self.convertAndReturnProductsList(payload.get("products"))
         self.discountTotal = int(payload.get("discountTotal"))
+        self.delivery = bool(payload.get("delivery"))
+        self.deliveryDate = payload.get("deliveryDate")
+        self.address = payload.get("address")
     
     def verifyPurchase(self):
 
         def checkProductExistence():
             productsExistCount = Product.objects.filter(
-                id__in=self.products, merchant__id=self.merchantId, isActive=True
+                id__in=self.products, merchant__id=self.merchantId, isActive=True, inStock=True
             ).count()
             if productsExistCount == len(self.products):
                 return True

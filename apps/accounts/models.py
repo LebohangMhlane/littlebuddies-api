@@ -19,3 +19,7 @@ class UserAccount(models.Model):
     def save(self, *args, **kwargs):
         self.isActive = self.user.is_active
         super(UserAccount, self).save(*args, **kwargs)
+
+
+class AccountSettings(models.Model):
+    pass
