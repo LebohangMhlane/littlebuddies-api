@@ -19,7 +19,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateSecret": "secret",
         }
         token = self.createNormalTestAccountAndLogin()
-        self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         merchantUserAccount = self.createTestMerchantUserAccount()
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
@@ -55,7 +55,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_deactivate_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
-        self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
@@ -75,7 +75,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_deactivate_merchant_failure(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
-        _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
@@ -96,7 +96,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_update_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
-        _ = self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.name, "Pet Food Shop")
@@ -116,13 +116,13 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(updatedMerchant["name"], "World of pets")
         self.assertEqual(updatedMerchant["address"], "32 rethman street newgermany")
 
-    @patch("apps.integrations.firebase_instance.firebase_instance_module.FirebaseInstance.sendTransactionStatusNotification")
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
     def test_acknowlegde_order(self, mockedResponse, mockedSendNotification):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        customer = self.createTestCustomer()
+        _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
@@ -142,7 +142,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         )
         paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
         paymentNotificationUrl = reverse("payment_notification_view")
-        response = self.client.post(
+        _ = self.client.post(
             paymentNotificationUrl,
             data=paymentNotificationResponse,
             content_type='application/x-www-form-urlencoded'
@@ -157,3 +157,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             data=checkoutFormPayload,
             HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
         )
+        order = Order.objects.all().first()
+        self.assertEqual(response.data["message"], "Order acknowledged successfully")
+        self.assertTrue(order.acknowledged)
+    
+    def test_fulfill_order(self):
+        pass
+
+

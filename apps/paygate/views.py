@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.integrations.firebase_instance.firebase_instance_module import FirebaseInstance
+from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
 from apps.merchants.models import MerchantBusiness
 from apps.orders.models import Order
 from apps.paygate.app_models.app_models import CheckoutFormPayload

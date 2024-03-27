@@ -152,7 +152,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         return merchant
 
-    def makeUserAccountSuperAdmin(self, userAccountPk:int):
+    def makeNormalAccountSuperAdmin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()

@@ -12,7 +12,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         _ = self.loginAsMerchant()
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
-            "merchantPk": 1,
+            "merchantPk": testMerchantAccount.pk,
             "name": "Ben's Cat Food",
             "description": "petfoodshop@gmail.com",
             "originalPrice": 100,
@@ -34,7 +34,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_product_as_superadmin(self):
         _ = self.createNormalTestAccountAndLogin()
-        self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantAccount = self.createTestMerchantUserAccount()
         self.createTestMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
@@ -71,7 +71,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "discountPercentage": 0,
         }
         _ = self.createNormalTestAccountAndLogin()
-        self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantAccount = self.createTestMerchantUserAccount()
         self.createTestMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
@@ -110,17 +110,29 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_delete_product_as_superadmin(self):
         _ = self.createNormalTestAccountAndLogin()
-        self.makeUserAccountSuperAdmin(self.userAccount.pk)
+        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
-        product = self.createTestProduct(merchant, testMerchantUserAccount, name="Bob's Cat Food", price=200.0)
-        deleteProductUrl = reverse("delete_product_view", kwargs={"productPk": product.pk})
-        payload = {
-            "productPk": 1,
-        }
+        product1 = self.createTestProduct(
+            merchant, testMerchantUserAccount, 
+            name="Bob's Cat Food", price=200.0
+        )
+        product2 = self.createTestProduct(
+            merchant, testMerchantUserAccount, 
+            name="Bob's Dog Food", price=200.0
+        )
+        deleteProductUrl = reverse(
+            "delete_product_view", 
+            kwargs={"productPk": product1.pk}
+        )
         response = self.client.get(
             deleteProductUrl,
-            data=payload,
             HTTP_AUTHORIZATION=f"Token {self.authToken}"
         )
-        self.assertEqual(response.data["message"], "Product deleted successfully")
+        self.assertEqual(
+            response.data["message"], 
+            "Product deleted successfully"
+        )
+        product = Product.objects.all().first()
+        self.assertEqual(product.pk, product2.pk)
+

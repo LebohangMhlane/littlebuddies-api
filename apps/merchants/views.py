@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from apps.integrations.firebase_instance.firebase_instance_module import FirebaseInstance
+from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
 from apps.merchants.models import MerchantBusiness
 from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 
@@ -117,7 +117,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
         pass
 
 
-class AcknowledgedOrderView(APIView, GlobalViewFunctions):
+class AcknowledgeOrderView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         try:
@@ -127,12 +127,15 @@ class AcknowledgedOrderView(APIView, GlobalViewFunctions):
                 notificationSent = self.sendNotificationOfOrderAcknowledgement(order)
                 if not notificationSent:
                     self.sendAcknowledgementEmail(order)
+                order.acknowledged = True
+                order.save()
             else: raise Exception("You're not permitted to use this feature")
             return Response({
                 "success": True,
                 "message": "Order acknowledged successfully",
             }, status=200)
         except Exception as e:
+            self.sendAcknowledgementEmail(order)
             return Response({
                 "sucess": False,
                 "message": "Failed to acknowledge order",
