@@ -15,7 +15,7 @@ from apps.orders.serializers.order_serializer import OrderSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
-class getMerchants(APIView, GlobalViewFunctions):
+class getMerchantsNearby(APIView, GlobalViewFunctions):
 
     def get(self, request, **kwargs):
         try:
