@@ -10,6 +10,24 @@ from apps.merchants.models import MerchantBusiness
 
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 
+    # little buddies tests
+    def test_get_petstores_near_me(self):
+        _ = self.createTestCustomer()
+        authToken = self.loginAsCustomer()
+        merchantUserAccount = self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
+        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+
+        deviceLocation = "-29.7799367,30.875305"
+        getPetStoresNearMeUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
+        response = self.client.get(
+            getPetStoresNearMeUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+        print(response.data)
+        pass
+
     def test_create_merchant(self):
         createMerchantPayload = {
             "userAccountPk": 2,

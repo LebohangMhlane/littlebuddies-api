@@ -3,10 +3,16 @@ from apps.merchants.views import (CreateMerchantView,
                                 DeactivateMerchantView,
                                 UpdateMerchant,
                                 AcknowledgeOrderView,
-                                FulfillOrderView
+                                FulfillOrderView,
+                                getMerchants,
                                 )
 
 urlpatterns = [
+    
+    # little buddies unique url name urls:
+    path('get-petstores-near-me/<str:coordinates>/', getMerchants.as_view(), name="get_petstores_near_me"),
+
+    # dynamic name urls:
     path('create-merchant/', CreateMerchantView.as_view(), name="create_merchant_view"),
     path('deactivate-merchant/', DeactivateMerchantView.as_view(), name="deactivate_merchant_view"),
     path('update-merchant/', UpdateMerchant.as_view(), name="update_merchant_view"),

@@ -151,7 +151,8 @@ class GlobalTestCaseConfig(TestCase):
             address="12 Pet Street Newgermany",
             paygateReference="pgtest_123456789",
             paygateId="10011072130",
-            paygateSecret="secret"
+            paygateSecret="secret",
+            geolocation="-29.7928319,30.8321922"
         )
         return merchant
 

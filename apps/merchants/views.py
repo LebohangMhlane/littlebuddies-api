@@ -1,5 +1,10 @@
+import googlemaps.client
+import googlemaps.distance_matrix
+import googlemaps.geolocation
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+import googlemaps
 
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
 from apps.merchants.models import MerchantBusiness
@@ -8,6 +13,34 @@ from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
+
+
+class getMerchants(APIView, GlobalViewFunctions):
+
+    def get(self, request, **kwargs):
+        try:
+            # TODO: restrict api key access to server ip address:
+            gmaps = googlemaps.Client(key="AIzaSyBQgPeIoIWjNxRWzwKoLJhHO5yUyUcTLXo")
+
+            distance = googlemaps.distance_matrix.distance_matrix(
+                client=gmaps,
+                origins=["71 Rethman Street, New Germany, 3610"],
+                destinations=["Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"]
+            )
+
+            deviceLocation = kwargs["coordinates"]
+
+            return Response({
+                "success": True,
+                "message": "Stores near customer retrieved successfully",
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to get stores near customer",
+                "error": str(e)
+            }, status=401)
+
 
 
 class CreateMerchantView(APIView, GlobalViewFunctions):
@@ -147,7 +180,7 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
         notificationSent = FirebaseInstance().sendOrderAcknowledgementNotification(order)
         return notificationSent
     
-    def sendAcknowledgementEmail(self):
+    def sendAcknowledgementEmail(self, order:Order):
         pass
 
 

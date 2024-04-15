@@ -10,6 +10,7 @@ class MerchantBusiness(models.Model):
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
+    geolocation = models.CharField(max_length=200, blank=False, null=True)
     isActive = models.BooleanField(default=True)
     paygateReference = models.CharField(max_length=1000, blank=False, default="")
     paygateId = models.CharField(max_length=20, blank=False)
