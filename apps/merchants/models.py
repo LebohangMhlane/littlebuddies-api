@@ -16,6 +16,7 @@ class MerchantBusiness(models.Model):
     Pinetown = "Pinetown"
     Hillcrest = "Hillcrest"
     
+    logo = models.CharField(max_length=2000, blank=False, null=True)
     userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
