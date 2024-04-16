@@ -10,23 +10,48 @@ from apps.merchants.models import MerchantBusiness
 
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 
-    # little buddies tests
+    # little buddies tests:
     def test_get_petstores_near_me(self):
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchantUserAccount1 = self.createTestMerchantUserAccount()
+        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
+        merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
+            "username": "Lebo",
+            "password": "Hello World",
+            "firstName": "Lebohang",
+            "lastName": "Mhlane",
+            "email": "lebo@gmail.com",
+            "address": "24 Tiger Lily Street",
+            "phoneNumber": "0638473382",
+            "isMerchant": True,
+            "deviceToken": "dfwhefoewhofh328rh2"
+        })
+        merchantBusiness2 = self.createTestMerchantBusinessDynamic(
+            merchantUserAccount2, {
+                "name": "Totally Pets",
+                "email": "totallypets@gmail.com",
+                "address": "197 Brand Rd, Bulwer, Berea, 4083",
+                "paygateReference": "pgtest_123456789",
+                "paygateId": "339e8g3iiI934",
+                "paygateSecret": "santafridays",
+                "area": "New Germany",
+                "hasSpecials": False,
+            }
+        )
+
+        p1 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
+        p2 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+
+        p3 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p4 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
 
         deviceLocation = "-29.7799367,30.875305"
-        getPetStoresNearMeUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
+        getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
         response = self.client.get(
-            getPetStoresNearMeUrl,
+            getNearByStoresUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
-        print(response.data)
-        pass
 
     def test_create_merchant(self):
         createMerchantPayload = {

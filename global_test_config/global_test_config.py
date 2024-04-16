@@ -102,6 +102,27 @@ class GlobalTestCaseConfig(TestCase):
         testMerchantUserAccount = UserAccount.objects.get(user__username=userInputData["username"])
         return testMerchantUserAccount
     
+    def createTestMerchantUserAccountDynamic(self, userData):
+        userInputData = {
+            "username": userData["username"],
+            "password": userData["password"],
+            "firstName": userData["firstName"],
+            "lastName": userData["lastName"],
+            "email": userData["email"],
+            "address": userData["address"],
+            "phoneNumber": userData["phoneNumber"],
+            "isMerchant": userData["isMerchant"],
+            "deviceToken": userData["deviceToken"]
+        }
+        create_account_url = reverse("create_account_view")
+        response = self.client.post(
+            path=create_account_url,
+            content_type=f"application/json",
+            data=userInputData,
+        )
+        testMerchantUserAccount = UserAccount.objects.get(user__username=userInputData["username"])
+        return testMerchantUserAccount
+    
     def createNormalTestAccountAndLogin(self):
         userAccount = self.createNormalTestAccount()
         loginUrl = reverse("login")
@@ -146,13 +167,28 @@ class GlobalTestCaseConfig(TestCase):
     def createTestMerchantBusiness(self, userAccount:UserAccount):
         merchant = MerchantBusiness.objects.create(
             userAccount=userAccount,
-            name="Pet Food Shop",
-            email="petfoodshop@gmail.com",
-            address="12 Pet Street Newgermany",
+            name="Absolute Pets",
+            email="absolutepets@gmail.com",
+            address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640",
             paygateReference="pgtest_123456789",
             paygateId="10011072130",
             paygateSecret="secret",
-            geolocation="-29.7928319,30.8321922"
+            area="New Germany",
+            hasSpecials=False,
+        )
+        return merchant
+    
+    def createTestMerchantBusinessDynamic(self, userAccount:UserAccount, businessData):
+        merchant = MerchantBusiness.objects.create(
+            userAccount=userAccount,
+            name=businessData["name"],
+            email=businessData["email"],
+            address=businessData["address"],
+            paygateReference="pgtest_123456789",
+            paygateId=businessData["paygateId"],
+            paygateSecret=businessData["paygateSecret"],
+            area=businessData["area"],
+            hasSpecials=businessData["hasSpecials"],
         )
         return merchant
 

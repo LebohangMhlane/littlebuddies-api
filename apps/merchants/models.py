@@ -1,3 +1,4 @@
+from enum import Enum
 from django.db import models
 from django.conf import settings
 
@@ -6,16 +7,26 @@ from cryptography.fernet import Fernet as fernet
 
 
 class MerchantBusiness(models.Model):
+
+    # TODO: find a cleaner way to do this.
+    # I anticipate more locations in the future
+    Kloof = "Kloof"
+    NewGermany = "New Germany"
+    Westville = "Westville"
+    Pinetown = "Pinetown"
+    Hillcrest = "Hillcrest"
+    
     userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
-    geolocation = models.CharField(max_length=200, blank=False, null=True)
     isActive = models.BooleanField(default=True)
     paygateReference = models.CharField(max_length=1000, blank=False, default="")
-    paygateId = models.CharField(max_length=20, blank=False)
-    paygateSecret = models.CharField(max_length=32, blank=False, default="")
-    fernetToken = models.CharField(max_length=2000, blank=True)
+    paygateId = models.CharField(max_length=20, blank=False, unique=True)
+    paygateSecret = models.CharField(max_length=32, blank=False, null=True)
+    fernetToken = models.CharField(max_length=2000, blank=True, unique=True)
+    area = models.CharField(max_length=80, blank=False, null=False, default=Kloof)
+    hasSpecials = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.userAccount.user.username}"
@@ -46,4 +57,11 @@ class MerchantBusiness(models.Model):
         except Exception as e:
             raise Exception(f"Failed to decrypt token: {str(e)}")
 
-
+    def getLocationsList(self):
+        return [
+            self.Kloof,
+            self.NewGermany,
+            self.Westville,
+            self.Pinetown,
+            self.Hillcrest
+        ]

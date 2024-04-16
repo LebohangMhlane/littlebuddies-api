@@ -1,6 +1,10 @@
+import googlemaps.addressvalidation
 import googlemaps.client
+import googlemaps.convert
 import googlemaps.distance_matrix
+import googlemaps.geocoding
 import googlemaps.geolocation
+import googlemaps.maps
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -12,27 +16,23 @@ from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
+from apps.products.models import Product
+from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
 class getMerchantsNearby(APIView, GlobalViewFunctions):
-
     def get(self, request, **kwargs):
         try:
             # TODO: restrict api key access to server ip address:
             gmaps = googlemaps.Client(key="AIzaSyBQgPeIoIWjNxRWzwKoLJhHO5yUyUcTLXo")
-
-            distance = googlemaps.distance_matrix.distance_matrix(
-                client=gmaps,
-                origins=["71 Rethman Street, New Germany, 3610"],
-                destinations=["Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"]
-            )
-
             deviceLocation = kwargs["coordinates"]
-
+            locationArea = self._getLocationArea(deviceLocation, gmaps)
+            merchantsNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
+                "petStoresNearby": merchantsNearby
             }, status=200)
         except Exception as e:
             return Response({
@@ -40,6 +40,69 @@ class getMerchantsNearby(APIView, GlobalViewFunctions):
                 "message": "Failed to get stores near customer",
                 "error": str(e)
             }, status=401)
+        
+    def _getLocationArea(self, deviceLocation, gmaps):
+        try:
+            locationArea = None
+            deviceAddresses = googlemaps.geocoding.reverse_geocode(
+                gmaps,
+                deviceLocation,
+            )
+            deviceAddresses = deviceAddresses[0]
+            for component in deviceAddresses["address_components"]:
+                if component["long_name"] in MerchantBusiness().getLocationsList():
+                    locationArea = component["long_name"]
+                    break
+            return locationArea
+        except Exception as e:
+            raise Exception(f"Failed to get location area: {str(e)}")
+
+    def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
+        merchantsNearby = []
+
+        def getProducts(merchant):
+            products = Product.objects.filter(
+                isActive=True,
+                merchant=merchant,
+                inStock=True,
+            )
+            if products:
+                serializer = ProductSerializer(products, many=True)
+            return serializer.data
+        def getDistancesFromCustomer(deviceLocation, merchantAddresses):
+            try:
+                distance = googlemaps.distance_matrix.distance_matrix(
+                    client=gmaps,
+                    origins=[deviceLocation],
+                    destinations=merchantAddresses
+                )
+                distances = distance["rows"][0]["elements"]
+                return distances
+            except Exception as e:
+                raise Exception(f"Failed to get distance from customer: {str(e)}")
+        def setDistanceData(allDistances):
+            for index, distanceData in enumerate(allDistances):
+                merchantsNearby[index]["distance"] = distanceData
+                continue
+
+        merchantsInArea = MerchantBusiness.objects.filter(
+            area=locationArea,
+            isActive=True,
+        )
+        merchantAddresses = []
+        if merchantsInArea:
+            for merchant in merchantsInArea:
+                merchantAddresses.append(merchant.address)
+                products = getProducts(merchant)
+                serializer = MerchantSerializer(merchant, many=False)
+                merchantsNearby.append({
+                    "merchant": serializer.data,
+                    "products": products,
+                })
+        allDistances = getDistancesFromCustomer(deviceLocation, merchantAddresses)
+        setDistanceData(allDistances)
+        
+        return merchantsNearby
 
 
 
