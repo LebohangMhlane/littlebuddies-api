@@ -21,4 +21,4 @@ class Product(models.Model):
     specialEndDate = models.DateTimeField(auto_now=True) # TODO: fix special ending date issue
 
     def __str__(self) -> str:
-        return f"{self.name} - {self.description}"
+        return f"{self.name} - {self.merchant.name}"
