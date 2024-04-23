@@ -25,6 +25,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 
+# TODO: restrict api key access to server ip address:
+GOOGLE_SERVICES_API_KEY = os.environ.get("GOOGLE_SERVICES_API_KEY")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -36,7 +39,7 @@ FIREBASE_APP = FirebaseApp()
 
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
-APP_URL = "18d1-41-10-127-253.ngrok-free.app" # using ngrok server during development
+APP_URL = "f80e-41-10-127-253.ngrok-free.app" # using ngrok server during development
 
 SERVER_URL = f"https://{APP_URL}"
 

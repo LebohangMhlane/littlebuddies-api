@@ -1,3 +1,5 @@
+from django.conf import settings
+
 import json
 import googlemaps.addressvalidation
 import googlemaps.client
@@ -17,8 +19,6 @@ from apps.merchants.serializers.merchant_serializer import MerchantSerializer
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
-from apps.products.models import Product
-from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 import logging
 
@@ -29,7 +29,7 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
         try:
             logger.info("Getting stores near customer...")
             # TODO: restrict api key access to server ip address:
-            gmaps = googlemaps.Client(key="AIzaSyBQgPeIoIWjNxRWzwKoLJhHO5yUyUcTLXo")
+            gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             deviceLocation = kwargs["coordinates"]
             locationArea = self._getLocationArea(deviceLocation, gmaps)
             merchantsNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
@@ -107,7 +107,6 @@ class getUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             logger.info("Getting updated stores near customer...")
-            # TODO: restrict api key access to server ip address:
             updatedMerchantsNearby = []
             stores = json.loads(kwargs["storeIds"])
             storeIds = [store.get("id") for store in stores]
