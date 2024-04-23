@@ -4,13 +4,16 @@ from apps.merchants.views import (CreateMerchantView,
                                 UpdateMerchant,
                                 AcknowledgeOrderView,
                                 FulfillOrderView,
-                                getMerchantsNearby,
+                                getNewMerchantsNearby,
+                                getUpdatedMerchantsNearby
                                 )
 
 urlpatterns = [
 
     # little buddies unique url name urls:
-    path('get-petstores-near-me/<str:coordinates>/', getMerchantsNearby.as_view(), name="get_petstores_near_me"),
+    path('get-petstores-near-me/<str:coordinates>/', getNewMerchantsNearby.as_view(), name="get_petstores_near_me"),
+    path('get-updated-petstores-near-me/<str:storeIds>/', getUpdatedMerchantsNearby.as_view(), name="get_updated_petstores_near_me"),
+
 
     # dynamic name urls:
     path('create-merchant/', CreateMerchantView.as_view(), name="create_merchant_view"),

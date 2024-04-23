@@ -53,6 +53,50 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
 
+    def test_get_updated_petstores_near_me(self):
+        _ = self.createTestCustomer()
+        authToken = self.loginAsCustomer()
+        merchantUserAccount1 = self.createTestMerchantUserAccount()
+        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
+        merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
+            "username": "Lebo",
+            "password": "Hello World",
+            "firstName": "Lebohang",
+            "lastName": "Mhlane",
+            "email": "lebo@gmail.com",
+            "address": "24 Tiger Lily Street",
+            "phoneNumber": "0638473382",
+            "isMerchant": True,
+            "deviceToken": "dfwhefoewhofh328rh2"
+        })
+        merchantBusiness2 = self.createTestMerchantBusinessDynamic(
+            merchantUserAccount2, {
+                "name": "Totally Pets",
+                "email": "totallypets@gmail.com",
+                "address": "197 Brand Rd, Bulwer, Berea, 4083",
+                "paygateReference": "pgtest_123456789",
+                "paygateId": "339e8g3iiI934",
+                "paygateSecret": "santafridays",
+                "area": "New Germany",
+                "hasSpecials": False,
+            }
+        )
+
+        p1 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
+        p2 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+
+        p3 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p4 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+
+        getNearByStoresUrl = reverse("get_updated_petstores_near_me", kwargs={
+        "storeIds": '[{"id": 1, "distance": "10 mins"}, {"id": 2, "distance": "10 mins"}]'
+        })
+        response = self.client.get(
+            getNearByStoresUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+        pass
+
     def test_create_merchant(self):
         createMerchantPayload = {
             "userAccountPk": 2,

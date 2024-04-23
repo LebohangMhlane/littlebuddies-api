@@ -5,7 +5,6 @@ from django.conf import settings
 from apps.accounts.models import UserAccount
 from cryptography.fernet import Fernet as fernet
 
-
 class MerchantBusiness(models.Model):
 
     # TODO: find a cleaner way to do this.

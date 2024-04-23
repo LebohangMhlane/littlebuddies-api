@@ -1,3 +1,4 @@
+import json
 import googlemaps.addressvalidation
 import googlemaps.client
 import googlemaps.convert
@@ -19,11 +20,14 @@ from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.products.models import Product
 from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
+import logging
 
+logger = logging.getLogger(__name__)
 
-class getMerchantsNearby(APIView, GlobalViewFunctions):
+class getNewMerchantsNearby(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
+            logger.info("Getting stores near customer...")
             # TODO: restrict api key access to server ip address:
             gmaps = googlemaps.Client(key="AIzaSyBQgPeIoIWjNxRWzwKoLJhHO5yUyUcTLXo")
             deviceLocation = kwargs["coordinates"]
@@ -39,9 +43,10 @@ class getMerchantsNearby(APIView, GlobalViewFunctions):
                 "success": False,
                 "message": "Failed to get stores near customer",
                 "error": str(e)
-            }, status=401)
+            }, status=200)
         
     def _getLocationArea(self, deviceLocation, gmaps):
+        logger.info("Getting location area...")
         try:
             locationArea = None
             deviceAddresses = googlemaps.geocoding.reverse_geocode(
@@ -58,18 +63,10 @@ class getMerchantsNearby(APIView, GlobalViewFunctions):
             raise Exception(f"Failed to get location area: {str(e)}")
 
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
+        logger.info("Getting stores in area...")
         merchantsNearby = []
 
-        def getProducts(merchant):
-            products = Product.objects.filter(
-                isActive=True,
-                merchant=merchant,
-                inStock=True,
-            )
-            if products:
-                serializer = ProductSerializer(products, many=True)
-            return serializer.data
-        def getDistancesFromCustomer(deviceLocation, merchantAddresses):
+        def getDistanceFromCustomer(deviceLocation, merchantAddresses):
             try:
                 distance = googlemaps.distance_matrix.distance_matrix(
                     client=gmaps,
@@ -93,17 +90,49 @@ class getMerchantsNearby(APIView, GlobalViewFunctions):
         if merchantsInArea:
             for merchant in merchantsInArea:
                 merchantAddresses.append(merchant.address)
-                products = getProducts(merchant)
+                products = self.getProducts(merchant)
                 serializer = MerchantSerializer(merchant, many=False)
                 merchantsNearby.append({
                     "merchant": serializer.data,
                     "products": products,
                 })
-        allDistances = getDistancesFromCustomer(deviceLocation, merchantAddresses)
+        allDistances = getDistanceFromCustomer(deviceLocation, merchantAddresses)
         setDistanceData(allDistances)
         
         return merchantsNearby
+    
 
+class getUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
+
+    def get(self, request, **kwargs):
+        try:
+            logger.info("Getting updated stores near customer...")
+            # TODO: restrict api key access to server ip address:
+            updatedMerchantsNearby = []
+            stores = json.loads(kwargs["storeIds"])
+            storeIds = [store.get("id") for store in stores]
+            storeDistances = [store.get("distance") for store in stores]
+            merchants = MerchantBusiness.objects.filter(
+                id__in=storeIds)
+            for index, merchant in enumerate(merchants):
+                products = self.getProducts(merchant)
+                serializer = MerchantSerializer(merchant, many=False)
+                updatedMerchantsNearby.append({
+                    "merchant": serializer.data,
+                    "products": products,
+                    "distance": {"duration": {"text": storeDistances[index]}}
+                })
+            return Response({
+                "success": True,
+                "message": "Stores near customer retrieved successfully",
+                "petStoresNearby": updatedMerchantsNearby
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to get stores near customer",
+                "error": str(e)
+            }, status=401)
 
 
 class CreateMerchantView(APIView, GlobalViewFunctions):

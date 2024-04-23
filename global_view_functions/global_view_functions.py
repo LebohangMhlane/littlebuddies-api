@@ -4,7 +4,11 @@
 
 import hashlib
 from apps.merchants.models import MerchantBusiness
+from apps.products.models import Product
+from apps.products.serializers.serializers import ProductSerializer
+import logging
 
+logger = logging.getLogger(__name__)
 
 class GlobalViewFunctions():
 
@@ -53,3 +57,13 @@ class GlobalViewFunctions():
     def notifyAllOfItemCreation(self, instance):
         pass
 
+    def getProducts(self, merchant):
+        logger.info("Getting updated stores near customer...")
+        products = Product.objects.filter(
+            isActive=True,
+            merchant=merchant,
+            inStock=True,
+        )
+        if products:
+            serializer = ProductSerializer(products, many=True)
+        return serializer.data
