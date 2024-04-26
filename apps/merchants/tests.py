@@ -52,6 +52,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             getNearByStoresUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
+        self.assertIsNotNone(response.data["customerAddress"])
 
     def test_get_updated_petstores_near_me(self):
         _ = self.createTestCustomer()
@@ -187,8 +188,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
         testMerchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
-        self.assertEqual(merchant.name, "Pet Food Shop")
-        self.assertEqual(merchant.address, "12 Pet Street Newgermany")
+        self.assertEqual(merchant.name, "Absolute Pets")
+        self.assertEqual(merchant.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
         payload = {
             "merchantPk": 1,
             "name": "World of pets",

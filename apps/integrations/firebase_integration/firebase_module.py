@@ -8,22 +8,22 @@ from apps.transactions.models import Transaction
 
 class FirebaseInstance():
 
-    def sendTransactionStatusNotification(self, updatedTransaction:Transaction):
+    def sendTransactionStatusNotification(self, transaction:Transaction):
         try:
-            transactionStatus = updatedTransaction.getTransactionStatus()
+            transactionStatus = transaction.getTransactionStatus()
             message = messaging.Message(
                 notification=messaging.Notification(
-                    title=f"Order from {updatedTransaction.merchant.name} successfully placed!",
+                    title=f"Order from {transaction.merchant.name} successfully placed!",
                     body="You will receive another notification when the store has acknowleged your order."
-                ) if updatedTransaction.status == updatedTransaction.COMPLETED else messaging.Notification(
-                    title=f"Order from {updatedTransaction.merchant.name} failed.",
+                ) if transaction.status == transaction.COMPLETED else messaging.Notification(
+                    title=f"Order from {transaction.merchant.name} failed.",
                     body=f"Reason: {transactionStatus}"
                 ),
                 data={
                     'transactionStatus': transactionStatus,
                     'time': str(datetime.datetime.now()),
                 },
-                token = updatedTransaction.customer.deviceToken,
+                token = transaction.customer.deviceToken,
             )
             response = messaging.send(message)
             print('Successfully sent message:', response)

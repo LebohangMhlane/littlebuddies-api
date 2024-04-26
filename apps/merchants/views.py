@@ -31,12 +31,13 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             # TODO: restrict api key access to server ip address:
             gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             deviceLocation = kwargs["coordinates"]
-            locationArea = self._getLocationArea(deviceLocation, gmaps)
+            locationArea, customerAddress = self._getLocationArea(deviceLocation, gmaps)
             merchantsNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
-                "petStoresNearby": merchantsNearby
+                "petStoresNearby": merchantsNearby,
+                "customerAddress": customerAddress
             }, status=200)
         except Exception as e:
             return Response({
@@ -58,25 +59,14 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
                 if component["long_name"] in MerchantBusiness().getLocationsList():
                     locationArea = component["long_name"]
                     break
-            return locationArea
+            return locationArea, deviceAddresses["formatted_address"]
         except Exception as e:
             raise Exception(f"Failed to get location area: {str(e)}")
 
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
-        logger.info("Getting stores in area...")
+        logger.info("Getting stores near customer...")
         merchantsNearby = []
-
-        def getDistanceFromCustomer(deviceLocation, merchantAddresses):
-            try:
-                distance = googlemaps.distance_matrix.distance_matrix(
-                    client=gmaps,
-                    origins=[deviceLocation],
-                    destinations=merchantAddresses
-                )
-                distances = distance["rows"][0]["elements"]
-                return distances
-            except Exception as e:
-                raise Exception(f"Failed to get distance from customer: {str(e)}")
+            
         def setDistanceData(allDistances):
             for index, distanceData in enumerate(allDistances):
                 merchantsNearby[index]["distance"] = distanceData
@@ -96,10 +86,21 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
                     "merchant": serializer.data,
                     "products": products,
                 })
-        allDistances = getDistanceFromCustomer(deviceLocation, merchantAddresses)
+        allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
         setDistanceData(allDistances)
-        
         return merchantsNearby
+    
+    def _getDistanceFromCustomer(self, deviceLocation, merchantAddresses, gmaps):
+            try:
+                distance = googlemaps.distance_matrix.distance_matrix(
+                    client=gmaps,
+                    origins=[deviceLocation],
+                    destinations=merchantAddresses
+                )
+                distances = distance["rows"][0]["elements"]
+                return distances
+            except Exception as e:
+                raise Exception(f"Failed to get distance from customer: {str(e)}")
     
 
 class getUpdatedMerchantsNearby(APIView, GlobalViewFunctions):

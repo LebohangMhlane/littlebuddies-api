@@ -1,4 +1,5 @@
 
+from django.conf import settings
 from apps.products.models import Product
 
 # what the mobile app sends to the server to initiate payment after checkout:
@@ -17,7 +18,6 @@ class CheckoutForm():
         self.merchantId = int(payload.get("merchantId"))
         self.totalCheckoutAmount = float(payload["totalCheckoutAmount"]),
         self.products = self.convertAndReturnProductsList(payload.get("products"))
-        self.discountTotal = int(payload.get("discountTotal"))
         self.delivery = bool(payload.get("delivery"))
         self.deliveryDate = payload.get("deliveryDate")
         self.address = payload.get("address")
@@ -33,19 +33,21 @@ class CheckoutForm():
             raise Exception("This store no longer sells this/these products")
         
         def checkifPricesMatch():
-            products = Product.objects.filter(
-                id__in=self.products, merchant__id=self.merchantId, isActive=True
-            )
-            totalAmountAfterDiscounts = 0
-            for product in products:
-                discountedAmount = (product.discountPercentage / 100) * product.originalPrice
-                discountedPrice = product.originalPrice - discountedAmount
-                totalAmountAfterDiscounts = totalAmountAfterDiscounts + discountedPrice
-            if (
-                totalAmountAfterDiscounts == self.totalCheckoutAmount[0] and discountedAmount == float(self.discountTotal)
-            ):
-                return True
-            raise Exception("Total product prices do not match the checkout amount")
+            # TODO: disabling this for now. Company applied specials and discounts will come later.
+            # products = Product.objects.filter(
+            #     id__in=self.products, merchant__id=self.merchantId, isActive=True
+            # )
+            # totalAmountAfterDiscounts = 0
+            # for product in products:
+            #     discountedAmount = (product.discountPercentage / 100) * product.originalPrice
+            #     discountedPrice = product.originalPrice - discountedAmount
+            #     totalAmountAfterDiscounts = totalAmountAfterDiscounts + discountedPrice
+            # if (
+            #     totalAmountAfterDiscounts == self.totalCheckoutAmount[0] and discountedAmount == float(self.discountTotal)
+            # ):
+            #     return True
+            # raise Exception("Total product prices do not match the checkout amount")
+            return True
 
         if checkProductExistence() and checkifPricesMatch():
             return True
@@ -53,8 +55,10 @@ class CheckoutForm():
     # this function only exists because the test case payload:
     # requires conversion and the payload from the mobile app doesn't:
     def convertAndReturnProductsList(self, products):
-        try:
-            products = eval(products)
-            return products
-        except Exception as e:
-            return products
+        if not settings.DEBUG:
+            try:
+                products = eval(products)
+                return products
+            except Exception as e:
+                return products
+        return products

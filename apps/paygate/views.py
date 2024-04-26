@@ -36,11 +36,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
-        return Response({
-            "message_sent": True
-        })
-
     def post(self, request, *args, **kwargs):
         try:
             checkoutForm = CheckoutForm(payload=request.data)
@@ -223,7 +218,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             elif transactionStatus == 4:
                 transaction.status = Transaction.CUSTOMER_CANCELLED
             elif transactionStatus == 5:
-                transaction.statues = Transaction.RECEIVED_BY_PAYGATE
+                transaction.status = Transaction.RECEIVED_BY_PAYGATE
             elif transactionStatus == 7:
                 transaction.status = Transaction.SETTLEMENT_VOIDED
             return transaction
