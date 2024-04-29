@@ -44,6 +44,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
 
     def getOrdersAsCustomer(self, request):
         userAccount = request.user.useraccount
-        orders = Order.objects.filter(transaction__customer__id=userAccount.pk)
+        orders = Order.objects.filter(transaction__customer__id=userAccount.pk).order_by(
+            "created")
         if orders:
             return orders

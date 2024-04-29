@@ -6,31 +6,41 @@ from apps.products.models import Product
 
 class CheckoutForm():
     merchantId = 0
-    totalCheckoutAmount = 0.0
+    totalCheckoutAmount = "0.0"
     products = []
+    productIds = []
     discountTotal = 0
     delivery = True
     deliveryDate = ""
     address = ""
+    productCount = 0
     
     def __init__(self, payload):
         payload = payload.copy()
         self.merchantId = int(payload.get("merchantId"))
-        self.totalCheckoutAmount = float(payload["totalCheckoutAmount"]),
-        self.products = self.convertAndReturnProductsList(payload.get("products"))
+        self.totalCheckoutAmount = payload["totalCheckoutAmount"]
+        self.products = self._setProducts(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
         self.deliveryDate = payload.get("deliveryDate")
         self.address = payload.get("address")
+        self.productIds = self._setProductIds(payload["products"])
+        self.setProductCount()
     
     def verifyPurchase(self):
 
-        def checkProductExistence():
-            productsExistCount = Product.objects.filter(
-                id__in=self.products, merchant__id=self.merchantId, isActive=True, inStock=True
-            ).count()
-            if productsExistCount == len(self.products):
-                return True
-            raise Exception("This store no longer sells this/these products")
+        def verifyProductExistence():
+            # TODO: disabling this for now: i dont think there will be a time in 
+            # between an order being placed 
+            # productsExistCount = Product.objects.filter(
+            #     id__in=self.products, 
+            #     merchant__id=self.merchantId, 
+            #     isActive=True, 
+            #     inStock=True
+            # ).count()
+            # if productsExistCount == len(self.products):
+            #     return True
+            # raise Exception("This store no longer sells this/these products")
+            return True
         
         def checkifPricesMatch():
             # TODO: disabling this for now. Company applied specials and discounts will come later.
@@ -49,16 +59,41 @@ class CheckoutForm():
             # raise Exception("Total product prices do not match the checkout amount")
             return True
 
-        if checkProductExistence() and checkifPricesMatch():
+        if verifyProductExistence() and checkifPricesMatch():
             return True
     
-    # this function only exists because the test case payload:
-    # requires conversion and the payload from the mobile app doesn't:
-    def convertAndReturnProductsList(self, products):
-        if not settings.DEBUG:
+    def _setProducts(self, products):
+        try:
+            orderedProducts = []
+            # test cases require eval() conversion
+            # running from mobile doesn't:
             try:
                 products = eval(products)
-                return products
-            except Exception as e:
-                return products
-        return products
+            except:
+                pass
+            for product in products:
+                productObject = Product.objects.get(id=product["id"])
+                orderedProduct = OrderedProduct.objects.create(
+                    product=productObject,
+                    quantityOrdered=product["quantityOrdered"]
+                )
+                orderedProducts.append(orderedProduct)
+            return orderedProducts
+        except Exception as e:
+            raise e
+
+    def _setProductIds(self, products):
+        # test cases require eval() conversion
+        # running from mobile doesn't:
+        try:
+            products = eval(products)
+        except:
+            pass        
+        productIds = []
+        for product in products:
+            productIds.append(int(product["id"]))
+        return productIds
+    
+    def setProductCount(self):
+        for product in self.products:
+            self.productCount += int(product.quantityOrdered)

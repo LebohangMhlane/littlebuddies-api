@@ -2,10 +2,8 @@ from django.db import models
 # from django.dispatch import receiver
 # from django.db.models.signals import post_save
 
-
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness
-from apps.products.models import Product
 
 
 class Transaction(models.Model):
@@ -24,9 +22,9 @@ class Transaction(models.Model):
     reference = models.CharField(max_length=255, blank=False, null=True)
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE)
-    productsPurchased = models.ManyToManyField(Product, blank=True)
+    productsPurchased = models.ManyToManyField("orders.OrderedProduct", blank=True)
     numberOfProducts = models.PositiveIntegerField(default=0)
-    amount = models.PositiveIntegerField(default=0, blank=False)
+    amount = models.CharField(default="0.00", max_length=7, blank=False)
     discountTotal = models.PositiveIntegerField(default=0, blank=False)
     status = models.CharField(max_length=50, blank=False, default=PENDING)
     dateCreated = models.DateTimeField(auto_now_add=True)

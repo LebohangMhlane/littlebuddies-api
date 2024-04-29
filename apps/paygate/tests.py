@@ -23,8 +23,8 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {
             "merchantId": str(merchant.pk),
-            "totalCheckoutAmount": "300.0",
-            "products": "[1, 2]",
+            "totalCheckoutAmount": "400.0",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.makeDate(1),
@@ -38,11 +38,12 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         )
         transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
         self.assertIsNotNone(transaction)
-        self.assertTrue(transaction.amount == float(checkoutFormPayload["totalCheckoutAmount"]))
+        self.assertTrue(transaction.amount == checkoutFormPayload["totalCheckoutAmount"])
         self.assertEqual(response.data["message"], "Paygate response was successful")
         self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["name"], "Bob's dog food")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
+        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["product"]["name"], "Bob's dog food")
+        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["product"]["name"], "Bob's cat food")
+        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["quantityOrdered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")

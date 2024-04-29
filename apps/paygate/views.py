@@ -79,12 +79,13 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     
     # prepare and return the payload we need to send to paygate to initiate a payment:
     # refer to docs: https://docs.paygate.co.za/?php#initiate
-    def preparePayGatePayload(self, checkoutFormPayload, merchant:MerchantBusiness, request):
+    def preparePayGatePayload(self, checkoutFormPayload:CheckoutForm, merchant:MerchantBusiness, request):
         reference = self.createReference(merchant, request)
+        totalCheckoutAmount = checkoutFormPayload.totalCheckoutAmount.replace('.', '')
         paygatePayload = {
             "PAYGATE_ID": merchant.paygateId,
             "REFERENCE": reference,
-            "AMOUNT": f"{str(checkoutFormPayload.totalCheckoutAmount[0]).replace('.', '')}0", # paygate doesn't use decimals
+            "AMOUNT": f"{totalCheckoutAmount}", # paygate doesn't use decimals
             "CURRENCY": "ZAR",
             "RETURN_URL": f"{settings.SERVER_URL}/payment_notification/",
             "TRANSACTION_DATE": "2018-01-01 12:00:00", # TODO: implement real time date
@@ -101,7 +102,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     
     def createReference(self, merchant:MerchantBusiness, request):
         merchantTransactionCount = Transaction.objects.filter(merchant=merchant).count()
-        reference = f"Transaction{merchant.id}{request.user.useraccount.phoneNumber}{request.user.pk}{merchantTransactionCount}"
+        reference = f"T{merchant.id}{str(request.user.useraccount.phoneNumber)[-4:]}{request.user.pk}{merchantTransactionCount}"
         return reference
         
     def generateChecksum(self, paygate_data, merchantPaygateSecretKey = ''):
@@ -130,9 +131,8 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         return response
 
     def createATransaction(
-            self, request, checkoutFormPayload, merchant, reference, verifiedPayload
+            self, request, checkoutFormPayload:CheckoutForm, merchant, reference, verifiedPayload
         ):
-        productCount = len(checkoutFormPayload.products)
         def findDuplicateTransaction():
             return Transaction.objects.filter(
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
@@ -140,8 +140,8 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 customer=request.user.useraccount,
                 merchant__id=checkoutFormPayload.merchantId,
                 amount=checkoutFormPayload.totalCheckoutAmount[0],
-                productsPurchased__id__in=checkoutFormPayload.products,
-                numberOfProducts=productCount,
+                productsPurchased__id__in=checkoutFormPayload.productIds,
+                numberOfProducts=checkoutFormPayload.productCount,
                 discountTotal=checkoutFormPayload.discountTotal,
                 status=Transaction.PENDING
             ).exists()
@@ -151,8 +151,8 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 reference=reference,
                 customer=request.user.useraccount,
                 merchant=merchant,
-                amount=checkoutFormPayload.totalCheckoutAmount[0],
-                numberOfProducts=productCount,
+                amount=checkoutFormPayload.totalCheckoutAmount,
+                numberOfProducts=checkoutFormPayload.productCount,
                 status=Transaction.PENDING,
                 discountTotal=checkoutFormPayload.discountTotal,
                 dateCreated=datetime.datetime.now(),
@@ -166,15 +166,15 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 reference=reference,
                 customer=request.user.useraccount,
                 merchant__id=checkoutFormPayload.merchantId,
-                amount=checkoutFormPayload.totalCheckoutAmount[0],
+                amount=str(checkoutFormPayload.totalCheckoutAmount),
                 productsPurchased__id__in=checkoutFormPayload.products,
-                numberOfProducts=productCount,
+                numberOfProducts=checkoutFormPayload.productCount,
                 discountTotal=checkoutFormPayload.discountTotal,
                 status=Transaction.PENDING
             ).first()
             return transaction
 
-    def createAnOrder(self, transaction, checkoutForm:CheckoutForm):
+    def createAnOrder(self, transaction:Transaction, checkoutForm:CheckoutForm):
         try:
             order = Order.objects.create(
                 transaction=transaction,
@@ -183,6 +183,8 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 deliveryDate=checkoutForm.deliveryDate,
                 address=checkoutForm.address,
             )
+            order.orderedProducts.add(*transaction.productsPurchased.all())
+            order.save()
             return order
         except Exception as e:
             raise Exception("Failed to create order")
