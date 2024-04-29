@@ -1,5 +1,6 @@
 
 from django.conf import settings
+from apps.orders.models import OrderedProduct
 from apps.products.models import Product
 
 # what the mobile app sends to the server to initiate payment after checkout:
