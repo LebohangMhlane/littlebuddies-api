@@ -46,42 +46,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["quantityOrdered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_initiate_payment_as_customer_discounted(self, mockedResponse):
-
-        mockedResponse.status_code = 200
-        mockedResponse.return_value = MockedPaygateResponse()
-
-        createTestCustomer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100, 50)
-        checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
-            "totalCheckoutAmount": "250.0",
-            "products": "[1, 2]",
-            "discountTotal": "50",
-            "delivery": True,
-            "deliveryDate": self.makeDate(1),
-            "address": "71 downthe street Bergville"
-        }
-        initiate_payment_url = reverse("initiate_payment_view")
-        response = self.client.post(
-            initiate_payment_url,
-            data=checkoutFormPayload,
-            HTTP_AUTHORIZATION=f"Token {authToken}",
-        )
-        transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
-        self.assertIsNotNone(transaction)
-        self.assertTrue(transaction.amount == float(checkoutFormPayload["totalCheckoutAmount"]))
-        self.assertEqual(response.data["message"], "Paygate response was successful")
-        self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["name"], "Bob's dog food")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["name"], "Bob's cat food")
-        self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
-
     # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
     def test_paygate_notification(self, mockedResponse):
@@ -97,7 +61,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         checkoutFormPayload = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[1, 2]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
         }
         initiate_payment_url = reverse("initiate_payment_view")

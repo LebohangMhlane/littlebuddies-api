@@ -85,18 +85,18 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_authorized_navigation(self):
         authToken = self.createNormalTestAccountAndLogin()
-        paymentsUrl = reverse("initiate_payment_view")
+        getOrdersUrl = reverse("get_all_orders_view")
         response = self.client.get(
-            path=paymentsUrl,
+            path=getOrdersUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         self.assertEqual(response.status_code, 200)
 
     def test_unauthorized_navigation(self):
         self.createNormalTestAccountAndLogin()
-        paymentsUrl = reverse("initiate_payment_view")
+        getOrdersUrl = reverse("get_all_orders_view")
         response = self.client.get(
-            path=paymentsUrl,
+            path=getOrdersUrl,
         )
         self.assertEqual(response.status_code, 401)
 

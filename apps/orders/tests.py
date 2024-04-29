@@ -23,7 +23,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkoutFormPayload = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[1, 2]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.makeDate(1),
@@ -69,7 +69,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkoutFormPayload = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[1, 2]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.makeDate(1),
@@ -128,7 +128,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkoutFormPayload = {
             "merchantId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[1, 2]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.makeDate(1),
