@@ -6,7 +6,7 @@ from apps.products.models import Product
 
 class Order(models.Model):
 
-    PENDING_DELIVERY = "PENDING_DELIVERY"
+    PENDING_DELIVERY = "PENDING_DELIVERY"   
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     PAYMENT_PENDING = "PAYMENT_PENDING"

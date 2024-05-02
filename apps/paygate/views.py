@@ -178,7 +178,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         try:
             order = Order.objects.create(
                 transaction=transaction,
-                status=Order.PAYMENT_PENDING,
+                status=Order.PENDING_DELIVERY,
                 delivery=checkoutForm.delivery,
                 deliveryDate=checkoutForm.deliveryDate,
                 address=checkoutForm.address,

@@ -1,9 +1,47 @@
+from django.contrib.auth.models import User
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 
+from apps.accounts.models import UserAccount
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
+
+
+class LoginView(ObtainAuthToken, GlobalViewFunctions):
+
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = self.serializer_class(data={
+                "username": request.data["username"],
+                "password": request.data["password"],
+            }, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            user = serializer.validated_data['user']
+            authToken = Token.objects.get(user=user)
+
+            self._saveDeviceToken(user, request)
+            
+            return Response({
+                "token": authToken.key,
+            })
+        except Exception as e:
+            return Response({
+                "message": "Failed to authenticate user",
+                "error": str(e)
+            }, status=401)
+        
+    def _saveDeviceToken(self, user, request):
+        userAccount = UserAccount.objects.get(user=user)
+        userAccount.deviceToken = request.data["deviceToken"]
+        userAccount.save()
+        return user
+
 
 
 class CreateAccountView(APIView, GlobalViewFunctions):
