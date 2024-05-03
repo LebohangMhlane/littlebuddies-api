@@ -46,6 +46,49 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["quantityOrdered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
 
+    
+    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
+    def test_check_transaction_status(self, mockedResponse):
+
+        mockedResponse.return_value = MockedPaygateResponse()
+
+        createTestCustomer = self.createTestCustomer()
+        authToken = self.loginAsCustomer()
+        merchantUserAccount = self.createTestMerchantUserAccount()
+        merchant = self.createTestMerchantBusiness(merchantUserAccount)
+        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        checkoutFormPayload = {
+            "merchantId": str(merchant.pk),
+            "totalCheckoutAmount": "400.0",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "discountTotal": "0",
+            "delivery": True,
+            "deliveryDate": self.makeDate(1),
+            "address": "71 downthe street Bergville"
+        }
+        initiate_payment_url = reverse("initiate_payment_view")
+        response = self.client.post(
+            initiate_payment_url,
+            data=checkoutFormPayload,
+            HTTP_AUTHORIZATION=f"Token {authToken}",
+        )
+        transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
+        transaction.status = transaction.COMPLETED
+        transaction.save()
+        reference = transaction.reference
+
+        # test begins:
+        checkTransactionStatusUrl = reverse("check_transaction_status", args=[reference])
+        response = self.client.get(
+            checkTransactionStatusUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}",
+        )
+        self.assertEqual(response.data["message"], f"Transaction {reference} status retrieved successfully")
+        self.assertEqual(response.data["transactionStatus"], transaction.COMPLETED)
+
+    
+
     # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
     def test_paygate_notification(self, mockedResponse):

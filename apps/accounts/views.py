@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -38,7 +37,8 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
         
     def _saveDeviceToken(self, user, request):
         userAccount = UserAccount.objects.get(user=user)
-        userAccount.deviceToken = request.data["deviceToken"]
+        if "deviceToken" in request.data: # only for test cases:
+            userAccount.deviceToken = request.data["deviceToken"]
         userAccount.save()
         return user
 

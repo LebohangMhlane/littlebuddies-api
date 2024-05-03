@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+
 from rest_framework.reverse import reverse
+from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness
@@ -79,6 +81,7 @@ class GlobalTestCaseConfig(TestCase):
             deviceToken=userInputData["deviceToken"],
             phoneNumberVerified=userInputData["phoneNumberVerified"]
         )
+        token = Token.objects.create(user=customer)
         return testUserAccount
     
     def createTestMerchantUserAccount(self):
