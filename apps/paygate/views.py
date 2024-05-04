@@ -72,7 +72,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 raise Exception(f"Response from Paygate was {paygateResponse.status_code}")
         except Exception as e:
             return Response({
-                "success": False,
+                "success": False,   
                 "message": "Failed to initialize Paygate payment",
                 "error": str(e)},
                 content_type='application/json', status=500)
@@ -185,6 +185,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             )
             order.orderedProducts.add(*transaction.productsPurchased.all())
             order.save()
+            for orderedProduct in transaction.productsPurchased.all():
+                orderedProduct.order = order
+                orderedProduct.save()
             return order
         except Exception as e:
             raise Exception("Failed to create order")
