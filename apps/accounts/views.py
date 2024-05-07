@@ -1,8 +1,11 @@
 
+from django.contrib.auth.models import User
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import AllowAny
 
 from apps.accounts.models import UserAccount
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
@@ -16,13 +19,9 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            serializer = self.serializer_class(data={
-                "username": request.data["username"],
-                "password": request.data["password"],
-            }, context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            user = serializer.validated_data['user']
-            authToken = Token.objects.get(user=user)
+            user = User.objects.get(email=request.POST["emailAddress"])
+            if user.check_password(request.POST["password"]):
+                authToken = Token.objects.get(user=user)
 
             self._saveDeviceToken(user, request)
             
@@ -40,7 +39,6 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
         if "deviceToken" in request.data: # only for test cases:
             userAccount.deviceToken = request.data["deviceToken"]
         userAccount.save()
-        return user
 
 
 
@@ -50,20 +48,23 @@ class CreateAccountView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         pass
-
+    
     def post(self, request, *args, **kwargs):
         try:
             userAccount = self.createUser(receivedPayload=request.data)
+            authToken = Token.objects.get(user__id=userAccount.data["user"]["id"])
             return Response({
-                "success": True,
                 "message": "Account created successfully",
-                "userAccount": userAccount.data
+                "userAccount": userAccount.data,
+                "loginToken": authToken.key
             })
         except Exception as e:
+            error = ""
+            if "UNIQUE" in str(e.args[0]):
+                error = "A user with these details already exists"
             return Response({
-                "success": False,
                 "message": "Failed to create account",
-                "error": str(e)
+                "error": error
             }, status=500)
 
     def createUser(self, receivedPayload=dict):
@@ -78,17 +79,16 @@ class CreateAccountView(APIView, GlobalViewFunctions):
 
     def sortData(self, receivedPayload):
         userPayload = {
-            "username": receivedPayload["username"],
+            "username": f"{receivedPayload['firstName']}{receivedPayload['lastName']}{receivedPayload['phoneNumber']}",
             "password": receivedPayload["password"],
             "firstName": receivedPayload["firstName"],
             "lastName": receivedPayload["lastName"],
-            "email": receivedPayload["email"],
+            "email": receivedPayload["emailAddress"],
         }
         userAccountPayload = {
-            "deviceToken": receivedPayload["deviceToken"],
-            "address": receivedPayload["address"],
+            "deviceToken": receivedPayload["deviceToken"] if "deviceToken" in receivedPayload else "",
             "phoneNumber": receivedPayload["phoneNumber"],
-            "isMerchant": receivedPayload["isMerchant"],
+            "isMerchant": False,
         }
         return userPayload, userAccountPayload
     

@@ -3,6 +3,7 @@ import re
 from apps.accounts.models import UserAccount
 from rest_framework import serializers
 
+from apps.accounts.serializers.user_serializer import UserSerializer
 from global_serializer_functions.global_serializer_functions import (
     SerializerFunctions,
 )
@@ -12,8 +13,10 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
     class Meta:
         model = UserAccount
         fields = "__all__"
-        depth = 2
+        depth = 1
 
+    user = UserSerializer()
+    
     def is_valid(self, *, raise_exception=True):
         initialData = self.initial_data
         if self.checkIfPhoneNumberIsValid(initialData["phoneNumber"]): return True
@@ -25,7 +28,6 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
         try:
             userAccount = UserAccount.objects.create(
                 user = validated_data["user"],
-                address = validated_data["address"],
                 phoneNumber = validated_data["phoneNumber"],
                 isMerchant = validated_data["isMerchant"],
                 deviceToken = validated_data["deviceToken"],
@@ -33,7 +35,7 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
             return userAccount
         except Exception as e:
             self.deleteAllUserRelatedInstances(validated_data["user"].pk)
-            raise Exception("Failed to create User Account")
+            raise Exception(f"Failed to create User Account {str(e)}")
 
     def checkIfPhoneNumberIsValid(self, phoneNumber):
         if not len(phoneNumber) == 10: return False

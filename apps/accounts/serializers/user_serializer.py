@@ -11,25 +11,18 @@ class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
     
     class Meta:
         model = User
-        fields = "__all__"
+        fields = ["id", "first_name", "last_name", "email", "is_superuser", "is_staff", "username"]
 
     def is_valid(self, *, raise_exception=False):
         initialData = self.initial_data
-        if(
-            self.validateEmail(initialData["email"]), 
-            self.validateUsername(initialData["username"])):
+        if self.validateEmail(initialData["emailAddress"]):
             return True
         else:
-            self.deleteAllUserRelatedInstances()
             raise Exception("Invalid User Data")
             
     def validateEmail(self, email):
         # TODO: implement email validation:
-        pass
-
-    def validateUsername(self, username):
-        # TODO: implement username validation:
-        pass
+        return True
 
     def create(self, validated_data):
         try:
@@ -45,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
         except Exception as e:
             if user.pk:
                 self.deleteAllUserRelatedInstances(userPk=user.pk)
-            raise Exception("Failed to create User")
+            raise Exception(f"Failed to create User: {str(e.args[0])}")
     
     def createUserAuthenticationToken(self, user):
         try:
