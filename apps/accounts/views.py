@@ -22,11 +22,16 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
             user = User.objects.get(email=request.POST["emailAddress"])
             if user.check_password(request.POST["password"]):
                 authToken = Token.objects.get(user=user)
-
+                userAccount = UserAccount.objects.get(user=user)
+                userAccountSerializer = UserAccountSerializer(userAccount, many=False)
+            else:
+                raise Exception("Invalid username or password")
+            
             self._saveDeviceToken(user, request)
             
             return Response({
                 "token": authToken.key,
+                "userProfile": userAccountSerializer.data
             })
         except Exception as e:
             return Response({
