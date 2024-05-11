@@ -34,6 +34,9 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
                 "userProfile": userAccountSerializer.data
             })
         except Exception as e:
+            error = e.args[0]
+            if("User matching query does not exist" in error):
+                e = "No user with that email address was found"
             return Response({
                 "message": "Failed to authenticate user",
                 "error": str(e)
@@ -47,7 +50,7 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
 
 
 
-class CreateAccountView(APIView, GlobalViewFunctions):
+class RegistrationView(APIView, GlobalViewFunctions):
 
     permission_classes = []
 
@@ -58,6 +61,7 @@ class CreateAccountView(APIView, GlobalViewFunctions):
         try:
             userAccount = self.createUser(receivedPayload=request.data)
             authToken = Token.objects.get(user__id=userAccount.data["user"]["id"])
+            self._sendVerificationEmail(userAccount, authToken)
             return Response({
                 "message": "Account created successfully",
                 "userAccount": userAccount.data,
@@ -104,6 +108,8 @@ class CreateAccountView(APIView, GlobalViewFunctions):
             userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
             return userAccount
         
+    def _sendVerificationEmail(self):
+        pass
 
 class DeactivateAccountView(APIView, GlobalViewFunctions):
 
