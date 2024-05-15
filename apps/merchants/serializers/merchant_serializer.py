@@ -14,7 +14,7 @@ class MerchantSerializer(serializers.ModelSerializer):
     def is_valid(self, *, raise_exception=False):
         initialData = self.initial_data
         for key, value in initialData.items():
-            if value is None or value is "":
+            if value == None or value == "":
                 raise Exception("Values must not be empty")
         return True
     
