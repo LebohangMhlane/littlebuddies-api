@@ -5,11 +5,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny
 
 from apps.accounts.models import UserAccount
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
+from global_serializer_functions.global_serializer_functions import SerializerFunctions
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
@@ -50,7 +50,7 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
 
 
 
-class RegistrationView(APIView, GlobalViewFunctions):
+class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
 
     permission_classes = []
 
@@ -58,6 +58,7 @@ class RegistrationView(APIView, GlobalViewFunctions):
         pass
     
     def post(self, request, *args, **kwargs):
+        userAccount = None
         try:
             userAccount = self.createUser(receivedPayload=request.data)
             authToken = Token.objects.get(user__id=userAccount.data["user"]["id"])
@@ -68,6 +69,7 @@ class RegistrationView(APIView, GlobalViewFunctions):
                 "loginToken": authToken.key
             })
         except Exception as e:
+            self.deleteAllUserRelatedInstances(int(userAccount.data["user"]["id"]))
             error = ""
             if "UNIQUE" in str(e.args[0]):
                 error = "A user with these details already exists"
@@ -108,7 +110,7 @@ class RegistrationView(APIView, GlobalViewFunctions):
             userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
             return userAccount
         
-    def _sendVerificationEmail(self):
+    def _sendVerificationEmail(self, userAccount, authToken):
         pass
 
 class DeactivateAccountView(APIView, GlobalViewFunctions):
