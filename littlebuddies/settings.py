@@ -14,9 +14,9 @@ import os
 from pathlib import Path
 from firebase_app.firebase_app import FirebaseApp
 
-import dotenv
+from dotenv import dotenv_values
 
-dotenv.load_dotenv()
+dotenv_values()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
