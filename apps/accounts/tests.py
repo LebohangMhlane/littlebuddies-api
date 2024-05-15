@@ -12,11 +12,11 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
     def test_create_account(self):
         create_account_url = reverse("create_account_view")
         userInputData = {
-            "username": "Lebo",
+            "username": "LebohangMhlane0621837747",
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
+            "emailAddress": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
@@ -37,11 +37,11 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_account_failure(self):
         userInputData = {
-            "username": "Lebo",
+            "username": "LebohangMhlane0621837747",
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
+            "emailAddress": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
@@ -64,13 +64,13 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_log_in(self):
         userInputData = {
-            "username": "Lebo",
+            "emailAddress": "lebohang@gmail.com",
             "password": "HelloWorld",
         }
         response = self.createNormalTestAccount()
         loginUrl = reverse("login")
         loginPayload = {
-            "username": userInputData["username"],
+            "emailAddress": userInputData["emailAddress"],
             "password": userInputData["password"],
         }
         response = self.client.post(
@@ -78,7 +78,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             content_type=f"application/json",
             data=loginPayload,
         )
-        user = User.objects.get(username=userInputData["username"])
+        user = User.objects.get(email=userInputData["emailAddress"])
         token = Token.objects.get(user=user)
         tokenInResponse = response.data["token"]
         self.assertEqual(token.key, tokenInResponse)

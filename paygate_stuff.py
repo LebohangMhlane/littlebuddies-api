@@ -11,12 +11,6 @@ payfast_data = {
     "payment_method": "cc",
 }
 
-paygate_credentials = {
-    "PayGate ID": 10011072130,
-    "Password":	"secret",
-    "Currencies":"ZAR"
-}
-
 additional_paygate_fields = {
     # "PAY_METHOD": "",
     # "PAY_METHOD_DETAIL": "",

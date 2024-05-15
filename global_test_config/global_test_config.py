@@ -36,7 +36,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
+            "emailAddress": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "isMerchant": False,
@@ -49,7 +49,7 @@ class GlobalTestCaseConfig(TestCase):
             data=userInputData,
         )
         testUserAccount = UserAccount.objects.get(
-            user__username=userInputData["username"]
+            user__username=response.data["userAccount"]["user"]["username"]
         )
         return testUserAccount
     

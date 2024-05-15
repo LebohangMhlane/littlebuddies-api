@@ -69,13 +69,12 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 "loginToken": authToken.key
             })
         except Exception as e:
-            self.deleteAllUserRelatedInstances(int(userAccount.data["user"]["id"]))
             error = ""
             if "UNIQUE" in str(e.args[0]):
                 error = "A user with these details already exists"
             return Response({
                 "message": "Failed to create account",
-                "error": error
+                "error": str(e)
             }, status=500)
 
     def createUser(self, receivedPayload=dict):
