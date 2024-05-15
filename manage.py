@@ -6,7 +6,7 @@ import sys
 import dotenv
 
 def main():
-    dotenv.read_dotenv()
+    dotenv.dotenv_values(".env")
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'littlebuddies.settings')
     try:
