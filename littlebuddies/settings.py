@@ -47,7 +47,7 @@ APP_URL = "6f88-41-10-113-170.ngrok-free.app" # using ngrok server during develo
 
 SERVER_URL = f"https://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL]
+ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL, "34.229.1.163"]
 
 # rest framework configuration
 REST_FRAMEWORK = {
