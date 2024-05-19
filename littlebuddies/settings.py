@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     'apps.transactions',
     'apps.orders',
     'apps.integrations',
-    'littlebuddies',
 ]
 
 MIDDLEWARE = [
