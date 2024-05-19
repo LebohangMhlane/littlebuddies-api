@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'apps.transactions',
     'apps.orders',
     'apps.integrations',
+    'whitenoise.runserver_nostatic'
 ]
 
 MIDDLEWARE = [
@@ -88,6 +89,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'littlebuddies.urls'
@@ -161,6 +163,10 @@ if(DEBUG):
     STATIC_URL = '/static/'
 else:
     STATIC_URL = '/home/ubuntu/static/'
+
+MEDIA_URL = 'media/'
+
+MEDIA_ROOT = 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
