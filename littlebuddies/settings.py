@@ -159,7 +159,7 @@ USE_TZ = True
 if(DEBUG):
     STATIC_URL = '/static/'
 else:
-    STATIC_URL = 'home/ubuntu/static'
+    STATIC_URL = '/home/ubuntu/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
