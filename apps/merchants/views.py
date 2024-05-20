@@ -66,7 +66,6 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
         logger.info("Getting stores near customer...")
         merchantsNearby = []
-        serializer = MerchantSerializer()
         
         def setDistanceData(allDistances):
             for index, distanceData in enumerate(allDistances):
@@ -80,15 +79,15 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
 
         merchantAddresses = []
 
-        if len(merchantsInArea) != 0:
-            for merchant in merchantsInArea:
-                merchantAddresses.append(merchant.address)
-                products = self.getProducts(merchant)
-                serializer = MerchantSerializer(merchant, many=False)
-                merchantsNearby.append({
-                    "merchant": serializer.data,
-                    "products": products,
-                })
+        for merchant in merchantsInArea:
+            merchantAddresses.append(merchant.address)
+            products = self.getProducts(merchant)
+            serializer = MerchantSerializer(merchant, many=False)
+            merchantsNearby.append({
+                "merchant": serializer.data,
+                "products": products,
+            })
+
         allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
         setDistanceData(allDistances)
         return merchantsNearby
