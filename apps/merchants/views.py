@@ -97,7 +97,7 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             return merchantsNearby
         except Exception as e:
             tb = traceback.format_exc()
-            raise Exception(f"str(e){tb}")
+            raise Exception(f"{tb}")
 
     
     def _getDistanceFromCustomer(self, deviceLocation, merchantAddresses, gmaps):

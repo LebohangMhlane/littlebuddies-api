@@ -72,4 +72,4 @@ class GlobalViewFunctions():
             return serializer.data
         except Exception as e:
             tb = traceback.format_exc()
-            raise (f"{str(e)}{tb}")
+            raise Exception(f"{tb}")
