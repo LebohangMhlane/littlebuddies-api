@@ -66,29 +66,34 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
         logger.info("Getting stores near customer...")
         merchantsNearby = []
-            
+        
         def setDistanceData(allDistances):
             for index, distanceData in enumerate(allDistances):
                 merchantsNearby[index]["distance"] = distanceData
                 continue
+        try:
+            merchantsInArea = MerchantBusiness.objects.filter(
+                area=locationArea,
+                isActive=True,
+            )
+            merchantAddresses = []
 
-        merchantsInArea = MerchantBusiness.objects.filter(
-            area=locationArea,
-            isActive=True,
-        )
-        merchantAddresses = []
-        if merchantsInArea:
-            for merchant in merchantsInArea:
-                merchantAddresses.append(merchant.address)
-                products = self.getProducts(merchant)
-                serializer = MerchantSerializer(merchant, many=False)
-                merchantsNearby.append({
-                    "merchant": serializer.data,
-                    "products": products,
-                })
-        allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
-        setDistanceData(allDistances)
-        return merchantsNearby
+            serializer = None
+
+            if merchantsInArea:
+                for merchant in merchantsInArea:
+                    merchantAddresses.append(merchant.address)
+                    products = self.getProducts(merchant)
+                    serializer = MerchantSerializer(merchant, many=False)
+                    merchantsNearby.append({
+                        "merchant": serializer.data,
+                        "products": products,
+                    })
+            allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
+            setDistanceData(allDistances)
+            return merchantsNearby
+        except Exception as e:
+            raise e
     
     def _getDistanceFromCustomer(self, deviceLocation, merchantAddresses, gmaps):
             try:

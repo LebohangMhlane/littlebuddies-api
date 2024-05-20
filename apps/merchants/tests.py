@@ -31,7 +31,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             merchantUserAccount2, {
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
-                "address": "197 Brand Rd, Bulwer, Berea, 4083",
+                "address": "ORSUM, Shop No, 55 Shepstone Rd, New Germany, Durban, 3610",
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
                 "paygateSecret": "santafridays",
@@ -46,7 +46,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         p3 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
         p4 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
 
-        deviceLocation = "-29.7799367,30.875305"
+        deviceLocation = "-29.7799367,30.875305" 
         getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
         response = self.client.get(
             getNearByStoresUrl,
