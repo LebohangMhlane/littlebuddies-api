@@ -2,6 +2,8 @@
 
 # functions shared by all views:
 
+import traceback
+
 import hashlib
 from apps.merchants.models import MerchantBusiness
 from apps.products.models import Product
@@ -59,11 +61,15 @@ class GlobalViewFunctions():
 
     def getProducts(self, merchant):
         logger.info("Getting updated stores near customer...")
-        products = Product.objects.filter(
-            isActive=True,
-            merchant=merchant,
-            inStock=True,
-        )
-        if products:
-            serializer = ProductSerializer(products, many=True)
-        return serializer.data
+        try:
+            products = Product.objects.filter(
+                isActive=True,
+                merchant=merchant,
+                inStock=True,
+            )
+            if products:
+                serializer = ProductSerializer(products, many=True)
+            return serializer.data
+        except Exception as e:
+            tb = traceback.format_exc()
+            raise (f"{str(e)}{tb}")
