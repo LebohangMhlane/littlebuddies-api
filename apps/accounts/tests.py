@@ -16,7 +16,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "emailAddress": "lebohang@gmail.com",
+            "email": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
@@ -41,7 +41,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "emailAddress": "lebohang@gmail.com",
+            "email": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
@@ -64,13 +64,13 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_log_in(self):
         userInputData = {
-            "emailAddress": "lebohang@gmail.com",
+            "email": "lebohang@gmail.com",
             "password": "HelloWorld",
         }
         response = self.createNormalTestAccount()
         loginUrl = reverse("login")
         loginPayload = {
-            "emailAddress": userInputData["emailAddress"],
+            "email": userInputData["email"],
             "password": userInputData["password"],
         }
         response = self.client.post(
@@ -78,7 +78,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             content_type=f"application/json",
             data=loginPayload,
         )
-        user = User.objects.get(email=userInputData["emailAddress"])
+        user = User.objects.get(email=userInputData["email"])
         token = Token.objects.get(user=user)
         tokenInResponse = response.data["token"]
         self.assertEqual(token.key, tokenInResponse)

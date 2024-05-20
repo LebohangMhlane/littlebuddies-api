@@ -19,8 +19,8 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            user = User.objects.get(email=request.POST["emailAddress"])
-            if user.check_password(request.POST["password"]):
+            user = User.objects.get(email=request.data["email"])
+            if user.check_password(request.data["password"]):
                 authToken = Token.objects.get(user=user)
                 userAccount = UserAccount.objects.get(user=user)
                 userAccountSerializer = UserAccountSerializer(userAccount, many=False)
@@ -93,12 +93,12 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             "password": receivedPayload["password"],
             "firstName": receivedPayload["firstName"],
             "lastName": receivedPayload["lastName"],
-            "email": receivedPayload["emailAddress"],
+            "email": receivedPayload["email"],
         }
         userAccountPayload = {
             "deviceToken": receivedPayload["deviceToken"] if "deviceToken" in receivedPayload else "",
             "phoneNumber": receivedPayload["phoneNumber"],
-            "isMerchant": False,
+            "isMerchant": receivedPayload["isMerchant"],
         }
         return userPayload, userAccountPayload
     

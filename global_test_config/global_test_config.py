@@ -26,7 +26,7 @@ class GlobalTestCaseConfig(TestCase):
 
     def setUp(self) -> None:
         self.loginPayload = {
-            "username": "Lebo",
+            "email": "lebohang@gmail.com",
             "password": "HelloWorld",
         }
         
@@ -36,7 +36,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "emailAddress": "lebohang@gmail.com",
+            "email": "lebohang@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "isMerchant": False,
@@ -102,7 +102,7 @@ class GlobalTestCaseConfig(TestCase):
             content_type=f"application/json",
             data=userInputData,
         )
-        testMerchantUserAccount = UserAccount.objects.get(user__username=userInputData["username"])
+        testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
         return testMerchantUserAccount
     
     def createTestMerchantUserAccountDynamic(self, userData):
@@ -123,7 +123,7 @@ class GlobalTestCaseConfig(TestCase):
             content_type=f"application/json",
             data=userInputData,
         )
-        testMerchantUserAccount = UserAccount.objects.get(user__username=userInputData["username"])
+        testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
         return testMerchantUserAccount
     
     def createNormalTestAccountAndLogin(self):
@@ -141,7 +141,7 @@ class GlobalTestCaseConfig(TestCase):
     def loginAsMerchant(self):
         loginUrl = reverse("login")
         loginPayload = {
-            "username": "Mike",
+            "email": "mikemyers@gmail.com",
             "password": "HelloWorld",
         }
         response = self.client.post(
@@ -154,7 +154,7 @@ class GlobalTestCaseConfig(TestCase):
     def loginAsCustomer(self):
         loginUrl = reverse("login")
         loginPayload = {
-            "username": "customer",
+            "email": "customer@gmail.com",
             "password": "HelloWorld",
         }
         response = self.client.post(
@@ -168,17 +168,20 @@ class GlobalTestCaseConfig(TestCase):
         pass
 
     def createTestMerchantBusiness(self, userAccount:UserAccount):
-        merchant = MerchantBusiness.objects.create(
-            userAccount=userAccount,
-            name="Absolute Pets",
-            email="absolutepets@gmail.com",
-            address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640",
-            paygateReference="pgtest_123456789",
-            paygateId="10011072130",
-            paygateSecret="secret",
-            area="New Germany",
-            hasSpecials=False,
-        )
+        try:
+            merchant = MerchantBusiness.objects.create(
+                userAccount=userAccount,
+                name="Absolute Pets",
+                email="absolutepets@gmail.com",
+                address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640",
+                paygateReference="pgtest_123456789",
+                paygateId="10011072130",
+                paygateSecret="secret",
+                area="New Germany",
+                hasSpecials=False,
+            )
+        except Exception as e:
+            pass
         return merchant
     
     def createTestMerchantBusinessDynamic(self, userAccount:UserAccount, businessData):

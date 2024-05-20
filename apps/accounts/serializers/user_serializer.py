@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
 
     def is_valid(self, *, raise_exception=False):
         initialData = self.initial_data
-        if self.validateEmail(initialData["emailAddress"]):
+        if self.validateEmail(initialData["email"]):
             return True
         else:
             raise Exception("Invalid User Data")
