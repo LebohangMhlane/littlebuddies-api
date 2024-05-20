@@ -1,6 +1,9 @@
 from django.conf import settings
 
 import json
+
+import traceback
+
 import googlemaps.addressvalidation
 import googlemaps.client
 import googlemaps.convert
@@ -64,33 +67,37 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             raise Exception(f"Failed to get location area: {str(e)}")
 
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
-        logger.info("Getting stores near customer...")
-        merchantsNearby = []
-        
-        def setDistanceData(allDistances):
-            for index, distanceData in enumerate(allDistances):
-                merchantsNearby[index]["distance"] = distanceData
-                continue
+        try:
+            logger.info("Getting stores near customer...")
+            merchantsNearby = []
+            
+            def setDistanceData(allDistances):
+                for index, distanceData in enumerate(allDistances):
+                    merchantsNearby[index]["distance"] = distanceData
+                    continue
 
-        merchantsInArea = MerchantBusiness.objects.filter(
-            area=locationArea,
-            isActive=True,
-        )
+            merchantsInArea = MerchantBusiness.objects.filter(
+                area=locationArea,
+                isActive=True,
+            )
 
-        merchantAddresses = []
+            merchantAddresses = []
 
-        for merchant in merchantsInArea:
-            merchantAddresses.append(merchant.address)
-            products = self.getProducts(merchant)
-            serializer = MerchantSerializer(merchant, many=False)
-            merchantsNearby.append({
-                "merchant": serializer.data,
-                "products": products,
-            })
+            for merchant in merchantsInArea:
+                merchantAddresses.append(merchant.address)
+                products = self.getProducts(merchant)
+                serializer = MerchantSerializer(merchant, many=False)
+                merchantsNearby.append({
+                    "merchant": serializer.data,
+                    "products": products,
+                })
 
-        allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
-        setDistanceData(allDistances)
-        return merchantsNearby
+            allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
+            setDistanceData(allDistances)
+            return merchantsNearby
+        except Exception as e:
+            tb = traceback.format_exc()
+            raise Exception(f"str(e){tb}")
 
     
     def _getDistanceFromCustomer(self, deviceLocation, merchantAddresses, gmaps):
