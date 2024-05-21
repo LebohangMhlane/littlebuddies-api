@@ -87,7 +87,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             "REFERENCE": reference,
             "AMOUNT": f"{totalCheckoutAmount}", # paygate doesn't use decimals
             "CURRENCY": "ZAR",
-            "RETURN_URL": f"{settings.SERVER_URL}/payment_notification/",
+            "RETURN_URL": f"{settings.SERVER_URL if not settings.DEBUG else settings.DEVELOPEMENT_URL}/payment_notification/",
             "TRANSACTION_DATE": "2018-01-01 12:00:00", # TODO: implement real time date
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
