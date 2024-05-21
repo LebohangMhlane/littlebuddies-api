@@ -33,7 +33,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 GOOGLE_SERVICES_API_KEY = os.environ.get("GOOGLE_SERVICES_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # firebase stuff
 
