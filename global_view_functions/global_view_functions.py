@@ -69,6 +69,8 @@ class GlobalViewFunctions():
             )
             if products:
                 serializer = ProductSerializer(products, many=True)
+            else:
+                raise Exception("No Product was found")
             return serializer.data
         except Exception as e:
             tb = traceback.format_exc()

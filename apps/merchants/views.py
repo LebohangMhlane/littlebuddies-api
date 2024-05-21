@@ -64,7 +64,8 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
                     break
             return locationArea, deviceAddresses["formatted_address"]
         except Exception as e:
-            raise Exception(f"Failed to get location area: {str(e)}")
+            tb = traceback.format_exc()
+            raise Exception(f"Failed to get location area: {tb}")
 
     def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
         try:
@@ -81,20 +82,23 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
                 isActive=True,
             )
 
-            merchantAddresses = []
+            if merchantsInArea:
+                merchantAddresses = []
 
-            for merchant in merchantsInArea:
-                merchantAddresses.append(merchant.address)
-                products = self.getProducts(merchant)
-                serializer = MerchantSerializer(merchant, many=False)
-                merchantsNearby.append({
-                    "merchant": serializer.data,
-                    "products": products,
-                })
+                for merchant in merchantsInArea:
+                    merchantAddresses.append(merchant.address)
+                    products = self.getProducts(merchant)
+                    serializer = MerchantSerializer(merchant, many=False)
+                    merchantsNearby.append({
+                        "merchant": serializer.data,
+                        "products": products,
+                    })
 
-            allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
-            setDistanceData(allDistances)
-            return merchantsNearby
+                allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
+                setDistanceData(allDistances)
+                return merchantsNearby
+            else: 
+                raise Exception("No Merchants were found in this area")
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"{tb}")
