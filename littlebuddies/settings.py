@@ -43,7 +43,9 @@ FIREBASE_APP = FirebaseApp()
 
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
-DEVELOPEMENT_URL = "215c-41-10-113-170.ngrok-free.app" # using ngrok server during development
+# server stuff
+
+DEVELOPEMENT_URL = "f96e-41-10-113-170.ngrok-free.app" # using ngrok server during development
 
 APP_URL = "54.160.249.30" 
 
@@ -53,6 +55,16 @@ else:
     SERVER_URL = f"http://{APP_URL}"
 
 ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL, DEVELOPEMENT_URL]
+
+# Email stuff
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_FROM = 'littlebuddiesptyltd@gmail.com'
+EMAIL_HOST_USER = 'littlebuddiesptyltd@gmail.com'
+EMAIL_HOST_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 # rest framework configuration
 REST_FRAMEWORK = {

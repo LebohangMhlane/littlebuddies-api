@@ -48,8 +48,6 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
             userAccount.deviceToken = request.data["deviceToken"]
         userAccount.save()
 
-
-
 class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
 
     permission_classes = []
@@ -58,32 +56,42 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         pass
     
     def post(self, request, *args, **kwargs):
+
         userAccount = None
+
         try:
-            userAccount = self.createUser(receivedPayload=request.data)
+            userAccount = self._startRegistrationProcess(receivedData=request.data)
             authToken = Token.objects.get(user__id=userAccount.data["user"]["id"])
+
             self._sendVerificationEmail(userAccount, authToken)
+
             return Response({
                 "message": "Account created successfully",
                 "userAccount": userAccount.data,
                 "loginToken": authToken.key
             })
+        
         except Exception as e:
+
             error = ""
+
             if "UNIQUE" in str(e.args[0]):
                 error = "A user with these details already exists"
             return Response({
                 "message": "Failed to create account",
-                "error": str(e)
+                "error": "An error has occured. We are looking into it"
             }, status=500)
 
-    def createUser(self, receivedPayload=dict):
-        userPayload, userAccountPayload = self.sortData(receivedPayload)
-        userSerializer = UserSerializer(data=receivedPayload)
+    def _startRegistrationProcess(self, receivedData=dict):
+
+        userData, userAccountData = self.sortData(receivedData)
+
+        userSerializer = UserSerializer(data=receivedData)
+        
         if userSerializer.is_valid():
-            userInstance = userSerializer.create(validated_data=userPayload)
+            userInstance = userSerializer.create(validated_data=userData)
             if userInstance:
-                userAccount = self.createUserAccount(userAccountPayload, userInstance)
+                userAccount = self.createUserAccount(userAccountData, userInstance)
                 userAccount = UserAccountSerializer(userAccount, many=False)
                 return userAccount
 
@@ -98,13 +106,15 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         userAccountPayload = {
             "deviceToken": receivedPayload["deviceToken"] if "deviceToken" in receivedPayload else "",
             "phoneNumber": receivedPayload["phoneNumber"],
-            "isMerchant": receivedPayload["isMerchant"],
         }
         return userPayload, userAccountPayload
     
     def createUserAccount(self, userAccountPayload, userInstance):
+
         userAccountPayload["user"] = userInstance
+
         userAccountSerializer = UserAccountSerializer(data=userAccountPayload)
+        
         if userAccountSerializer.is_valid(raise_exception=True):
             userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
             return userAccount
@@ -127,7 +137,6 @@ class DeactivateAccountView(APIView, GlobalViewFunctions):
         user.is_active = False
         user.save()
         userAccount.save()
-
 
 class UpdateAccountView(APIView, GlobalViewFunctions):
 

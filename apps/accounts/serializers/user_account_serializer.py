@@ -29,7 +29,6 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
             userAccount = UserAccount.objects.create(
                 user = validated_data["user"],
                 phoneNumber = validated_data["phoneNumber"],
-                isMerchant = validated_data["isMerchant"],
                 deviceToken = validated_data["deviceToken"],
             )
             return userAccount
