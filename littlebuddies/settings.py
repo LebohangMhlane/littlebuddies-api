@@ -47,7 +47,10 @@ DEVELOPEMENT_URL = "215c-41-10-113-170.ngrok-free.app" # using ngrok server duri
 
 APP_URL = "54.160.249.30" 
 
-SERVER_URL = f"http://{APP_URL}"
+if DEBUG:
+    SERVER_URL = f"http://{DEVELOPEMENT_URL}"
+else:
+    SERVER_URL = f"http://{APP_URL}"
 
 ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL, DEVELOPEMENT_URL]
 
