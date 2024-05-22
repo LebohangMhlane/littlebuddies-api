@@ -33,7 +33,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 GOOGLE_SERVICES_API_KEY = os.environ.get("GOOGLE_SERVICES_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # firebase stuff
 
@@ -44,10 +44,9 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
+DEVELOPEMENT_URL = "0ec8-41-10-113-170.ngrok-free.app" # using ngrok server during development
 
-DEVELOPEMENT_URL = "f96e-41-10-113-170.ngrok-free.app" # using ngrok server during development
-
-APP_URL = "54.160.249.30" 
+APP_URL = "54.160.249.30"
 
 if DEBUG:
     SERVER_URL = f"http://{DEVELOPEMENT_URL}"
@@ -57,7 +56,6 @@ else:
 ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL, DEVELOPEMENT_URL]
 
 # Email stuff
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_FROM = 'littlebuddiesptyltd@gmail.com'

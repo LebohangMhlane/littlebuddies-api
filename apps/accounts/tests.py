@@ -16,7 +16,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
+            "email": "asandamhlane@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "deviceToken": "fidfjowehfoewfhowvehwoueh394e",

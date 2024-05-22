@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+    <div style="background-color: black; width: 100%; height: 20px;">
+    </div>
+
+    <div style="display: flex; padding: 0px; margin-top: 25px;">
+        <p style="font-size: 25px; font-weight: 600; padding: 0px; margin: 0px;">
+            Welcome to Littlebuddies, {{userFirstName}}!
+        </p>    
+    </div>
+
+    <div style="display: flex; flex-direction: row; align-items: center; margin-top: 25px;">
+
+        <div style="padding: 10px; padding-left: 0px; margin: 0px;">
+            Click this button to activate your account
+        </div>
+
+        <a href="{{domain}}/accounts/activate-account/{{uidb64}}/{{activationToken}}/" style="color: white; text-decoration: none;">
+            <div style="background-color: #27AAE1; padding: 10px; border-radius: 10px; cursor: pointer;">
+                Activate account
+            </div>
+        </a>
+
+    </div>
+
+    <div style="background-color: #27AAE1; width: 100%; height: 20px; margin-top: 30px;">
+    </div>
+    
+</body>
+</html>

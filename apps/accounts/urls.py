@@ -16,12 +16,12 @@ Including another URLconf
 """
 from django.urls import path
 
-from apps.accounts.views import (
-    RegistrationView, DeactivateAccountView, UpdateAccountView, LoginView)
+from apps.accounts import views 
 
 urlpatterns = [
-    path('login/', LoginView.as_view(), name="login"),
-    path('create-account/', RegistrationView.as_view(), name="create_account_view"),
-    path('update-account/', UpdateAccountView.as_view(), name="update_account_view"),
-    path('deactivate-account/', DeactivateAccountView.as_view(), name="deactivate_account_view"),
+    path('login/', views.LoginView.as_view(), name="login"),
+    path('create-account/', views.RegistrationView.as_view(), name="create_account_view"),
+    path('activate-account/<uidb64>/<activationToken>/', views.ActivateAccountView.as_view(), name="activate_account_view"),
+    path('update-account/', views.UpdateAccountView.as_view(), name="update_account_view"),
+    path('deactivate-account/', views.DeactivateAccountView.as_view(), name="deactivate_account_view"),
 ]
