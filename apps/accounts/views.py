@@ -2,10 +2,11 @@
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.contrib.sites.shortcuts import get_current_site
 
 from rest_framework.views import APIView
@@ -156,9 +157,23 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
     permission_classes = []
 
     def get(self, request, **kwargs):
-        # TODO: prepare a proper response
-        return HttpResponse("Account activation successfull")
+        try:
+            pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
+            activationToken = kwargs["activationToken"]
+            user = User.objects.get(pk=pk)
+            if accountActivationTokenGenerator.check_token(user, activationToken):
+                return render(
+                    request,
+                    template_name="email_templates/successful_account_activation.html")
+            else:
+                raise
+        except Exception as e:
+            return render(
+                request,
+                template_name="email_templates/failed_account_activation.html")
 
+
+        
 class DeactivateAccountView(APIView, GlobalViewFunctions):
 
     def get(self, request):
