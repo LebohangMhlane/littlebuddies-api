@@ -1,16 +1,29 @@
 
 
-# functions shared by all views:
-
 import traceback
 
 import hashlib
+
+from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth.models import User
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth.models import User
+
+from apps.accounts.tokens import accountActivationTokenGenerator
+
 from apps.merchants.models import MerchantBusiness
 from apps.products.models import Product
 from apps.products.serializers.serializers import ProductSerializer
+
 import logging
 
 logger = logging.getLogger(__name__)
+
+# functions shared by all views:
 
 class GlobalViewFunctions():
 
@@ -75,3 +88,26 @@ class GlobalViewFunctions():
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"{tb}")
+
+    def sendActivationEmail(self, userAccount, request):
+        mail_subject = "Littlebuddies Email Activation"
+        user = User.objects.get(id=userAccount["user"]["id"])
+        message = render_to_string(
+            "email_templates/email_account_activation.html",
+            {
+                "userFirstName": userAccount["user"]["first_name"],
+                "domain": f"http://{get_current_site(request).domain}",
+                "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
+                "activationToken": accountActivationTokenGenerator.make_token(user=user),
+                "protocol": "https" if request.is_secure() else "http"
+            }
+        )
+        plain_message = strip_tags(message)
+        email = EmailMultiAlternatives(
+            mail_subject, plain_message, to=[userAccount["user"]["email"]]
+        )
+        email.attach_alternative(message, "text/html")
+        if email.send():
+            print("Email sent successfully")
+        else:
+            raise Exception("Failed to send activation email")

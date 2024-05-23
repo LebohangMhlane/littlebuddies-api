@@ -1,7 +1,6 @@
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.models import User
-from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -66,25 +65,18 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         pass
     
     def post(self, request, *args, **kwargs):
-
         userAccount = None
-
         try:
             userAccount = self._startRegistrationProcess(receivedData=request.data)
             authToken = Token.objects.get(user__id=userAccount["user"]["id"])
-
-            self._sendActivationEmail(userAccount, request)
-
+            self.sendActivationEmail(userAccount, request)
             return Response({
                 "message": "Account created successfully",
                 "userAccount": userAccount,
                 "loginToken": authToken.key
             })
-        
         except Exception as e:
-
             error = ""
-
             if "UNIQUE" in str(e.args[0]):
                 error = "A user with these details already exists"
             return Response({
@@ -92,35 +84,9 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 "error": "An error has occured. We are looking into it"
             }, status=500)
         
-    def _sendActivationEmail(self, userAccount, request):
-        mail_subject = "Littlebuddies Email Activation"
-        user = User.objects.get(id=userAccount["user"]["id"])
-        message = render_to_string(
-            "email_templates/email_account_activation.html",
-            {
-                "userFirstName": userAccount["user"]["first_name"],
-                "domain": f"http://{get_current_site(request).domain}",
-                "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
-                "activationToken": accountActivationTokenGenerator.make_token(user=user),
-                "protocol": "https" if request.is_secure() else "http"
-            }
-        )
-        plain_message = strip_tags(message)
-        email = EmailMultiAlternatives(
-            mail_subject, plain_message, to=[userAccount["user"]["email"]]
-        )
-        email.attach_alternative(message, "text/html")
-        if email.send():
-            print("Email sent successfully")
-        else:
-            raise Exception("Failed to send activation email")
-
     def _startRegistrationProcess(self, receivedData=dict):
-
         userData, userAccountData = self.separateData(receivedData)
-
         userSerializer = UserSerializer(data=receivedData)
-        
         if userSerializer.is_valid():
             userInstance = userSerializer.create(validated_data=userData)
             if userInstance:
@@ -143,15 +109,43 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         return userPayload, userAccountPayload
     
     def createUserAccount(self, userAccountPayload, userInstance):
-
         userAccountPayload["user"] = userInstance
-
         userAccountSerializer = UserAccountSerializer(data=userAccountPayload)
-        
         if userAccountSerializer.is_valid(raise_exception=True):
             userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
             return userAccount
         
+class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
+
+    def get(self, request, **kwargs):
+        try:
+            userAccount = UserAccountSerializer(request.user.useraccount)
+            self.sendActivationEmail(userAccount.data, request)
+            return Response({
+                "message": "Activation email sent successfully",
+                "activationEmailSent": True
+            })
+        except Exception as e:
+            return Response({
+                "message": "Failed to send activation email",
+                "activationEmailSent": False
+            })
+
+class CheckAccountActivation(APIView, GlobalViewFunctions, SerializerFunctions):
+
+    def get(self, request, **kwargs):
+        userAccount = request.user.useraccount
+        if userAccount.emailVerified:
+            return Response({
+                "message": "Account activated.",
+                "accountActivated": True
+            })
+        else:
+            return Response({
+                "message": "Your account is not activated.",
+                "accountActivated": False
+            }, status=401)
+
 class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
 
     permission_classes = []
@@ -162,6 +156,9 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
             activationToken = kwargs["activationToken"]
             user = User.objects.get(pk=pk)
             if accountActivationTokenGenerator.check_token(user, activationToken):
+                userAccount = UserAccount.objects.get(user=user)
+                userAccount.emailVerified = True
+                userAccount.save()
                 return render(
                     request,
                     template_name="email_templates/successful_account_activation.html")
@@ -171,8 +168,6 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
             return render(
                 request,
                 template_name="email_templates/failed_account_activation.html")
-
-
         
 class DeactivateAccountView(APIView, GlobalViewFunctions):
 

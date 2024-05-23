@@ -22,6 +22,8 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name="login"),
     path('create-account/', views.RegistrationView.as_view(), name="create_account_view"),
     path('activate-account/<uidb64>/<activationToken>/', views.ActivateAccountView.as_view(), name="activate_account_view"),
+    path('check-account-activation/', views.CheckAccountActivation.as_view(), name="check_account_activation_view"),
+    path('resend-activation-email/', views.ResendActivationEmail.as_view(), name="resend_activation_email"),
     path('update-account/', views.UpdateAccountView.as_view(), name="update_account_view"),
     path('deactivate-account/', views.DeactivateAccountView.as_view(), name="deactivate_account_view"),
 ]
