@@ -204,8 +204,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
                 _ = FirebaseInstance().sendTransactionStatusNotification(
                     updatedTransaction
                 )
-                self.sendOrderEmails(updatedTransaction, order)
-            print(json.dumps(request.data, indent=4))
+                self.sendOrderEmail(updatedTransaction, order)
         except Exception as e:
             pass
         return HttpResponse("OK")
@@ -249,7 +248,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             return order
         return None
 
-    def sendOrderEmails(self, updatedTransaction, order):
+    def sendOrderEmail(self, updatedTransaction, order):
         pass
 
 class PaymentSuccessView(APIView):

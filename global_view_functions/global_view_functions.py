@@ -108,6 +108,6 @@ class GlobalViewFunctions():
         )
         email.attach_alternative(message, "text/html")
         if email.send():
-            print("Email sent successfully")
+            pass
         else:
             raise Exception("Failed to send activation email")

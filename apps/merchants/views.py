@@ -273,8 +273,8 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
                 order.save()
             else: raise Exception("You're not permitted to use this feature")
             return Response({
-                "success": True,
                 "message": "Order acknowledged successfully",
+                "orderAcknowledged": True,
             }, status=200)
         except Exception as e:
             self.sendAcknowledgementEmail(order)

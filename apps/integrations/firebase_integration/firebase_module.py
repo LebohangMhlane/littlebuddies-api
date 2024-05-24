@@ -25,12 +25,10 @@ class FirebaseInstance():
                 },
                 token = transaction.customer.deviceToken,
             )
-            response = messaging.send(message)
-            print('Successfully sent message:', response)
+            _ = messaging.send(message)
             return True
         except Exception as e:
-            print(str(e))
-            pass
+            return False
 
     def sendOrderAcknowledgementNotification(self, order:Order):
         try:
@@ -42,8 +40,7 @@ class FirebaseInstance():
                 data={},
                 token = order.transaction.customer.deviceToken,
             )
-            response = messaging.send(message)
-            print('Successfully sent acknowledgement notification:', response)
+            _ = messaging.send(message)
             return True
         except Exception as e:
             pass
