@@ -1,4 +1,6 @@
 
+import traceback
+
 from rest_framework import serializers
 from apps.merchants.models import MerchantBusiness
 from apps.accounts.models import UserAccount
@@ -30,4 +32,5 @@ class MerchantSerializer(serializers.ModelSerializer):
             merchant.save()
             return merchant
         except Exception as e:
-            raise Exception("Failed to create Merchant")
+            tb = traceback.format_exc()
+            raise Exception(f"Failed to create Merchant: {tb}")

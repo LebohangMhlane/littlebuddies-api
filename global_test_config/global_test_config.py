@@ -103,6 +103,8 @@ class GlobalTestCaseConfig(TestCase):
             data=userInputData,
         )
         testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
+        testMerchantUserAccount.isMerchant = True
+        testMerchantUserAccount.save()
         return testMerchantUserAccount
     
     def createTestMerchantUserAccountDynamic(self, userData):
@@ -166,8 +168,14 @@ class GlobalTestCaseConfig(TestCase):
 
     def loginAsSuperAdmin(self):
         pass
+    
+    def makeUserAccountAMerchant(self, userAccount:UserAccount):
+        userAccount.isMerchant = True
+        userAccount.save()
+        return userAccount
 
     def createTestMerchantBusiness(self, userAccount:UserAccount):
+        userAccount = self.makeUserAccountAMerchant(userAccount)
         try:
             merchant = MerchantBusiness.objects.create(
                 userAccount=userAccount,
@@ -185,6 +193,7 @@ class GlobalTestCaseConfig(TestCase):
         return merchant
     
     def createTestMerchantBusinessDynamic(self, userAccount:UserAccount, businessData):
+        userAccount = self.makeUserAccountAMerchant(userAccount)
         merchant = MerchantBusiness.objects.create(
             userAccount=userAccount,
             name=businessData["name"],

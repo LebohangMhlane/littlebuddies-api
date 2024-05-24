@@ -35,22 +35,16 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             # TODO: restrict api key access to server ip address:
 
             gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
-
             deviceLocation = kwargs["coordinates"]
-
             locationArea, customerAddress = self._getLocationArea(deviceLocation, gmaps)
-
             merchantsNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
-
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
                 "petStoresNearby": merchantsNearby,
                 "customerAddress": customerAddress
             }, status=200)
-        
         except Exception as e:
-            
             return Response({
                 "success": False,
                 "message": "Failed to get stores near customer",
@@ -58,26 +52,19 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             }, status=200)
         
     def _getLocationArea(self, deviceLocation, gmaps):
-
         logger.info("Getting location area...")
-
         try:
             locationArea = None
-
             deviceAddresses = googlemaps.geocoding.reverse_geocode(
                 gmaps,
                 deviceLocation,
             )
-
             deviceAddresses = deviceAddresses[0]
-
             for component in deviceAddresses["address_components"]:
                 if component["long_name"] in MerchantBusiness().getLocationsList():
                     locationArea = component["long_name"]
                     break
-
             return locationArea, deviceAddresses["formatted_address"]
-        
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"Failed to get location area: {tb}")
@@ -194,7 +181,7 @@ class CreateMerchantView(APIView, GlobalViewFunctions):
             return MerchantSerializer(merchant, many=False)
         
     def notifyAllOfMerchantCreation(self):
-        # TODO: notify all relevant parties of the creation of a new merchant:
+        # TODO: notify all relevant parties of the creation of a new merchant via email:
         pass
 
 

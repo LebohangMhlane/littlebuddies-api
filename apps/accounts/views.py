@@ -1,12 +1,8 @@
 
-from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.models import User
 from django.shortcuts import render
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,8 +12,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from apps.accounts.models import UserAccount
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
-
 from apps.accounts.tokens import accountActivationTokenGenerator
+
 from global_serializer_functions.global_serializer_functions import SerializerFunctions
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -76,13 +72,28 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 "loginToken": authToken.key
             })
         except Exception as e:
-            error = ""
-            if "UNIQUE" in str(e.args[0]):
-                error = "A user with these details already exists"
+            exception = e.args[0]
+            displayableException = self.determineException(exception)
             return Response({
                 "message": "Failed to create account",
-                "error": "An error has occured. We are looking into it"
+                "error": displayableException
             }, status=500)
+        
+    def determineException(self, exception):
+        default = "An error has occured. We are looking into it"
+        possibleErrors = [
+            "UNIQUE",
+            "Invalid phone number"
+        ]
+        displayableErrors = [
+            "A user with these details already exists",
+            "Invalid phone number"
+        ]
+        for index, possibleError in enumerate(possibleErrors):
+            if possibleError in exception:
+                displayableException = displayableErrors[index]
+                return displayableException
+        return default
         
     def _startRegistrationProcess(self, receivedData=dict):
         userData, userAccountData = self.separateData(receivedData)
