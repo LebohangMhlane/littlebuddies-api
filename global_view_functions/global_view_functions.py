@@ -27,11 +27,11 @@ logger = logging.getLogger(__name__)
 
 class GlobalViewFunctions():
 
-    exceptionString1 = "You do not have permission to delete a product"
-
-    exceptionString2 = "You don't have permission to update a merchant"
-
-    exceptionString3 = "You don't have permission to create merchants"
+    exceptionStrings = [
+        "You do not have permission to delete a product",
+        "You don't have permission to update a merchant",
+        "You don't have permission to create merchants"
+    ]
 
     def verifyPayloadIntegrity(self, payload:dict, secret="secret"):
         cleanedPayload = payload.copy()

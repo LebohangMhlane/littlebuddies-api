@@ -232,7 +232,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
                     "message": "Merchant updated successfully",
                     "updatedMerchant": merchantSerializer.data
                 }, status=200)
-            else: raise Exception(self.exceptionString2)
+            else: raise Exception(self.exceptionStrings[1])
         except Exception as e:
             return Response({
                 "success": False,

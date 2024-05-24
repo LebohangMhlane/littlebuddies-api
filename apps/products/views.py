@@ -53,7 +53,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
                     "success": True,
                     "message": "Product deleted successfully",
                 })
-            else: raise Exception(self.exceptionString1)
+            else: raise Exception(self.exceptionStrings[0])
         except Exception as e:
             return Response({
                 "success": False,
