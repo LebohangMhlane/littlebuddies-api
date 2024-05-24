@@ -27,4 +27,4 @@ jobs:
         pip install -r r.txt
     - name: Run Tests
       run: |
-        python manage.py pytest
+        python manage.py test
