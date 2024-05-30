@@ -72,12 +72,12 @@ class GlobalViewFunctions():
     def notifyAllOfItemCreation(self, instance):
         pass
 
-    def getProducts(self, merchant):
+    def getProducts(self, branch):
         logger.info("Getting updated stores near customer...")
         try:
             products = Product.objects.filter(
                 isActive=True,
-                merchant=merchant,
+                branch=branch,
                 inStock=True,
             )
             if products:

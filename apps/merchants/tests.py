@@ -14,9 +14,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_get_petstores_near_me(self):
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount1 = self.createTestMerchantUserAccount()
-        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
-        merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
+        merchantUserAccount1 = self.createTestMerchantUserAccount({})
+        merchantUserAccount2 = self.createTestMerchantUserAccount({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -27,15 +26,17 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "dfwhefoewhofh328rh2"
         })
-        merchantBusiness2 = self.createTestMerchantBusinessDynamic(
-            merchantUserAccount2, {
+        
+        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
+        merchantBusiness2 = self.createTestMerchantBusiness(
+            merchantUserAccount2, merchantData={
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
                 "address": "ORSUM, Shop No, 55 Shepstone Rd, New Germany, Durban, 3610",
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
                 "paygateSecret": "santafridays",
-                "area": "New Germany",
+                "branchAreas": ["New Germany"],
                 "hasSpecials": False,
             }
         )
@@ -52,6 +53,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             getNearByStoresUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
+        self.assertEqual(response.data["message"], "Stores near customer retrieved successfully")
+        self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 2)
         self.assertIsNotNone(response.data["customerAddress"])
 
     def test_get_updated_petstores_near_me(self):

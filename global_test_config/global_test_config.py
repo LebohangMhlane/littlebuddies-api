@@ -9,7 +9,7 @@ from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import MerchantBusiness
+from apps.merchants.models import Branch, MerchantBusiness
 from apps.products.models import Product
 
 
@@ -84,28 +84,33 @@ class GlobalTestCaseConfig(TestCase):
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def createTestMerchantUserAccount(self):
-        userInputData = {
-            "username": "Mike",
-            "password": "HelloWorld",
-            "firstName": "Mike",
-            "lastName": "Myers",
-            "email": "mikemyers@gmail.com",
-            "address": "72 rethman street newgermany",
-            "phoneNumber": "0631837737",
-            "isMerchant": True,
-            "deviceToken": "fhwefhf2h3f9we7yfwefy32"
-        }
-        create_account_url = reverse("create_account_view")
-        response = self.client.post(
-            path=create_account_url,
-            content_type=f"application/json",
-            data=userInputData,
-        )
-        testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
-        testMerchantUserAccount.isMerchant = True
-        testMerchantUserAccount.save()
-        return testMerchantUserAccount
+    def createTestMerchantUserAccount(self, userData):
+        try:
+            fakeUserData = {
+                "username": "Mike",
+                "password": "HelloWorld",
+                "firstName": "Mike",
+                "lastName": "Myers",
+                "email": "mikemyers@gmail.com",
+                "address": "72 rethman street newgermany",
+                "phoneNumber": "0631837737",
+                "isMerchant": True,
+                "deviceToken": "fhwefhf2h3f9we7yfwefy32"
+            }
+            create_account_url = reverse("create_account_view")
+            _ = self.client.post(
+                path=create_account_url,
+                content_type=f"application/json",
+                data=fakeUserData if len(userData) == 0 else userData,
+            )
+            merchantUserAccount = UserAccount.objects.get(
+                user__email=fakeUserData["email"] if len(userData) == 0 else userData["email"]
+            )
+            merchantUserAccount.isMerchant = True
+            merchantUserAccount.save()
+            return merchantUserAccount
+        except Exception as e:
+            pass
     
     def createTestMerchantUserAccountDynamic(self, userData):
         userInputData = {
@@ -169,25 +174,52 @@ class GlobalTestCaseConfig(TestCase):
     def loginAsSuperAdmin(self):
         pass
     
-    def makeUserAccountAMerchant(self, userAccount:UserAccount):
+    def makeUserAccountAMerchant(self, userAccount:UserAccount) -> UserAccount:
         userAccount.isMerchant = True
         userAccount.save()
         return userAccount
 
-    def createTestMerchantBusiness(self, userAccount:UserAccount):
+    def createTestMerchantBusiness(self, userAccount:UserAccount, merchantData={}):
         userAccount = self.makeUserAccountAMerchant(userAccount)
         try:
-            merchant = MerchantBusiness.objects.create(
-                userAccount=userAccount,
-                name="Absolute Pets",
-                email="absolutepets@gmail.com",
-                address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640",
-                paygateReference="pgtest_123456789",
-                paygateId="10011072130",
-                paygateSecret="secret",
-                area="New Germany",
-                hasSpecials=False,
-            )
+            merchant = MerchantBusiness()
+            if len(merchantData) == 0:
+                merchant.userAccount = userAccount
+                merchant.name="Absolute Pets"
+                merchant.email="absolutepets@gmail.com"
+                merchant.address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
+                merchant.paygateReference="pgtest_123456789"
+                merchant.paygateId="10011072130"
+                merchant.paygateSecret="secret"
+                merchant.setBranchAreas(["New Germany"])
+                merchant.save()
+            else:
+                merchant.userAccount=userAccount
+                merchant.name=merchantData["name"]
+                merchant.email=merchantData["email"]
+                merchant.address=merchantData["address"]
+                merchant.paygateReference="pgtest_123456789"
+                merchant.paygateId=merchantData["paygateId"]
+                merchant.paygateSecret=merchantData["paygateSecret"]
+                merchant.hasSpecials=merchantData["hasSpecials"]
+                merchant.setBranchAreas(merchantData["branchAreas"])
+                merchant.save()
+        except Exception as e:
+            pass
+        try:
+            branch1 = Branch()
+            if len(merchantData) == 0:
+                branch1.isActive=True
+                branch1.address = "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
+                branch1.merchant = merchant
+                branch1.area = "New Germany"
+                branch1.save()
+            else:
+                branch1.isActive=True
+                branch1.address = merchantData["address"]
+                branch1.merchant = merchant
+                branch1.area = merchantData["branchAreas"][0]
+                branch1.save()
         except Exception as e:
             pass
         return merchant
@@ -215,19 +247,24 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createTestProduct(self, merchant, merchantUserAccount, name, price, discountPercent=0):
-        product = Product.objects.create(
-            merchant=merchant,
-            name=name,
-            description="High quality dog food",
-            originalPrice=price,
-            image="image",
-            inStock=True,
-            storeReference="ID2342",
-            discountPercentage=discountPercent,
-            createdBy=merchantUserAccount,
-            isActive=True,
-        )
+    def createTestProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
+        try:
+            branch = Branch.objects.get(merchant=merchant)
+            product = Product.objects.create(
+                name=name,
+                description="High quality dog food",
+                originalPrice=price,
+                image="image",
+                inStock=True,
+                storeReference="ID2342",
+                discountPercentage=discountPercent,
+                createdBy=merchantUserAccount,
+                isActive=True,
+            )
+            branch.products.add(product)
+            branch.save()
+        except Exception as e:
+            pass
         return product
     
     def makeDate(self, daysFromNow):

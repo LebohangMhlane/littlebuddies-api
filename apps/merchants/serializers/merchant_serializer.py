@@ -2,7 +2,7 @@
 import traceback
 
 from rest_framework import serializers
-from apps.merchants.models import MerchantBusiness
+from apps.merchants.models import Branch, MerchantBusiness
 from apps.accounts.models import UserAccount
 
 
@@ -34,3 +34,27 @@ class MerchantSerializer(serializers.ModelSerializer):
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"Failed to create Merchant: {tb}")
+        
+
+
+class BranchSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Branch
+        fields = "__all__"
+        depth = 2
+
+    def is_valid(self, *, raise_exception=False):
+        return True
+    
+    def create(self, branchData):
+        merchant = MerchantBusiness.objects.get(id=branchData["merchantId"])
+        try:
+            branch = Branch()
+            branch.address = branchData["branchAddress"]
+            branch.merchant = merchant
+            branch.area = branchData["branchArea"]
+            branch.save()
+        except Exception as e:
+            tb = traceback.format_exc()
+            raise Exception(f"Failed to create Branch: {tb}")

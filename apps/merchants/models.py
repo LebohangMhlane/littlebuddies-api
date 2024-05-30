@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from django.conf import settings
 
@@ -13,18 +14,18 @@ class MerchantBusiness(models.Model):
     Westville = "Westville"
     Pinetown = "Pinetown"
     Hillcrest = "Hillcrest"
-    
+
     logo = models.CharField(max_length=2000, blank=False, null=True)
     userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
+    branchAreas = models.TextField(default="[]")
     isActive = models.BooleanField(default=True)
     paygateReference = models.CharField(max_length=1000, blank=False, default="")
     paygateId = models.CharField(max_length=20, blank=False, unique=True)
     paygateSecret = models.CharField(max_length=32, blank=False, null=True)
     fernetToken = models.CharField(max_length=2000, blank=True, unique=True)
-    area = models.CharField(max_length=80, blank=False, null=False, default=Kloof)
     hasSpecials = models.BooleanField(default=False)
 
     def __str__(self) -> str:
@@ -64,3 +65,22 @@ class MerchantBusiness(models.Model):
             self.Pinetown,
             self.Hillcrest
         ]
+
+    def getBranchAreas(self):
+        return json.loads(self.branchAreas)
+    
+    def setBranchAreas(self, areas:list):
+        self.branchAreas = json.dumps(areas)
+
+class Branch(models.Model):
+    
+    isActive = models.BooleanField(default=False)
+    address = models.CharField(max_length=200)
+    products = models.ManyToManyField("products.Product")
+    area = models.CharField(max_length=200, default="")
+    merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
+    hasSpecials = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return f"{self.address}"
+    

@@ -17,11 +17,12 @@ from rest_framework.response import Response
 import googlemaps
 
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
-from apps.merchants.models import MerchantBusiness
-from apps.merchants.serializers.merchant_serializer import MerchantSerializer
+from apps.merchants.models import Branch, MerchantBusiness
+from apps.merchants.serializers.merchant_serializer import BranchSerializer, MerchantSerializer
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
+from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 import logging
 
@@ -31,9 +32,7 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             logger.info("Getting stores near customer...")
-
             # TODO: restrict api key access to server ip address:
-
             gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             deviceLocation = kwargs["coordinates"]
             locationArea, customerAddress = self._getLocationArea(deviceLocation, gmaps)
@@ -79,25 +78,27 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
                     merchantsNearby[index]["distance"] = distanceData
                     continue
 
-            merchantsInArea = MerchantBusiness.objects.filter(
+            branchesInArea = Branch.objects.filter(
                 area=locationArea,
-                isActive=True,
+                isActive = True
             )
 
-            if merchantsInArea:
-                merchantAddresses = []
+            if branchesInArea:
+                branchAddress = []
 
-                for merchant in merchantsInArea:
-                    merchantAddresses.append(merchant.address)
-                    products = self.getProducts(merchant)
-                    serializer = MerchantSerializer(merchant, many=False)
+                for branch in branchesInArea:
+                    branchAddress.append(branch.address)
+                    products = branch.products.all()
+                    productSerializer = ProductSerializer(products, many=True if len(products) > 1 else False)
+                    branchSerializer = BranchSerializer(branch, many=False)
                     merchantsNearby.append({
-                        "merchant": serializer.data,
-                        "products": products,
+                        "branch": branchSerializer.data,
+                        "products": productSerializer.data,
                     })
 
-                allDistances = self._getDistanceFromCustomer(deviceLocation, merchantAddresses, gmaps)
+                allDistances = self._getDistanceFromCustomer(deviceLocation, branchAddress, gmaps)
                 setDistanceData(allDistances)
+                merchantsNearby.sort(key=lambda x: x["distance"]["duration"]["text"], reverse=True)
                 return merchantsNearby
             else: 
                 raise Exception("No Merchants were found in this area")
