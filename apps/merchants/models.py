@@ -76,7 +76,7 @@ class Branch(models.Model):
     
     isActive = models.BooleanField(default=False)
     address = models.CharField(max_length=200)
-    products = models.ManyToManyField("products.Product")
+    products = models.ManyToManyField("products.Product", blank=True)
     area = models.CharField(max_length=200, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
     hasSpecials = models.BooleanField(default=False)
