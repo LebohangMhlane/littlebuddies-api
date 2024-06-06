@@ -4,7 +4,7 @@ from rest_framework.serializers import ModelSerializer
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness
-from apps.products.models import Product
+from apps.products.models import BranchProduct, Product
 
 class ProductSerializer(ModelSerializer):
 
@@ -48,3 +48,18 @@ class ProductSerializer(ModelSerializer):
         except Exception as e:
             raise Exception("Failed to create a product")
         return product
+    
+
+
+class BranchProductSerializer(ModelSerializer):
+
+        class Meta:
+            model = BranchProduct
+            fields = ['id', 'inStock', 'isActive', 'branchPrice', 'storeReference', 'createdBy']
+            depth = 2
+
+        def is_valid(self, *, raise_exception=False):
+            return super().is_valid(raise_exception=raise_exception)
+        
+        def create(self, validated_data):
+            return super().create(validated_data)

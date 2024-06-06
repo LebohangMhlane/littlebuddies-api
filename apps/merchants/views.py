@@ -17,18 +17,18 @@ from rest_framework.response import Response
 import googlemaps
 
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
-from apps.merchants.models import Branch, MerchantBusiness
-from apps.merchants.serializers.merchant_serializer import BranchSerializer, MerchantSerializer
+from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
+from apps.merchants.serializers.merchant_serializer import BranchSerializer, MerchantSerializer, SaleCampaignSerializer
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
-from apps.products.serializers.serializers import ProductSerializer
+from apps.products.serializers.serializers import BranchProductSerializer, ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 import logging
 
 logger = logging.getLogger(__name__)
 
-class getNewMerchantsNearby(APIView, GlobalViewFunctions):
+class getBranchesNearby(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             logger.info("Getting stores near customer...")
@@ -36,11 +36,11 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
             gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             deviceLocation = kwargs["coordinates"]
             locationArea, customerAddress = self._getLocationArea(deviceLocation, gmaps)
-            merchantsNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
+            branchesNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
-                "petStoresNearby": merchantsNearby,
+                "petStoresNearby": branchesNearby,
                 "customerAddress": customerAddress
             }, status=200)
         except Exception as e:
@@ -88,12 +88,16 @@ class getNewMerchantsNearby(APIView, GlobalViewFunctions):
 
                 for branch in branchesInArea:
                     branchAddress.append(branch.address)
-                    products = branch.products.all()
-                    productSerializer = ProductSerializer(products, many=True if len(products) > 1 else False)
-                    branchSerializer = BranchSerializer(branch, many=False)
+                    bps = BranchProductSerializer(branch.branchproduct_set, many=True)
+                    bs = BranchSerializer(branch, many=False)
+                    scs = SaleCampaignSerializer()
+                    saleCampaigns = SaleCampaign.objects.filter(branch=branch)
+                    if saleCampaigns:
+                        scs = SaleCampaignSerializer(saleCampaigns, many=True)
                     merchantsNearby.append({
-                        "branch": branchSerializer.data,
-                        "products": productSerializer.data,
+                        "branch": bs.data,
+                        "products": bps.data,
+                        "saleCampaign": scs.data
                     })
 
                 allDistances = self._getDistanceFromCustomer(deviceLocation, branchAddress, gmaps)

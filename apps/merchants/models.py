@@ -1,4 +1,6 @@
 import json
+from datetime import datetime, timedelta
+
 from django.db import models
 from django.conf import settings
 
@@ -26,7 +28,6 @@ class MerchantBusiness(models.Model):
     paygateId = models.CharField(max_length=20, blank=False, unique=True)
     paygateSecret = models.CharField(max_length=32, blank=False, null=True)
     fernetToken = models.CharField(max_length=2000, blank=True, unique=True)
-    hasSpecials = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.userAccount.user.username}"
@@ -73,14 +74,22 @@ class MerchantBusiness(models.Model):
         self.branchAreas = json.dumps(areas)
 
 class Branch(models.Model):
-    
+
     isActive = models.BooleanField(default=False)
     address = models.CharField(max_length=200)
-    products = models.ManyToManyField("products.Product", blank=True)
     area = models.CharField(max_length=200, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
-    hasSpecials = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.address}"
     
+
+class SaleCampaign(models.Model):
+
+    branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
+    percentageOff = models.PositiveIntegerField()
+    branchProducts = models.ManyToManyField("products.BranchProduct")
+    campaignEnds = models.DateField(default=datetime.now() + timedelta(days=5))
+    
+    def __str__(self) -> str:
+        return f"{self.branch.merchant.name} - {self.branch.area} - sale campaign"

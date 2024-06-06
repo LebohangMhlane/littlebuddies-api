@@ -41,11 +41,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        p1 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+        _ = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 100)
+        _ = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 50, 10)
 
-        p3 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
-        p4 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 100)
+        _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 50, 10)
 
         deviceLocation = "-29.7799367,30.875305" 
         getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
@@ -60,8 +60,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_get_updated_petstores_near_me(self):
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount1 = self.createTestMerchantUserAccount()
-        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
+        merchantUserAccount1 = self.createTestMerchantUserAccount({})
+        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1, {})
         merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
             "username": "Lebo",
             "password": "Hello World",
@@ -73,7 +73,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "dfwhefoewhofh328rh2"
         })
-        merchantBusiness2 = self.createTestMerchantBusinessDynamic(
+        merchantBusiness2 = self.createTestMerchantBusiness(
             merchantUserAccount2, {
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
@@ -81,7 +81,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
                 "paygateSecret": "santafridays",
-                "area": "New Germany",
+                "branchAreas": ["New Germany"],
                 "hasSpecials": False,
             }
         )
@@ -112,7 +112,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         }
         token = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        merchantUserAccount = self.createTestMerchantUserAccount()
+        merchantUserAccount = self.createTestMerchantUserAccount({})
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
             createMerchantUrl,
@@ -123,7 +123,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchant = MerchantBusiness.objects.filter(name=createMerchantPayload["name"]).first()
         self.assertEqual(merchant.userAccount.pk, merchantUserAccount.pk)
         self.assertEqual(response.data["merchant"]["name"], createMerchantPayload["name"])
-        self.assertTrue(self.userAccount.pk != response.data["merchant"]["userAccount"]["id"])
 
     def test_unauthorized_create_merchant(self):
         createMerchantPayload = {

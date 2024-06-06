@@ -9,8 +9,8 @@ from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Branch, MerchantBusiness
-from apps.products.models import Product
+from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
+from apps.products.models import BranchProduct, Product
 
 
 # test functions shared by all tests
@@ -224,21 +224,6 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return merchant
     
-    def createTestMerchantBusinessDynamic(self, userAccount:UserAccount, businessData):
-        userAccount = self.makeUserAccountAMerchant(userAccount)
-        merchant = MerchantBusiness.objects.create(
-            userAccount=userAccount,
-            name=businessData["name"],
-            email=businessData["email"],
-            address=businessData["address"],
-            paygateReference="pgtest_123456789",
-            paygateId=businessData["paygateId"],
-            paygateSecret=businessData["paygateSecret"],
-            area=businessData["area"],
-            hasSpecials=businessData["hasSpecials"],
-        )
-        return merchant
-
     def makeNormalAccountSuperAdmin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
@@ -250,22 +235,35 @@ class GlobalTestCaseConfig(TestCase):
     def createTestProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
         try:
             branch = Branch.objects.get(merchant=merchant)
-            product = Product.objects.create(
+
+            product, bool = Product.objects.get_or_create(
                 name=name,
                 description="High quality dog food",
-                originalPrice=price,
+                recommendedRetailPrice=300,
                 image="image",
-                inStock=True,
-                storeReference="ID2342",
-                discountPercentage=discountPercent,
-                createdBy=merchantUserAccount,
-                isActive=True,
+                category=1
             )
-            branch.products.add(product)
-            branch.save()
+
+            branchProduct = BranchProduct()
+            branchProduct.branch = branch
+            branchProduct.branchPrice = product.recommendedRetailPrice + price # store charging R100 more
+            branchProduct.storeReference = "3EERDE2"
+            branchProduct.createdBy = merchantUserAccount
+            branchProduct.product = product
+            branchProduct.save()
+
+            if discountPercent > 0:
+                saleCampaign = SaleCampaign()
+                saleCampaign.branch = branch
+                saleCampaign.campaignEnds = datetime.now() + timedelta(days=5)
+                saleCampaign.percentageOff = discountPercent
+                saleCampaign.save()
+                saleCampaign.branchProducts.add(branchProduct)
+                saleCampaign.save()
+
         except Exception as e:
             pass
-        return product
+        return branchProduct
     
     def makeDate(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)

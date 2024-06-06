@@ -1,24 +1,32 @@
 from django.db import models
 
+from datetime import datetime, timedelta
+
 from apps.accounts.models import UserAccount
+from apps.merchants.models import Branch
 
 
 class Product(models.Model):
 
-    isActive = models.BooleanField(default=False)
     name = models.CharField(max_length=200, blank=False, default="")
-    description = models.CharField(max_length=2000, blank=False, default="")
-    originalPrice = models.PositiveIntegerField(blank=False, default=0)
-    inStock = models.BooleanField(default=True)
+    description = models.TextField(max_length=2000, blank=False, default="")
+    recommendedRetailPrice = models.PositiveIntegerField(blank=False, default=0)
     image = models.CharField(max_length=800, blank=False, default="")
-    storeReference = models.CharField(max_length=200, blank=False, default="")
-    discountPercentage = models.PositiveIntegerField(blank=False, default=0)
-    createdBy = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
-    onSpecial = models.BooleanField(default=False)
     category = models.PositiveSmallIntegerField(default=1)
-    specialEndDate = models.DateTimeField(auto_now=True) # TODO: fix special ending date issue
 
     def __str__(self) -> str:
         return f"{self.name}"
     
 
+class BranchProduct(models.Model):
+
+    inStock = models.BooleanField(default=True)
+    isActive = models.BooleanField(default=True)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    branchPrice = models.PositiveBigIntegerField(blank=False, null=True)
+    storeReference = models.CharField(max_length=200, blank=False, default="")
+    createdBy = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
+
+    def __str__(self) -> str:
+        return f"{self.branch.merchant.name} - Product {self.product.name}"

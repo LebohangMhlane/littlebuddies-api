@@ -33,7 +33,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 GOOGLE_SERVICES_API_KEY = os.environ.get("GOOGLE_SERVICES_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # firebase stuff
 
@@ -44,7 +44,7 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
-DEVELOPEMENT_URL = "80a0-41-10-123-202.ngrok-free.app" # using ngrok server during development
+DEVELOPEMENT_URL = "90bd-41-10-123-202.ngrok-free.app" # using ngrok server during development
 
 APP_URL = "54.160.249.30"
 
