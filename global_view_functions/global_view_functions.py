@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 
 from apps.accounts.tokens import accountActivationTokenGenerator
 
-from apps.merchants.models import MerchantBusiness
+from apps.merchants.models import Branch, MerchantBusiness
 from apps.products.models import Product
 from apps.products.serializers.serializers import ProductSerializer
 
@@ -46,9 +46,9 @@ class GlobalViewFunctions():
         else:
             return (False, cleanedPayload)
 
-    def getMerchant(self, merchantId) -> MerchantBusiness:
-        merchant = MerchantBusiness.objects.get(id=merchantId)
-        return merchant
+    def getBranch(self, branchId) -> Branch:
+        branch = Branch.objects.get(id=branchId)
+        return branch
 
     def checkIfUserIsSuperAdmin(self, request):
         if request.user.is_superuser and request.user.useraccount.canCreateMerchants:

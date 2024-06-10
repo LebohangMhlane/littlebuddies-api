@@ -36,7 +36,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     def getOrdersAsMerchant(self, request):
         userAccount = request.user.useraccount
         orders = Order.objects.filter(
-            transaction__merchant__userAccount__pk=userAccount.pk, 
+            transaction__branch__merchant__userAccount__pk=userAccount.pk, 
             transaction__status=Transaction.COMPLETED
         )
         if orders:

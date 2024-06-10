@@ -1,14 +1,14 @@
 
 from django.conf import settings
 from apps.orders.models import OrderedProduct
-from apps.products.models import Product
+from apps.products.models import BranchProduct, Product
 
 # what the mobile app sends to the server to initiate payment after checkout:
 
 class CheckoutForm():
-    merchantId = 0
+    branchId = 0
     totalCheckoutAmount = "0.0"
-    products = []
+    branchProducts = []
     productIds = []
     discountTotal = 0
     delivery = True
@@ -18,9 +18,9 @@ class CheckoutForm():
     
     def __init__(self, payload):
         payload = payload.copy()
-        self.merchantId = int(payload.get("merchantId"))
+        self.branchId = int(payload.get("branchId"))
         self.totalCheckoutAmount = payload["totalCheckoutAmount"]
-        self.products = self._setProducts(payload.get("products"))
+        self.branchProducts = self._setProducts(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
         self.deliveryDate = payload.get("deliveryDate")
         self.address = payload.get("address")
@@ -63,23 +63,23 @@ class CheckoutForm():
         if verifyProductExistence() and checkifPricesMatch():
             return True
     
-    def _setProducts(self, products):
+    def _setProducts(self, branchProducts):
         try:
-            orderedProducts = []
+            orderedBranchProducts = []
             # test cases require eval() conversion
             # running from mobile doesn't:
             try:
-                products = eval(products)
+                branchProducts = eval(branchProducts)
             except:
                 pass
-            for product in products:
-                productObject = Product.objects.get(id=product["id"])
+            for branchProduct in branchProducts:
+                product = BranchProduct.objects.get(id=branchProduct["id"])
                 orderedProduct = OrderedProduct.objects.create(
-                    product=productObject,
-                    quantityOrdered=product["quantityOrdered"]
+                    branchProduct=product,
+                    quantityOrdered=branchProduct["quantityOrdered"]
                 )
-                orderedProducts.append(orderedProduct)
-            return orderedProducts
+                orderedBranchProducts.append(orderedProduct)
+            return orderedBranchProducts
         except Exception as e:
             raise e
 
@@ -96,5 +96,5 @@ class CheckoutForm():
         return productIds
     
     def setProductCount(self):
-        for product in self.products:
+        for product in self.branchProducts:
             self.productCount += int(product.quantityOrdered)

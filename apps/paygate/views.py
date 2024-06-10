@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
-from apps.merchants.models import MerchantBusiness
+from apps.merchants.models import Branch
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.paygate.app_models.app_models import CheckoutForm
@@ -39,21 +39,21 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     def post(self, request, *args, **kwargs):
         try:
             checkoutForm = CheckoutForm(payload=request.data)
-            merchant = self.getMerchant(checkoutForm.merchantId)
+            branch = self.getBranch(checkoutForm.branchId)
             if checkoutForm.verifyPurchase():
                 paygatePayload, reference = self.preparePayGatePayload(
-                    checkoutForm, merchant, request
+                    checkoutForm, branch, request
                 )
                 paygateResponse = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
             if paygateResponse.status_code == 200:
                 responseData = paygateResponse.text.split("&")
                 responseAsDict = self.convertResponseToDict(responseData)
                 dataIntegritySecure, verifiedPayload = self.verifyPayloadIntegrity(
-                    responseAsDict, secret=merchant.getMerchantSecretKey()
+                    responseAsDict, secret=branch.merchant.getMerchantSecretKey()
                 )
                 if dataIntegritySecure:
                     transaction = self.createATransaction(
-                        request, checkoutForm, merchant, reference, verifiedPayload
+                        request, checkoutForm, branch, reference, verifiedPayload
                     )
                     if transaction:
                         order = self.createAnOrder(transaction, checkoutForm)
@@ -79,11 +79,11 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     
     # prepare and return the payload we need to send to paygate to initiate a payment:
     # refer to docs: https://docs.paygate.co.za/?php#initiate
-    def preparePayGatePayload(self, checkoutFormPayload:CheckoutForm, merchant:MerchantBusiness, request):
-        reference = self.createReference(merchant, request)
+    def preparePayGatePayload(self, checkoutFormPayload:CheckoutForm, branch:Branch, request):
+        reference = self.createReference(branch, request)
         totalCheckoutAmount = checkoutFormPayload.totalCheckoutAmount.replace('.', '')
         paygatePayload = {
-            "PAYGATE_ID": merchant.paygateId,
+            "PAYGATE_ID": branch.merchant.paygateId,
             "REFERENCE": reference,
             "AMOUNT": f"{totalCheckoutAmount}", # paygate doesn't use decimals
             "CURRENCY": "ZAR",
@@ -91,18 +91,18 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             "TRANSACTION_DATE": "2018-01-01 12:00:00", # TODO: implement real time date
             "LOCALE": "en-za",
             "COUNTRY":"ZAF",
-            "EMAIL": merchant.userAccount.user.email,
+            "EMAIL": branch.merchant.userAccount.user.email,
         }
-        merchantPaygateSecretKey = merchant.getMerchantSecretKey()
+        merchantPaygateSecretKey = branch.merchant.getMerchantSecretKey()
         paygatePayload["CHECKSUM"] = self.generateChecksum(
             paygate_data=paygatePayload, 
             merchantPaygateSecretKey=merchantPaygateSecretKey
         )   
         return paygatePayload, reference
     
-    def createReference(self, merchant:MerchantBusiness, request):
-        merchantTransactionCount = Transaction.objects.filter(merchant=merchant).count()
-        reference = f"T{merchant.id}{str(request.user.useraccount.phoneNumber)[-4:]}{request.user.pk}{merchantTransactionCount}"
+    def createReference(self, branch:Branch, request):
+        numOfBranchTransactions = Transaction.objects.filter(branch=branch).count()
+        reference = f"T{branch.id}{str(request.user.useraccount.phoneNumber)[-4:]}{request.user.pk}{numOfBranchTransactions}"
         return reference
         
     def generateChecksum(self, paygate_data, merchantPaygateSecretKey = ''):
@@ -131,14 +131,14 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         return response
 
     def createATransaction(
-            self, request, checkoutFormPayload:CheckoutForm, merchant, reference, verifiedPayload
+            self, request, checkoutFormPayload:CheckoutForm, branch:Branch, reference, verifiedPayload
         ):
         def findDuplicateTransaction():
             return Transaction.objects.filter(
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
-                merchant__id=checkoutFormPayload.merchantId,
+                branch__id=branch.pk,
                 amount=checkoutFormPayload.totalCheckoutAmount[0],
                 productsPurchased__id__in=checkoutFormPayload.productIds,
                 numberOfProducts=checkoutFormPayload.productCount,
@@ -150,14 +150,14 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
-                merchant=merchant,
+                branch=branch,
                 amount=checkoutFormPayload.totalCheckoutAmount,
                 numberOfProducts=checkoutFormPayload.productCount,
                 status=Transaction.PENDING,
                 discountTotal=checkoutFormPayload.discountTotal,
                 dateCreated=datetime.datetime.now(),
             )
-            transaction.productsPurchased.set(checkoutFormPayload.products)
+            transaction.productsPurchased.set(checkoutFormPayload.branchProducts)
             transaction.save()
             return transaction
         else:
@@ -165,9 +165,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 payRequestId=verifiedPayload["PAY_REQUEST_ID"],
                 reference=reference,
                 customer=request.user.useraccount,
-                merchant__id=checkoutFormPayload.merchantId,
+                branch=branch,
                 amount=str(checkoutFormPayload.totalCheckoutAmount),
-                productsPurchased__id__in=checkoutFormPayload.products,
+                productsPurchased__id__in=checkoutFormPayload.branchProducts,
                 numberOfProducts=checkoutFormPayload.productCount,
                 discountTotal=checkoutFormPayload.discountTotal,
                 status=Transaction.PENDING
@@ -230,7 +230,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             payRequestId = receivedPayload["PAY_REQUEST_ID"]
             transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
             dataIntegritySecure, validatedPayload = self.verifyPayloadIntegrity(
-                receivedPayload, secret=transaction.merchant.getMerchantSecretKey()
+                receivedPayload, secret=transaction.branch.merchant.getMerchantSecretKey()
             ) # TODO: investigate checksum check failure in this step:
             transactionStatus = int(validatedPayload["TRANSACTION_STATUS"])
             transaction = setTransactionStatus(transactionStatus, transaction)

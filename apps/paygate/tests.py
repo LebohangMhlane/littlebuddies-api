@@ -15,14 +15,15 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        createTestCustomer = self.createTestCustomer()
+        testCustomer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
         merchantUserAccount = self.createTestMerchantUserAccount()
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "400.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -41,10 +42,10 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertTrue(transaction.amount == checkoutFormPayload["totalCheckoutAmount"])
         self.assertEqual(response.data["message"], "Paygate response was successful")
         self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["product"]["name"], "Bob's dog food")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["product"]["name"], "Bob's cat food")
+        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["branchProduct"]["product"], 1)
+        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["branchProduct"]["product"], 2)
         self.assertEqual(response.data["transaction"]["productsPurchased"][1]["quantityOrdered"], 2)
-        self.assertEqual(response.data["transaction"]["customer"]["address"], createTestCustomer.address)
+        self.assertEqual(response.data["transaction"]["customer"]["address"], testCustomer.address)
 
     
     @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
@@ -58,8 +59,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        branch = merchant.branch_set.first()
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "400.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -86,7 +88,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.data["message"], f"Transaction {reference} status retrieved successfully")
         self.assertEqual(response.data["transactionStatus"], transaction.COMPLETED)
-
     
 
     # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
@@ -101,8 +102,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        branch = merchant.branch_set.first()
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -124,7 +126,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
         self.assertEqual(products[1].id, p2.id)
-        self.assertEqual(order.transaction.merchant.id, int(checkoutFormPayload["merchantId"]))
+        self.assertEqual(order.transaction.branch.id, int(checkoutFormPayload["branchId"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.status, Transaction.COMPLETED)
         self.assertEqual(order.transaction.customer.id, customer.id)

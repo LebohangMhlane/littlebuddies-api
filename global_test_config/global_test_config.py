@@ -84,7 +84,7 @@ class GlobalTestCaseConfig(TestCase):
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def createTestMerchantUserAccount(self, userData):
+    def createTestMerchantUserAccount(self, userData={}):
         try:
             fakeUserData = {
                 "username": "Mike",

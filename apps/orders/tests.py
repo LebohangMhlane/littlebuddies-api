@@ -20,8 +20,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -46,7 +47,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
         self.assertEqual(products[1].id, p2.id)
-        self.assertEqual(order.transaction.merchant.id, int(checkoutFormPayload["merchantId"]))
+        self.assertEqual(order.transaction.branch.id, int(checkoutFormPayload["branchId"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
 
@@ -66,8 +67,10 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
 
+        branch = merchant.branch_set.all().first()
+
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -102,8 +105,8 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
         self.assertEqual(
-            orderFromResponse["transaction"]["merchant"]["id"], 
-            int(checkoutFormPayload["merchantId"]))
+            orderFromResponse["transaction"]["branch"]["id"], 
+            int(checkoutFormPayload["branchId"]))
         self.assertEqual(
             float(orderFromResponse["transaction"]["amount"]), 
             float(checkoutFormPayload["totalCheckoutAmount"])
@@ -125,8 +128,10 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
 
+        branch = merchant.branch_set.all().first()
+
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
@@ -163,8 +168,8 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
         self.assertEqual(
-            orderFromResponse["transaction"]["merchant"]["id"], 
-            int(checkoutFormPayload["merchantId"]))
+            orderFromResponse["transaction"]["branch"]["id"], 
+            int(checkoutFormPayload["branchId"]))
         self.assertEqual(
             float(orderFromResponse["transaction"]["amount"]), 
             float(checkoutFormPayload["totalCheckoutAmount"])

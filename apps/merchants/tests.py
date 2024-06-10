@@ -47,7 +47,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 100)
         _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 50, 10)
 
-        deviceLocation = "-29.7799367,30.875305" 
+        deviceLocation = "-29.7799367,30.875305"
         getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
         response = self.client.get(
             getNearByStoresUrl,
@@ -147,7 +147,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_deactivate_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createTestMerchantUserAccount()
+        testMerchantUserAccount = self.createTestMerchantUserAccount({})
         merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
@@ -220,10 +220,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
-            "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.makeDate(1),
             "address": "71 downthe street Bergville"
@@ -267,13 +266,14 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchant = self.createTestMerchantBusiness(merchantUserAccount)
         p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
         p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
-            "merchantId": str(merchant.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.makeDate(daysFromNow=1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
