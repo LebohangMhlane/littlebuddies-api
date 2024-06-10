@@ -39,7 +39,7 @@ class Order(models.Model):
 
 class OrderedProduct(models.Model):
 
-    branchProduct = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False)
+    branchProduct = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False, null=True)
     quantityOrdered = models.PositiveIntegerField()
 
     def __str__(self) -> str:
