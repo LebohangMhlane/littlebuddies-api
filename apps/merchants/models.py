@@ -81,7 +81,7 @@ class Branch(models.Model):
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
 
     def __str__(self) -> str:
-        return f"{self.address}"
+        return f"{self.merchant.name} - {self.address}"
     
 
 class SaleCampaign(models.Model):
