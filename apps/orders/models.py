@@ -34,7 +34,7 @@ class Order(models.Model):
     address = models.CharField(max_length=200, blank=False, null=True)
 
     def __str__(self) -> str:
-        return f"{self.transaction.customer.user.first_name}{self.transaction.customer.user.last_name} from {self.transaction.merchant.name} - {self.transaction.reference}"
+        return f"{self.transaction.customer.user.first_name}{self.transaction.customer.user.last_name} from {self.transaction.branch.merchant.name} - {self.transaction.reference}"
 
 
 class OrderedProduct(models.Model):
@@ -43,4 +43,4 @@ class OrderedProduct(models.Model):
     quantityOrdered = models.PositiveIntegerField()
 
     def __str__(self) -> str:
-        return f"{self.product.name} - {self.quantityOrdered} - {self.order.transaction.reference}"
+        return f"{self.branchProduct.product.name} - {self.quantityOrdered}"

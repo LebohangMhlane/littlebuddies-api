@@ -8,5 +8,5 @@ class OrderedProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderedProduct
         fields = "__all__"
-        depth = 2
+        depth = 3
 

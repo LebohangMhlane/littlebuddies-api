@@ -55,8 +55,8 @@ class BranchProductSerializer(ModelSerializer):
 
         class Meta:
             model = BranchProduct
-            fields = ['id', 'inStock', 'isActive', 'branchPrice', 'storeReference', 'createdBy']
-            depth = 2
+            fields = ['id', 'inStock', 'isActive', 'branchPrice', 'storeReference', 'createdBy', 'product']
+            depth = 3
 
         def is_valid(self, *, raise_exception=False):
             return super().is_valid(raise_exception=raise_exception)

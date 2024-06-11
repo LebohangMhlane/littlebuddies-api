@@ -30,8 +30,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
 
     permission_classes = [IsAuthenticated] 
 
-    ngrok_base_url = "https://b38c-41-10-119-195.ngrok-free.app" # TODO: for development use only:
-
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)

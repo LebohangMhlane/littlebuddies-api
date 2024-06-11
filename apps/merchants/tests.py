@@ -55,6 +55,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.data["message"], "Stores near customer retrieved successfully")
         self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 2)
+        self.assertEqual(response.data["petStoresNearby"][0]["products"][0]["product"]["name"], "Bob's dog food")
         self.assertIsNotNone(response.data["customerAddress"])
 
     def test_get_updated_petstores_near_me(self):
