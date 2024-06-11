@@ -13,10 +13,10 @@ class FirebaseInstance():
             transactionStatus = transaction.getTransactionStatus()
             message = messaging.Message(
                 notification=messaging.Notification(
-                    title=f"Order from {transaction.merchant.name} successfully placed!",
+                    title=f"Order from {transaction.branch.merchant.name} successfully placed!",
                     body="You will receive another notification when the store has acknowleged your order."
                 ) if transaction.status == transaction.COMPLETED else messaging.Notification(
-                    title=f"Order from {transaction.merchant.name} failed.",
+                    title=f"Order from {transaction.branch.merchant.name} failed.",
                     body=f"Reason: {transactionStatus}"
                 ),
                 data={
