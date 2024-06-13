@@ -201,7 +201,6 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.paygateReference="pgtest_123456789"
                 merchant.paygateId=merchantData["paygateId"]
                 merchant.paygateSecret=merchantData["paygateSecret"]
-                merchant.hasSpecials=merchantData["hasSpecials"]
                 merchant.setBranchAreas(merchantData["branchAreas"])
                 merchant.save()
         except Exception as e:

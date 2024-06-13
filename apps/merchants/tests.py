@@ -30,12 +30,12 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
         merchantBusiness2 = self.createTestMerchantBusiness(
             merchantUserAccount2, merchantData={
-                "name": "Totally Pets",
-                "email": "totallypets@gmail.com",
+                "name": "Orsum Pets",
+                "email": "orsumpets@gmail.com",
                 "address": "ORSUM, Shop No, 55 Shepstone Rd, New Germany, Durban, 3610",
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
-                "paygateSecret": "santafridays",
+                "paygateSecret": "secretSanta",
                 "branchAreas": ["New Germany"],
                 "hasSpecials": False,
             }
@@ -56,6 +56,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
         self.assertEqual(response.data["message"], "Stores near customer retrieved successfully")
+        self.assertEqual(response.data["petStoresNearby"][0]["distance"]["distance"]["text"], "2.9 km")
         self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 3)
         self.assertEqual(response.data["petStoresNearby"][0]["products"][0]["product"]["name"], "Bob's dog food")
         self.assertIsNotNone(response.data["customerAddress"])

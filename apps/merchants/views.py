@@ -31,6 +31,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class getBranchesNearby(APIView, GlobalViewFunctions):
+    
     def get(self, request, **kwargs):
         try:
             # TODO: restrict api key access to server ip address:
@@ -41,9 +42,13 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
             addresses = []
             if branches:
                 addresses = [branchData["branch"]["address"] for branchData in branches]
-                distances = self._getDistanceFromCustomer(deviceLocation, addresses, gmapsClient)
-                self._setDistanceData(distances, branches)
+                distances = self._getDistances(deviceLocation, addresses, gmapsClient)
+                self._setDistances(distances, branches)
                 branches.sort(key=lambda x: x["distance"]["duration"]["text"], reverse=True)
+            else:
+                raise Exception("No stores were found in this area")
+                # nearestBranch = self._findNearestBranch()
+                # in the future we can do an expanded search feature
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
@@ -74,7 +79,7 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
             tb = traceback.format_exc()
             raise Exception(f"Failed to get location area: {tb}")
 
-    def _setDistanceData(self, distances, branches):
+    def _setDistances(self, distances, branches):
         for index, distanceData in enumerate(distances):
             branches[index]["distance"] = distanceData
         return branches
@@ -83,7 +88,7 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
         try:
             branchesInArea = []
             branches = Branch.objects.filter(
-                area__in=[locationArea, "Durban"],
+                area__in=[locationArea],
                 isActive = True
             ).all()
             if branches:
@@ -100,12 +105,10 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
                         "saleCampaign": scs.data
                     })
                 return branchesInArea
-            else: 
-                raise Exception("No branches were found in this area")
         except Exception as e:
             raise Exception(f"Failed to get branches in area: {str(e)}")
         
-    def _findNearestStore(self, deviceLocation, gmapsClient):
+    def _findNearestBranch(self, deviceLocation, gmapsClient):
         try:
             place = googlemaps.places.find_place(
                 client=gmapsClient,
@@ -118,7 +121,7 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
         except Exception as e:
             pass
 
-    def _getDistanceFromCustomer(self, deviceLocation, addresses, gmapsClient):
+    def _getDistances(self, deviceLocation, addresses, gmapsClient):
             try:
                 distances = googlemaps.distance_matrix.distance_matrix(
                     client=gmapsClient,
