@@ -60,11 +60,11 @@ class GlobalTestCaseConfig(TestCase):
             "firstName": "Customer",
             "lastName": "IWantToOrder",
             "email": "customer@gmail.com",
-            "address": "21 everywhere street, The world",
+            "address": "71 Rethman Street, New Germany, Durban",
             "phoneNumber": "0631837747",
             "isMerchant": False,
             "deviceToken": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
-            "phoneNumberVerified": True,
+            "emailVerified": True,
         }
         customer = User.objects.create(
             username=userInputData["username"],
@@ -79,12 +79,12 @@ class GlobalTestCaseConfig(TestCase):
             phoneNumber=userInputData["phoneNumber"],
             isMerchant=userInputData["isMerchant"],
             deviceToken=userInputData["deviceToken"],
-            phoneNumberVerified=userInputData["phoneNumberVerified"]
+            emailVerified=userInputData["emailVerified"],
         )
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def createTestMerchantUserAccount(self, userData={}):
+    def createMerchantUserAccount(self, userData={}):
         try:
             fakeUserData = {
                 "username": "Mike",
@@ -179,7 +179,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createTestMerchantBusiness(self, userAccount:UserAccount, merchantData={}):
+    def createMerchantBusiness(self, userAccount:UserAccount, merchantData={}):
         userAccount = self.makeUserAccountAMerchant(userAccount)
         try:
             merchant = MerchantBusiness()
@@ -213,15 +213,13 @@ class GlobalTestCaseConfig(TestCase):
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
                 branch1.save()
-
-            branch2 = Branch()
-            if len(merchantData) == 0:
+                
+                branch2 = Branch()
                 branch2.isActive=True
                 branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
                 branch2.merchant = merchant
                 branch2.area = "Durban Central"
                 branch2.save()
-
             else:
                 branch1.isActive=True
                 branch1.address = merchantData["address"]
@@ -240,7 +238,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createTestProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
+    def createProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
 

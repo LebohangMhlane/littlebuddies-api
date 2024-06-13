@@ -1,18 +1,19 @@
 from django.urls import path
 from apps.merchants.views import (CreateMerchantView, 
-                                DeactivateMerchantView,
+                                DeactivateMerchantView, GetStoreRange,
                                 UpdateMerchant,
                                 AcknowledgeOrderView,
                                 FulfillOrderView,
-                                getBranchesNearby,
-                                getUpdatedMerchantsNearby
+                                GetNearestBranch,
+                                GetUpdatedMerchantsNearby
                                 )
 
 urlpatterns = [
 
     # little buddies unique url name urls:
-    path('get-petstores-near-me/<str:coordinates>/', getBranchesNearby.as_view(), name="get_petstores_near_me"),
-    path('get-updated-petstores-near-me/<str:storeIds>/', getUpdatedMerchantsNearby.as_view(), name="get_updated_petstores_near_me"),
+    path('get-store-range/', GetStoreRange.as_view(), name="get_store_range"),
+    path('get-nearest-branch/<str:coordinates>/<int:merchantId>', GetNearestBranch.as_view(), name="get_nearest_branch"),
+    path('get-updated-petstores-near-me/<str:storeIds>/', GetUpdatedMerchantsNearby.as_view(), name="get_updated_petstores_near_me"),
 
 
     # dynamic name urls:

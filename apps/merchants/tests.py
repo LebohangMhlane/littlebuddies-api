@@ -11,11 +11,34 @@ from apps.merchants.models import MerchantBusiness
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     # little buddies tests:
-    def test_get_petstores_near_me(self):
+
+    def test_get_store_range(self):
+
+        merchantUserAccount = self.createMerchantUserAccount({})
+        merchantBusiness = self.createMerchantBusiness(merchantUserAccount)
+        
+        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
+        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
+
+        customer = self.createTestCustomer()
+        authToken = self.loginAsCustomer()
+
+        storeRangeUrl = reverse('get_store_range')
+        response = self.client.get(
+            storeRangeUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+
+        self.assertEqual(len(response.data["petstores"]), 1)
+
+        pass
+
+    def test_get_nearest_branch(self):
+
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount1 = self.createTestMerchantUserAccount({})
-        merchantUserAccount2 = self.createTestMerchantUserAccount({
+
+        merchantUserAccount = self.createMerchantUserAccount({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -27,12 +50,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "deviceToken": "dfwhefoewhofh328rh2"
         })
         
-        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1)
-        merchantBusiness2 = self.createTestMerchantBusiness(
-            merchantUserAccount2, merchantData={
+        merchantBusiness = self.createMerchantBusiness(
+            merchantUserAccount, merchantData={
                 "name": "Orsum Pets",
                 "email": "orsumpets@gmail.com",
-                "address": "ORSUM, Shop No, 55 Shepstone Rd, New Germany, Durban, 3610",
+                "address": 'Shop No, 55 Shepstone Rd, New Germany, Durban, 3610, South Africa',
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
                 "paygateSecret": "secretSanta",
@@ -41,31 +63,29 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        _ = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 100)
-        _ = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 50, 10)
+        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
+        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
 
-        _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 100)
-        _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 50, 10)
-
-        deviceLocation = "-29.7799367,30.875305"
         # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
         # deviceLocation = "-29.857298, 31.024362"
-        getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
+        deviceLocation = "-29.7799367,30.875305"
+        getNearestBranchUrl = reverse("get_nearest_branch", kwargs={"coordinates": deviceLocation, "merchantId": 1})
+
         response = self.client.get(
-            getNearByStoresUrl,
+            getNearestBranchUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
-        self.assertEqual(response.data["message"], "Stores near customer retrieved successfully")
-        self.assertEqual(response.data["petStoresNearby"][0]["distance"]["distance"]["text"], "2.9 km")
-        self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 3)
-        self.assertEqual(response.data["petStoresNearby"][0]["products"][0]["product"]["name"], "Bob's dog food")
-        self.assertIsNotNone(response.data["customerAddress"])
+
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
+        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "2.9 km")
+        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
+        self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
 
     def test_get_updated_petstores_near_me(self):
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount1 = self.createTestMerchantUserAccount({})
-        merchantBusiness1 = self.createTestMerchantBusiness(merchantUserAccount1, {})
+        merchantUserAccount1 = self.createMerchantUserAccount({})
+        merchantBusiness1 = self.createMerchantBusiness(merchantUserAccount1, {})
         merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
             "username": "Lebo",
             "password": "Hello World",
@@ -77,7 +97,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "dfwhefoewhofh328rh2"
         })
-        merchantBusiness2 = self.createTestMerchantBusiness(
+        merchantBusiness2 = self.createMerchantBusiness(
             merchantUserAccount2, {
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
@@ -90,11 +110,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        p1 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+        p1 = self.createProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
+        p2 = self.createProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
 
-        p3 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
-        p4 = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p3 = self.createProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p4 = self.createProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
 
         getNearByStoresUrl = reverse("get_updated_petstores_near_me", kwargs={
         "storeIds": '[{"id": 1, "distance": "10 mins"}, {"id": 2, "distance": "10 mins"}]'
@@ -116,7 +136,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         }
         token = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        merchantUserAccount = self.createTestMerchantUserAccount({})
+        merchantUserAccount = self.createMerchantUserAccount({})
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
             createMerchantUrl,
@@ -151,8 +171,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_deactivate_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createTestMerchantUserAccount({})
-        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
+        testMerchantUserAccount = self.createMerchantUserAccount({})
+        merchant = self.createMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 1,
@@ -171,8 +191,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_deactivate_merchant_failure(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
         _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
+        testMerchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 100, # id doesn't exist
@@ -192,8 +212,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     def test_update_merchant(self):
         testAccountToken = self.createNormalTestAccountAndLogin()
         _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
+        testMerchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(testMerchantUserAccount)
         self.assertEqual(merchant.name, "Absolute Pets")
         self.assertEqual(merchant.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
         payload = {
@@ -219,10 +239,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(merchantUserAccount)
+        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
@@ -266,10 +286,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         _ = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(merchantUserAccount)
+        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
             "branchId": str(branch.pk),

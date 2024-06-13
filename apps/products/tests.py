@@ -7,8 +7,8 @@ from apps.products.models import Product
 class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_product_as_merchant(self):
-        testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchantBusiness(testMerchantAccount)
+        testMerchantAccount = self.createMerchantUserAccount()
+        self.createMerchantBusiness(testMerchantAccount)
         _ = self.loginAsMerchant()
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
@@ -35,8 +35,8 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
     def test_create_product_as_superadmin(self):
         _ = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchantBusiness(testMerchantAccount)
+        testMerchantAccount = self.createMerchantUserAccount()
+        self.createMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
             "merchantPk": 1,
@@ -72,8 +72,8 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         }
         _ = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchantBusiness(testMerchantAccount)
+        testMerchantAccount = self.createMerchantUserAccount()
+        self.createMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -96,8 +96,8 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "discountPercentage": 0,
         }
         _ = self.createNormalTestAccountAndLogin()
-        testMerchantAccount = self.createTestMerchantUserAccount()
-        self.createTestMerchantBusiness(testMerchantAccount)
+        testMerchantAccount = self.createMerchantUserAccount()
+        self.createMerchantBusiness(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -111,13 +111,13 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
     def test_delete_product_as_superadmin(self):
         _ = self.createNormalTestAccountAndLogin()
         self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(testMerchantUserAccount)
-        product1 = self.createTestProduct(
+        testMerchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(testMerchantUserAccount)
+        product1 = self.createProduct(
             merchant, testMerchantUserAccount, 
             name="Bob's Cat Food", price=200.0
         )
-        product2 = self.createTestProduct(
+        product2 = self.createProduct(
             merchant, testMerchantUserAccount, 
             name="Bob's Dog Food", price=200.0
         )

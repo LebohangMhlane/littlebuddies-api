@@ -16,10 +16,10 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
 
         customer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(merchantUserAccount)
+        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
             "branchId": str(merchant.pk),
@@ -61,11 +61,11 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         customer = self.createTestCustomer()
         customerAuthToken = self.loginAsCustomer()
 
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
+        merchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(merchantUserAccount)
 
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 
@@ -122,11 +122,11 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         customer = self.createTestCustomer()
         customerAuthToken = self.loginAsCustomer()
 
-        merchantUserAccount = self.createTestMerchantUserAccount()
-        merchant = self.createTestMerchantBusiness(merchantUserAccount)
+        merchantUserAccount = self.createMerchantUserAccount()
+        merchant = self.createMerchantBusiness(merchantUserAccount)
 
-        p1 = self.createTestProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createTestProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 

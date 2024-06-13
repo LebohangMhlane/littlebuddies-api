@@ -30,29 +30,47 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class getBranchesNearby(APIView, GlobalViewFunctions):
+
+class GetStoreRange(APIView, GlobalViewFunctions):
     
     def get(self, request, **kwargs):
         try:
-            # TODO: restrict api key access to server ip address:
-            gmapsClient = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
-            deviceLocation = kwargs["coordinates"]
-            area, customerAddress = self._getArea(deviceLocation, gmapsClient)
-            branches = self._getBranchesInArea(area)
-            addresses = []
-            if branches:
-                addresses = [branchData["branch"]["address"] for branchData in branches]
-                distances = self._getDistances(deviceLocation, addresses, gmapsClient)
-                self._setDistances(distances, branches)
-                branches.sort(key=lambda x: x["distance"]["duration"]["text"], reverse=True)
+            mb = MerchantBusiness.objects.all()
+            if mb:
+                ms = MerchantSerializer(mb, many=True)
             else:
-                raise Exception("No stores were found in this area")
-                # nearestBranch = self._findNearestBranch()
-                # in the future we can do an expanded search feature
+                raise Exception("No Pet stores were found")
             return Response({
                 "success": True,
-                "message": "Stores near customer retrieved successfully",
-                "petStoresNearby": branches,
+                "message": "Stores range retrieved successfully",
+                "petstores": ms.data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to get stores near customer",
+                "error": str(e)
+            }, status=200)
+
+
+class GetNearestBranch(APIView, GlobalViewFunctions):
+
+    def get(self, request, **kwargs):
+        try:
+            # TODO: restrict api key access to server ip address:
+            coordinates = kwargs["coordinates"]
+            merchantBusiness = MerchantBusiness.objects.get(id=kwargs["merchantId"])
+            gmapsClient = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
+            customerAddress = self._getCustomerAddress(coordinates, gmapsClient)
+            branchData = self._findNearestBranch(
+                coordinates, merchantBusiness.name, gmapsClient)
+            distanceFromBranch = self._getDistance(
+                coordinates, branchData["branch"]["address"], gmapsClient)
+            self._setDistance(distanceFromBranch, branchData)
+            return Response({
+                "success": True,
+                "message": "Nearest branch retrieved successfully",
+                "nearestBranch": branchData,
                 "customerAddress": customerAddress
             }, status=200)
         except Exception as e:
@@ -62,79 +80,63 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
                 "error": str(e)
             }, status=200)
         
-    def _getArea(self, deviceLocation, gmapsClient):
+    def _getCustomerAddress(self, coordinates, gmapsClient):
         try:
-            area = None
             deviceAddresses = googlemaps.geocoding.reverse_geocode(
                 gmapsClient,
-                deviceLocation,
+                coordinates,
             )
             deviceAddress = deviceAddresses[0]
-            for component in deviceAddress["address_components"]:
-                if component["long_name"] in MerchantBusiness().getAreasList():
-                    area = component["long_name"]
-                    break
-            return area, deviceAddress["formatted_address"]
+            return deviceAddress["formatted_address"]
         except Exception as e:
-            tb = traceback.format_exc()
-            raise Exception(f"Failed to get location area: {tb}")
+            raise Exception(f"Failed to get location area: {str(e)}")
 
-    def _setDistances(self, distances, branches):
-        for index, distanceData in enumerate(distances):
-            branches[index]["distance"] = distanceData
+    def _setDistance(self, distances, branches):
+        for distanceData in distances:
+            branches["distance"] = distanceData
         return branches
-
-    def _getBranchesInArea(self, locationArea):
-        try:
-            branchesInArea = []
-            branches = Branch.objects.filter(
-                area__in=[locationArea],
-                isActive = True
-            ).all()
-            if branches:
-                for branch in branches:
-                    bps = BranchProductSerializer(branch.branchproduct_set, many=True)
-                    bs = BranchSerializer(branch, many=False)
-                    scs = SaleCampaignSerializer()
-                    saleCampaigns = SaleCampaign.objects.filter(branch=branch)
-                    if saleCampaigns:
-                        scs = SaleCampaignSerializer(saleCampaigns, many=True)
-                    branchesInArea.append({
-                        "branch": bs.data,
-                        "products": bps.data,
-                        "saleCampaign": scs.data
-                    })
-                return branchesInArea
-        except Exception as e:
-            raise Exception(f"Failed to get branches in area: {str(e)}")
         
-    def _findNearestBranch(self, deviceLocation, gmapsClient):
+    def _findNearestBranch(self, coordinates, merchantName, gmapsClient):
         try:
-            place = googlemaps.places.find_place(
+            nearestBranch = googlemaps.places.find_place(
                 client=gmapsClient,
-                input="Pet Store",
+                input=merchantName,
                 input_type="textquery",
-                fields=["formatted_address","name","geometry"],
-                location_bias=f"circle:3000@{deviceLocation}"
+                fields=["formatted_address","name"],
+                location_bias=f"circle:3000@{coordinates}"
             )
-            pass
+            branchAddress = nearestBranch["candidates"][0]["formatted_address"]
+            branchData = {}
+            branch = Branch.objects.get(address=branchAddress)
+            bps = BranchProductSerializer(branch.branchproduct_set, many=True)
+            bs = BranchSerializer(branch, many=False)
+            scs = SaleCampaignSerializer()
+            saleCampaigns = SaleCampaign.objects.filter(branch=branch)
+            if saleCampaigns:
+                scs = SaleCampaignSerializer(saleCampaigns, many=True)
+            branchData = {
+                "branch": bs.data,
+                "products": bps.data,
+                "saleCampaigns": scs.data
+            }
+            return branchData
         except Exception as e:
-            pass
+            raise Exception("No branch could be found for this store")
 
-    def _getDistances(self, deviceLocation, addresses, gmapsClient):
-            try:
-                distances = googlemaps.distance_matrix.distance_matrix(
-                    client=gmapsClient,
-                    origins=[deviceLocation],
-                    destinations=addresses
-                )
-                distances = distances["rows"][0]["elements"]
-                return distances
-            except Exception as e:
-                raise Exception(f"Failed to get distance from customer: {str(e)}")
+    def _getDistance(self, coordinates, address, gmapsClient):
+        try:
+            distances = googlemaps.distance_matrix.distance_matrix(
+                client=gmapsClient,
+                origins=[coordinates],
+                destinations=[address]
+            )
+            distance = distances["rows"][0]["elements"]
+            return distance
+        except Exception as e:
+            raise Exception(f"Failed to get distance from customer: {str(e)}")
     
 
-class getUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
+class GetUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
 
     def get(self, request, **kwargs):
         try:
