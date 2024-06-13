@@ -7,10 +7,12 @@ import traceback
 import googlemaps.addressvalidation
 import googlemaps.client
 import googlemaps.convert
+import googlemaps.directions
 import googlemaps.distance_matrix
 import googlemaps.geocoding
 import googlemaps.geolocation
 import googlemaps.maps
+import googlemaps.places
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -31,16 +33,21 @@ logger = logging.getLogger(__name__)
 class getBranchesNearby(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
-            logger.info("Getting stores near customer...")
             # TODO: restrict api key access to server ip address:
-            gmaps = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
+            gmapsClient = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             deviceLocation = kwargs["coordinates"]
-            locationArea, customerAddress = self._getLocationArea(deviceLocation, gmaps)
-            branchesNearby = self._getMerchantsNearby(locationArea, deviceLocation, gmaps)
+            area, customerAddress = self._getArea(deviceLocation, gmapsClient)
+            branches = self._getBranchesInArea(area)
+            addresses = []
+            if branches:
+                addresses = [branchData["branch"]["address"] for branchData in branches]
+                distances = self._getDistanceFromCustomer(deviceLocation, addresses, gmapsClient)
+                self._setDistanceData(distances, branches)
+                branches.sort(key=lambda x: x["distance"]["duration"]["text"], reverse=True)
             return Response({
                 "success": True,
                 "message": "Stores near customer retrieved successfully",
-                "petStoresNearby": branchesNearby,
+                "petStoresNearby": branches,
                 "customerAddress": customerAddress
             }, status=200)
         except Exception as e:
@@ -50,75 +57,75 @@ class getBranchesNearby(APIView, GlobalViewFunctions):
                 "error": str(e)
             }, status=200)
         
-    def _getLocationArea(self, deviceLocation, gmaps):
-        logger.info("Getting location area...")
+    def _getArea(self, deviceLocation, gmapsClient):
         try:
-            locationArea = None
+            area = None
             deviceAddresses = googlemaps.geocoding.reverse_geocode(
-                gmaps,
+                gmapsClient,
                 deviceLocation,
             )
-            deviceAddresses = deviceAddresses[0]
-            for component in deviceAddresses["address_components"]:
-                if component["long_name"] in MerchantBusiness().getLocationsList():
-                    locationArea = component["long_name"]
+            deviceAddress = deviceAddresses[0]
+            for component in deviceAddress["address_components"]:
+                if component["long_name"] in MerchantBusiness().getAreasList():
+                    area = component["long_name"]
                     break
-            return locationArea, deviceAddresses["formatted_address"]
+            return area, deviceAddress["formatted_address"]
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"Failed to get location area: {tb}")
 
-    def _getMerchantsNearby(self, locationArea, deviceLocation, gmaps):
+    def _setDistanceData(self, distances, branches):
+        for index, distanceData in enumerate(distances):
+            branches[index]["distance"] = distanceData
+        return branches
+
+    def _getBranchesInArea(self, locationArea):
         try:
-            logger.info("Getting stores near customer...")
-            merchantsNearby = []
-            
-            def setDistanceData(allDistances):
-                for index, distanceData in enumerate(allDistances):
-                    merchantsNearby[index]["distance"] = distanceData
-                    continue
-
-            branchesInArea = Branch.objects.filter(
-                area=locationArea,
+            branchesInArea = []
+            branches = Branch.objects.filter(
+                area__in=[locationArea, "Durban"],
                 isActive = True
-            )
-
-            if branchesInArea:
-                branchAddress = []
-
-                for branch in branchesInArea:
-                    branchAddress.append(branch.address)
+            ).all()
+            if branches:
+                for branch in branches:
                     bps = BranchProductSerializer(branch.branchproduct_set, many=True)
                     bs = BranchSerializer(branch, many=False)
                     scs = SaleCampaignSerializer()
                     saleCampaigns = SaleCampaign.objects.filter(branch=branch)
                     if saleCampaigns:
                         scs = SaleCampaignSerializer(saleCampaigns, many=True)
-                    merchantsNearby.append({
+                    branchesInArea.append({
                         "branch": bs.data,
                         "products": bps.data,
                         "saleCampaign": scs.data
                     })
-
-                allDistances = self._getDistanceFromCustomer(deviceLocation, branchAddress, gmaps)
-                setDistanceData(allDistances)
-                merchantsNearby.sort(key=lambda x: x["distance"]["duration"]["text"], reverse=True)
-                return merchantsNearby
+                return branchesInArea
             else: 
-                raise Exception("No Merchants were found in this area")
+                raise Exception("No branches were found in this area")
         except Exception as e:
-            tb = traceback.format_exc()
-            raise Exception(f"{tb}")
+            raise Exception(f"Failed to get branches in area: {str(e)}")
+        
+    def _findNearestStore(self, deviceLocation, gmapsClient):
+        try:
+            place = googlemaps.places.find_place(
+                client=gmapsClient,
+                input="Pet Store",
+                input_type="textquery",
+                fields=["formatted_address","name","geometry"],
+                location_bias=f"circle:3000@{deviceLocation}"
+            )
+            pass
+        except Exception as e:
+            pass
 
-    
-    def _getDistanceFromCustomer(self, deviceLocation, merchantAddresses, gmaps):
+    def _getDistanceFromCustomer(self, deviceLocation, addresses, gmapsClient):
             try:
-                distance = googlemaps.distance_matrix.distance_matrix(
-                    client=gmaps,
+                distances = googlemaps.distance_matrix.distance_matrix(
+                    client=gmapsClient,
                     origins=[deviceLocation],
-                    destinations=merchantAddresses
+                    destinations=addresses
                 )
-                distances = distance["rows"][0]["elements"]
+                distances = distances["rows"][0]["elements"]
                 return distances
             except Exception as e:
                 raise Exception(f"Failed to get distance from customer: {str(e)}")

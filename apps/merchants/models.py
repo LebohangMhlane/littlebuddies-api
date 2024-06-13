@@ -16,6 +16,7 @@ class MerchantBusiness(models.Model):
     Westville = "Westville"
     Pinetown = "Pinetown"
     Hillcrest = "Hillcrest"
+    Durban_central = "Durban Central"
 
     logo = models.CharField(max_length=2000, blank=False, null=True)
     userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
@@ -58,13 +59,14 @@ class MerchantBusiness(models.Model):
         except Exception as e:
             raise Exception(f"Failed to decrypt token: {str(e)}")
 
-    def getLocationsList(self):
+    def getAreasList(self):
         return [
             self.Kloof,
             self.NewGermany,
             self.Westville,
             self.Pinetown,
-            self.Hillcrest
+            self.Hillcrest,
+            self.Durban_central,
         ]
 
     def getBranchAreas(self):

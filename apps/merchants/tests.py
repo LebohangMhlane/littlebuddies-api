@@ -48,13 +48,15 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         _ = self.createTestProduct(merchantBusiness2, merchantUserAccount2, "Bob's dog food", 50, 10)
 
         deviceLocation = "-29.7799367,30.875305"
+        # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
+        # deviceLocation = "-29.857298, 31.024362"
         getNearByStoresUrl = reverse("get_petstores_near_me", kwargs={"coordinates": deviceLocation})
         response = self.client.get(
             getNearByStoresUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
         self.assertEqual(response.data["message"], "Stores near customer retrieved successfully")
-        self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 2)
+        self.assertEqual(response.data["petStoresNearby"][0]["branch"]["id"], 3)
         self.assertEqual(response.data["petStoresNearby"][0]["products"][0]["product"]["name"], "Bob's dog food")
         self.assertIsNotNone(response.data["customerAddress"])
 

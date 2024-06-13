@@ -191,7 +191,7 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.paygateReference="pgtest_123456789"
                 merchant.paygateId="10011072130"
                 merchant.paygateSecret="secret"
-                merchant.setBranchAreas(["New Germany"])
+                merchant.setBranchAreas(["New Germany", "Durban Central"])
                 merchant.save()
             else:
                 merchant.userAccount=userAccount
@@ -214,6 +214,15 @@ class GlobalTestCaseConfig(TestCase):
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
                 branch1.save()
+
+            branch2 = Branch()
+            if len(merchantData) == 0:
+                branch2.isActive=True
+                branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
+                branch2.merchant = merchant
+                branch2.area = "Durban Central"
+                branch2.save()
+
             else:
                 branch1.isActive=True
                 branch1.address = merchantData["address"]
@@ -234,7 +243,7 @@ class GlobalTestCaseConfig(TestCase):
 
     def createTestProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
         try:
-            branch = Branch.objects.get(merchant=merchant)
+            branches = Branch.objects.filter(merchant=merchant)
 
             product, bool = Product.objects.get_or_create(
                 name=name,
@@ -244,22 +253,23 @@ class GlobalTestCaseConfig(TestCase):
                 category=1
             )
 
-            branchProduct = BranchProduct()
-            branchProduct.branch = branch
-            branchProduct.branchPrice = product.recommendedRetailPrice + price # store charging R100 more
-            branchProduct.storeReference = "3EERDE2"
-            branchProduct.createdBy = merchantUserAccount
-            branchProduct.product = product
-            branchProduct.save()
+            for branch in branches:
+                branchProduct = BranchProduct()
+                branchProduct.branch = branch
+                branchProduct.branchPrice = product.recommendedRetailPrice + price # store charging R100 more
+                branchProduct.storeReference = "3EERDE2"
+                branchProduct.createdBy = merchantUserAccount
+                branchProduct.product = product
+                branchProduct.save()
 
-            if discountPercent > 0:
-                saleCampaign = SaleCampaign()
-                saleCampaign.branch = branch
-                saleCampaign.campaignEnds = datetime.now() + timedelta(days=5)
-                saleCampaign.percentageOff = discountPercent
-                saleCampaign.save()
-                saleCampaign.branchProducts.add(branchProduct)
-                saleCampaign.save()
+                if discountPercent > 0:
+                    saleCampaign = SaleCampaign()
+                    saleCampaign.branch = branch
+                    saleCampaign.campaignEnds = datetime.now() + timedelta(days=5)
+                    saleCampaign.percentageOff = discountPercent
+                    saleCampaign.save()
+                    saleCampaign.branchProducts.add(branchProduct)
+                    saleCampaign.save()
 
         except Exception as e:
             pass
