@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from apps.products.models import Product
+from apps.products.models import BranchProduct, Product
 from apps.products.serializers.serializers import ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -63,7 +63,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
 
     def deleteProduct(self, request, kwargs):
         productPk = kwargs["productPk"]
-        product = Product.objects.get(pk=productPk)
+        product = BranchProduct.objects.get(pk=productPk)
         if self.checkIfUserIsMerchant(request):
             if self.checkIfUserMatchesProductMerchant(request, product.merchant):
                 product.delete()

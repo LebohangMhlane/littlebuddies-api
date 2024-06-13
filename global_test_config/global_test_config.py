@@ -242,13 +242,18 @@ class GlobalTestCaseConfig(TestCase):
         try:
             branches = Branch.objects.filter(merchant=merchant)
 
-            product, bool = Product.objects.get_or_create(
-                name=name,
-                description="High quality dog food",
-                recommendedRetailPrice=300,
-                image="image",
-                category=1
-            )
+            try:
+                product = Product.objects.get(
+                    name=name,
+                )
+            except:
+                product = Product()
+                product.name = name
+                product.recommendedRetailPrice = 200
+                product.image = "image"
+                product.category = 1
+                product.description = ""
+                product.save()
 
             for branch in branches:
                 branchProduct = BranchProduct()

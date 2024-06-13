@@ -1,7 +1,8 @@
 from django.test import TestCase
 from rest_framework.reverse import reverse
+from apps.merchants.models import Branch
 from global_test_config.global_test_config import GlobalTestCaseConfig
-from apps.products.models import Product
+from apps.products.models import BranchProduct, Product
 
 
 class ProductTests(GlobalTestCaseConfig, TestCase):
@@ -133,6 +134,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             response.data["message"], 
             "Product deleted successfully"
         )
-        product = Product.objects.all().first()
+        branch = Branch.objects.get(id=2)
+        product = BranchProduct.objects.filter(branch=branch).first()
         self.assertEqual(product.pk, product2.pk)
 

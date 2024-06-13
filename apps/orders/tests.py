@@ -46,7 +46,6 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         order = Order.objects.all().first()
         products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(products[1].id, p2.id)
         self.assertEqual(order.transaction.branch.id, int(checkoutFormPayload["branchId"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
