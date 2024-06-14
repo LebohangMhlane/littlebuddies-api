@@ -94,7 +94,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             )
             branchAddress = nearestBranch["candidates"][0]["formatted_address"]
             branchData = {}
-            branch = Branch.objects.get(address=branchAddress)
+            branch = Branch.objects.get(address__contains=branchAddress)
             bps = BranchProductSerializer(branch.branchproduct_set, many=True)
             bs = BranchSerializer(branch, many=False)
             scs = SaleCampaignSerializer()
