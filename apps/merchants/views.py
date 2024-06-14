@@ -30,20 +30,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class GetStoreRange(APIView, GlobalViewFunctions):
     
     def get(self, request, **kwargs):
         try:
+            coordinates = kwargs.get('coordinates')
             mb = MerchantBusiness.objects.all()
-            if mb:
-                ms = MerchantSerializer(mb, many=True)
-            else:
-                raise Exception("No Pet stores were found")
+            sc = SaleCampaign.objects.filter(branch__merchant__in=mb)
+            saleCampaigns = []
+            if sc: scs = SaleCampaignSerializer(sc, many=True) 
+            saleCampaigns = scs.data
+            if mb: ms = MerchantSerializer(mb, many=True)
+            else: raise Exception("No Pet stores were found")
             return Response({
                 "success": True,
-                "message": "Stores range retrieved successfully",
-                "petstores": ms.data
+                "message": "Store range retrieved successfully",
+                "petstores": ms.data,
+                "saleCampaigns": saleCampaigns
             }, status=200)
         except Exception as e:
             return Response({
@@ -79,23 +82,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 "message": "Failed to get stores near customer",
                 "error": str(e)
             }, status=200)
-        
-    def _getCustomerAddress(self, coordinates, gmapsClient):
-        try:
-            deviceAddresses = googlemaps.geocoding.reverse_geocode(
-                gmapsClient,
-                coordinates,
-            )
-            deviceAddress = deviceAddresses[0]
-            return deviceAddress["formatted_address"]
-        except Exception as e:
-            raise Exception(f"Failed to get location area: {str(e)}")
-
-    def _setDistance(self, distances, branches):
-        for distanceData in distances:
-            branches["distance"] = distanceData
-        return branches
-        
+    
     def _findNearestBranch(self, coordinates, merchantName, gmapsClient):
         try:
             nearestBranch = googlemaps.places.find_place(
@@ -114,6 +101,8 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             saleCampaigns = SaleCampaign.objects.filter(branch=branch)
             if saleCampaigns:
                 scs = SaleCampaignSerializer(saleCampaigns, many=True)
+            else:
+                scs.data = []
             branchData = {
                 "branch": bs.data,
                 "products": bps.data,
@@ -122,7 +111,23 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             return branchData
         except Exception as e:
             raise Exception("No branch could be found for this store")
+            
+    def _getCustomerAddress(self, coordinates, gmapsClient):
+        try:
+            deviceAddresses = googlemaps.geocoding.reverse_geocode(
+                gmapsClient,
+                coordinates,
+            )
+            deviceAddress = deviceAddresses[0]
+            return deviceAddress["formatted_address"]
+        except Exception as e:
+            raise Exception(f"Failed to get location area: {str(e)}")
 
+    def _setDistance(self, distances, branches):
+        for distanceData in distances:
+            branches["distance"] = distanceData
+        return branches
+        
     def _getDistance(self, coordinates, address, gmapsClient):
         try:
             distances = googlemaps.distance_matrix.distance_matrix(

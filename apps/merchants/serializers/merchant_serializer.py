@@ -61,9 +61,9 @@ class BranchSerializer(serializers.ModelSerializer):
 
 class SaleCampaignSerializer(serializers.ModelSerializer):
 
-    class Meta:
+    class Meta: 
         model = SaleCampaign
-        fields = ['percentageOff', 'branchProducts', 'campaignEnds']
+        fields = ['percentageOff', 'branchProducts', 'campaignEnds', 'branch']
         depth = 2
 
     def is_valid(self, *, raise_exception=False):
