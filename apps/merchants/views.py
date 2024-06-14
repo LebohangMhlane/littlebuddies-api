@@ -99,14 +99,11 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             bs = BranchSerializer(branch, many=False)
             scs = SaleCampaignSerializer()
             saleCampaigns = SaleCampaign.objects.filter(branch=branch)
-            if saleCampaigns:
-                scs = SaleCampaignSerializer(saleCampaigns, many=True)
-            else:
-                scs.data = []
+            if saleCampaigns: scs = SaleCampaignSerializer(saleCampaigns, many=True)
             branchData = {
                 "branch": bs.data,
                 "products": bps.data,
-                "saleCampaigns": scs.data,
+                "saleCampaigns": scs.data if saleCampaigns else [],
             }
             return branchData
         except Exception as e:
