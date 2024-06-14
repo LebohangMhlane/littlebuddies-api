@@ -106,7 +106,8 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             branchData = {
                 "branch": bs.data,
                 "products": bps.data,
-                "saleCampaigns": scs.data
+                "saleCampaigns": scs.data,
+                "debug": branchAddress
             }
             return branchData
         except Exception as e:
