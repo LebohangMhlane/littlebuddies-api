@@ -107,11 +107,10 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 "branch": bs.data,
                 "products": bps.data,
                 "saleCampaigns": scs.data,
-                "debug": branchAddress
             }
             return branchData
         except Exception as e:
-            raise Exception("No branch could be found for this store")
+            raise Exception(f"No branch could be found for this store: {str(e)} - {branchAddress}")
             
     def _getCustomerAddress(self, coordinates, gmapsClient):
         try:
