@@ -26,7 +26,7 @@ class GlobalTestCaseConfig(TestCase):
 
     def setUp(self) -> None:
         self.loginPayload = {
-            "email": "lebohang@gmail.com",
+            "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
         
@@ -36,7 +36,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
             "firstName": "Lebohang",
             "lastName": "Mhlane",
-            "email": "lebohang@gmail.com",
+            "email": "asandamhlane@gmail.com",
             "address": "71 rethman street newgermany",
             "phoneNumber": "0621837747",
             "isMerchant": False,

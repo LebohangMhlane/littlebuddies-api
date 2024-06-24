@@ -13,6 +13,7 @@ from django.utils.encoding import force_bytes
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import User
 
+from apps.accounts.models import UserAccount
 from apps.accounts.tokens import accountActivationTokenGenerator
 
 from apps.merchants.models import Branch, MerchantBusiness
@@ -111,3 +112,26 @@ class GlobalViewFunctions():
             pass
         else:
             raise Exception("Failed to send activation email")
+        
+    def sendPasswordResetRequestEmail(self, userAccount:UserAccount, request):
+        mail_subject = "Littlebuddies Password Reset"
+        user = userAccount.user
+        context = {
+            "userFirstName": user.first_name,
+            "domain": f"{'https' if request.is_secure() else 'http'}://{get_current_site(request).domain}",
+            "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
+            "resetToken": accountActivationTokenGenerator.make_token(user=user),
+            "protocol": "https" if request.is_secure() else "http"
+        }
+        message = render_to_string(
+            "email_templates/email_reset_password.html", context
+        )
+        plain_message = strip_tags(message)
+        email = EmailMultiAlternatives(
+            mail_subject, plain_message, to=[user.email]
+        )
+        email.attach_alternative(message, "text/html")
+        if email.send():
+            return True
+        else:
+            raise Exception("Failed to password reset request")

@@ -129,4 +129,11 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertTrue(userAccount.isActive == False)
         self.assertTrue(userAccount.user.is_active == False)
 
-
+    def test_password_reset(self):
+        accountToken = self.createNormalTestAccountAndLogin()
+        resetPasswordUrl = reverse("password_reset_request_view", 
+            kwargs={"email": "asandamhlane@gmail.com"})
+        response = self.client.get(
+            resetPasswordUrl,
+            headers={'Authorization': f"Token {self.authToken}"}
+        )

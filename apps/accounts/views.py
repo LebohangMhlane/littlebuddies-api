@@ -1,6 +1,6 @@
-
 from django.contrib.auth.models import User
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 
@@ -31,27 +31,26 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
                 userAccountSerializer = UserAccountSerializer(userAccount, many=False)
             else:
                 raise Exception("Invalid username or password")
-            
+
             self._saveDeviceToken(user, request)
-            
-            return Response({
-                "token": authToken.key,
-                "userProfile": userAccountSerializer.data
-            })
+
+            return Response(
+                {"token": authToken.key, "userProfile": userAccountSerializer.data}
+            )
         except Exception as e:
             error = e.args[0]
-            if("User matching query does not exist" in error):
+            if "User matching query does not exist" in error:
                 e = "No user with that email address was found"
-            return Response({
-                "message": "Failed to authenticate user",
-                "error": str(e)
-            }, status=401)
-        
+            return Response(
+                {"message": "Failed to authenticate user", "error": str(e)}, status=401
+            )
+
     def _saveDeviceToken(self, user, request):
         userAccount = UserAccount.objects.get(user=user)
-        if "deviceToken" in request.data: # only for test cases:
+        if "deviceToken" in request.data:  # only for test cases:
             userAccount.deviceToken = request.data["deviceToken"]
         userAccount.save()
+
 
 class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
 
@@ -59,44 +58,43 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, *args, **kwargs):
         pass
-    
+
     def post(self, request, *args, **kwargs):
         userAccount = None
         try:
             userAccount = self._startRegistrationProcess(receivedData=request.data)
             authToken = Token.objects.get(user__id=userAccount["user"]["id"])
             self.sendActivationEmail(userAccount, request)
-            return Response({
-                "message": "Account created successfully",
-                "userAccount": userAccount,
-                "loginToken": authToken.key
-            })
+            return Response(
+                {
+                    "message": "Account created successfully",
+                    "userAccount": userAccount,
+                    "loginToken": authToken.key,
+                }
+            )
         except Exception as e:
             exception = e.args[0]
             displayableException = self.determineException(exception)
-            return Response({
-                "message": "Failed to create account",
-                "error": displayableException
-            }, status=500)
-        
+            return Response(
+                {"message": "Failed to create account", "error": displayableException},
+                status=500,
+            )
+
     def determineException(self, exception):
         default = "An error has occured. We are looking into it"
-        possibleErrors = [
-            "UNIQUE",
-            "Invalid phone number"
-        ]
+        possibleErrors = ["UNIQUE", "Invalid phone number"]
         displayableErrors = [
             "A user with these details already exists",
-            "Invalid phone number"
+            "Invalid phone number",
         ]
         for index, possibleError in enumerate(possibleErrors):
             if possibleError in exception:
-                displayableException = displayableErrors[index]
-                return displayableException
+                displayableError = displayableErrors[index]
+                return displayableError
         return default
-        
-    def _startRegistrationProcess(self, receivedData=dict):
-        userData, userAccountData = self.separateData(receivedData)
+
+    def _startRegistrationProcess(self, receivedData=dict) -> dict:
+        userData, userAccountData = self.sortUserData(receivedData)
         userSerializer = UserSerializer(data=receivedData)
         if userSerializer.is_valid():
             userInstance = userSerializer.create(validated_data=userData)
@@ -105,57 +103,68 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 userAccount = UserAccountSerializer(userAccount, many=False)
                 return userAccount.data
 
-    def separateData(self, receivedPayload):
-        userPayload = {
+    def sortUserData(self, receivedPayload):
+        userData = {
             "username": f"{receivedPayload['firstName']}{receivedPayload['lastName']}{receivedPayload['phoneNumber']}",
             "password": receivedPayload["password"],
             "firstName": receivedPayload["firstName"],
             "lastName": receivedPayload["lastName"],
             "email": receivedPayload["email"],
         }
-        userAccountPayload = {
-            "deviceToken": receivedPayload["deviceToken"] if "deviceToken" in receivedPayload else "",
+        userAccountData = {
+            "deviceToken": (
+                receivedPayload["deviceToken"]
+                if "deviceToken" in receivedPayload
+                else ""
+            ),
             "phoneNumber": receivedPayload["phoneNumber"],
         }
-        return userPayload, userAccountPayload
-    
-    def createUserAccount(self, userAccountPayload, userInstance):
-        userAccountPayload["user"] = userInstance
-        userAccountSerializer = UserAccountSerializer(data=userAccountPayload)
+        return userData, userAccountData
+
+    def createUserAccount(self, userAccountData, userInstance):
+        userAccountData["user"] = userInstance
+        userAccountSerializer = UserAccountSerializer(data=userAccountData)
         if userAccountSerializer.is_valid(raise_exception=True):
-            userAccount = userAccountSerializer.create(validated_data=userAccountPayload)
+            userAccount = userAccountSerializer.create(validated_data=userAccountData)
             return userAccount
-        
+
+
 class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, **kwargs):
         try:
             userAccount = UserAccountSerializer(request.user.useraccount)
             self.sendActivationEmail(userAccount.data, request)
-            return Response({
-                "message": "Activation email sent successfully",
-                "activationEmailSent": True
-            })
+            return Response(
+                {
+                    "message": "Activation email sent successfully",
+                    "activationEmailSent": True,
+                }
+            )
         except Exception as e:
-            return Response({
-                "message": "Failed to send activation email",
-                "activationEmailSent": False
-            })
+            return Response(
+                {
+                    "message": "Failed to send activation email",
+                    "activationEmailSent": False,
+                }
+            )
+
 
 class CheckAccountActivation(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, **kwargs):
         userAccount = request.user.useraccount
         if userAccount.emailVerified:
-            return Response({
-                "message": "Account activated.",
-                "accountActivated": True
-            })
+            return Response({"message": "Account activated.", "accountActivated": True})
         else:
-            return Response({
-                "message": "Your account is not activated.",
-                "accountActivated": False
-            }, status=401)
+            return Response(
+                {
+                    "message": "Your account is not activated.",
+                    "accountActivated": False,
+                },
+                status=401,
+            )
+
 
 class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
 
@@ -172,23 +181,28 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
                 userAccount.save()
                 return render(
                     request,
-                    template_name="email_templates/successful_account_activation.html")
+                    template_name="email_templates/successful_account_activation.html",
+                )
             else:
                 raise
         except Exception as e:
             return render(
-                request,
-                template_name="email_templates/failed_account_activation.html")
-        
+                request, template_name="email_templates/failed_account_activation.html"
+            )
+
+
 class DeactivateAccountView(APIView, GlobalViewFunctions):
 
     def get(self, request):
         self.deactivateAccount(request)
-        return Response({
-            "success": True,
-            "message": "Account deactivated successfully",
-        }, status=200)
-    
+        return Response(
+            {
+                "success": True,
+                "message": "Account deactivated successfully",
+            },
+            status=200,
+        )
+
     def deactivateAccount(self, request):
         userAccount = request.user.useraccount
         user = request.user
@@ -196,24 +210,31 @@ class DeactivateAccountView(APIView, GlobalViewFunctions):
         user.save()
         userAccount.save()
 
+
 class UpdateAccountView(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
             updatedAccount = self.updateAccount(request)
             userAccountSerializer = UserAccountSerializer(updatedAccount, many=False)
-            return Response({
-                "success": True,
-                "message": "Account updated successfully",
-                "updatedAccount": userAccountSerializer.data
-            }, status=200)
+            return Response(
+                {
+                    "success": True,
+                    "message": "Account updated successfully",
+                    "updatedAccount": userAccountSerializer.data,
+                },
+                status=200,
+            )
         except Exception as e:
-            return Response({
-                "success": False,
-                "message": "Failed to update Account",
-                "error": str(e)
-            }, status=500)
-        
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to update Account",
+                    "error": str(e),
+                },
+                status=500,
+            )
+
     def updateAccount(self, request):
         receivedPayload = request.data.copy()
         userAccount = request.user.useraccount
@@ -222,12 +243,79 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
             userAccount.__setattr__(key, value)
         userAccount.save()
         return userAccount
-    
+
     def validateKey(self, key, request):
-        if (key == "canCreateMerchants" or key == "isMerchant"):
+        if key == "canCreateMerchants" or key == "isMerchant":
             exceptionString = f"You don't have permission to modify {key}"
             self.checkIfUserIsSuperAdmin(request, exceptionString)
-        
+
     def notifyAllOfUpdate(self):
         # send emails to relevant parties notifiying them of the deactivation:
         pass
+
+
+class PasswordResetRequest(APIView, GlobalViewFunctions):
+
+    permission_classes = []
+
+    def get(self, request, *args, **kwargs):
+        try:
+            userAccount = UserAccount.objects.get(user__email=kwargs["email"])
+            self.sendPasswordResetRequestEmail(userAccount, request)
+            return Response(
+                {
+                    "message": "Password reset email sent successfully",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "message": "Failed to send password reset email",
+                    "error": str(e),
+                },
+                status=500,
+            )
+
+
+class PasswordReset(APIView, GlobalViewFunctions):
+
+    permission_classes = []
+
+    # not a master at security so I'm not sure if doing a token
+    # check twice will make a difference
+    # my logic: get() <- are you allowed to access request the form?
+    # post() <- are you allowed to post using this form?
+
+    def get(self, request, **kwargs):
+        pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
+        activationToken = kwargs["resetToken"]
+        user = User.objects.get(pk=pk)
+        context = {"pk": kwargs["uidb64"], "resetToken": activationToken}
+        if accountActivationTokenGenerator.check_token(user, activationToken):
+            return render(
+                request, "password_reset_template/reset_password.html", context
+            )
+
+    def post(self, request, *args, **kwargs):
+        try:
+            newPassword = request.data["newPassword"]
+            pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
+            activationToken = kwargs["resetToken"]
+            user = User.objects.get(pk=pk)
+            if accountActivationTokenGenerator.check_token(user, activationToken):
+                passwordUpdated = self._updateUserPassword(newPassword, user)
+                if passwordUpdated:
+                    return render(
+                        request, "password_reset_template/reset_password_done.html"
+                    )
+                raise Exception('Failed to update password')
+        except Exception as e:
+            context = {"pk": "", "resetToken": "", "error": str(e.args[0])}
+            return render(
+                request, "password_reset_template/reset_password.html", context
+            )
+
+    def _updateUserPassword(self, newPassword, user: User):
+        user.set_password(newPassword)
+        user.save()
+        return True

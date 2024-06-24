@@ -44,7 +44,7 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
-DEVELOPEMENT_URL = "90bd-41-10-123-202.ngrok-free.app" # using ngrok server during development
+DEVELOPEMENT_URL = "e5e0-41-10-113-109.ngrok-free.app" # using ngrok server during development
 
 APP_URL = "54.160.249.30"
 
@@ -174,16 +174,19 @@ USE_TZ = True
 
 STATIC_ROOT = 'static'
 
+MEDIA_ROOT = 'media'
+
 if(DEBUG):
     STATIC_URL = '/static/'
+    MEDIA_URL = 'media/'
 else:
     STATIC_URL = '/home/ubuntu/static/'
+    MEDIA_URL = '/home/ubuntu/media/'
 
-MEDIA_URL = 'media/'
-
-MEDIA_ROOT = 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+PASSWORD_RESET_TIMEOUT = 60
