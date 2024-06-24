@@ -23,7 +23,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         customer = self.createTestCustomer()
         authToken = self.loginAsCustomer()
 
-        storeRangeUrl = reverse('get_store_range')
+        storeRangeUrl = reverse('get_store_range', args=['randomCoordinates']) # TODO: remember to test finding a store range within the devices radius
         response = self.client.get(
             storeRangeUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"

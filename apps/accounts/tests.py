@@ -64,7 +64,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
 
     def test_log_in(self):
         userInputData = {
-            "email": "lebohang@gmail.com",
+            "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
         response = self.createNormalTestAccount()

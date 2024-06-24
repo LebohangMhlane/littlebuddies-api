@@ -31,7 +31,11 @@ class Transaction(models.Model):
     dateCompleted = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.first_name} {self.customer.user.last_name} to {self.branch.merchant.name} - reference: {self.reference}"
+        customer_name = (
+            f"{self.customer.user.first_name} {self.customer.user.last_name}"
+        )
+        branch_name = self.branch.merchant.name if self.branch else "Unknown Branch"
+        return f"{customer_name} to {branch_name} - reference: {self.reference}"
 
     def save(self, *args, **kwargs):
         super(Transaction, self).save(*args, **kwargs)
