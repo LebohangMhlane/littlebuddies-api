@@ -283,7 +283,7 @@ class PasswordReset(APIView, GlobalViewFunctions):
 
     # not a master at security so I'm not sure if doing a token
     # check twice will make a difference
-    # my logic: get() <- are you allowed to access request the form?
+    # my logic: get() <- are you allowed to access the request the form?
     # post() <- are you allowed to post using this form?
 
     def get(self, request, **kwargs):
