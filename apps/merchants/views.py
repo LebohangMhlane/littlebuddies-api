@@ -65,8 +65,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             merchantBusiness = MerchantBusiness.objects.get(id=kwargs["merchantId"])
             gmapsClient = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             customerAddress = self._getCustomerAddress(coordinates, gmapsClient)
-            branchData = self._findNearestBranch(
-                coordinates, merchantBusiness.name, gmapsClient)
+            branchData = self._findNearestBranch(coordinates, merchantBusiness.name, gmapsClient)
             distanceFromBranch = self._getDistance(
                 coordinates, branchData["branch"]["address"], gmapsClient)
             self._setDistance(distanceFromBranch, branchData)
