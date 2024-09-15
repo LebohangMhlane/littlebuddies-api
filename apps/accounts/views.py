@@ -29,11 +29,9 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
                 authToken = Token.objects.get(user=user)
                 userAccount = UserAccount.objects.get(user=user)
                 userAccountSerializer = UserAccountSerializer(userAccount, many=False)
+                self._saveDeviceToken(user, request, userAccount)
             else:
                 raise Exception("Invalid username or password")
-
-            self._saveDeviceToken(user, request)
-
             return Response(
                 {"token": authToken.key, "userProfile": userAccountSerializer.data}
             )
@@ -45,8 +43,7 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
                 {"message": "Failed to authenticate user", "error": str(e)}, status=401
             )
 
-    def _saveDeviceToken(self, user, request):
-        userAccount = UserAccount.objects.get(user=user)
+    def _saveDeviceToken(self, user, request, userAccount):
         if "deviceToken" in request.data:  # only for test cases:
             userAccount.deviceToken = request.data["deviceToken"]
         userAccount.save()

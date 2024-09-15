@@ -18,6 +18,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,  
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+    handlers=[logging.StreamHandler()]
+)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,7 +41,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY").encode()
 GOOGLE_SERVICES_API_KEY = os.environ.get("GOOGLE_SERVICES_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # firebase stuff
 
@@ -44,7 +52,7 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
-DEVELOPEMENT_URL = "e5e0-41-10-113-109.ngrok-free.app" # using ngrok server during development
+DEVELOPEMENT_URL = "386a-41-10-114-235.ngrok-free.app" # using ngrok server during development
 
 APP_URL = "54.160.249.30"
 
@@ -53,7 +61,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.102", "localhost", APP_URL, DEVELOPEMENT_URL]
+ALLOWED_HOSTS = ["10.0.0.105", "localhost", APP_URL, DEVELOPEMENT_URL]
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
