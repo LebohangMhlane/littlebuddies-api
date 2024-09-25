@@ -324,7 +324,7 @@ class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
         except Exception as e:
             context = {"pk": "", "resetToken": "", "error": str(e.args[0])}
             return render(
-                request, "password_reset_template/reset_password.html", context
+                request, "password_reset_template/reset_password_error.html", context
             )
 
     def _updateUserPassword(self, newPassword, user: User):
