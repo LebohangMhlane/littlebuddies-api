@@ -1,3 +1,5 @@
+import datetime
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
@@ -258,6 +260,8 @@ class RequestPasswordReset(APIView, GlobalViewFunctions):
     def get(self, request, *args, **kwargs):
         try:
             userAccount = UserAccount.objects.get(user__email=kwargs["email"])
+            if userAccount.password_change_date.date() == timezone.now().date():
+                raise Exception("Password can only be reset once every 24hours.")
             self.sendPasswordResetRequestEmail(userAccount, request)
             return Response(
                 {
@@ -287,34 +291,38 @@ class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
         pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
         activationToken = kwargs["resetToken"]
         user = User.objects.get(pk=pk)
-        context = {
-            "pk": kwargs["uidb64"],
-            "resetToken": activationToken,
-            "success": True
-        }
         if accountActivationTokenGenerator.check_token(user, activationToken):
-            return render(
-                request, "password_reset_template/reset_password.html", context
-            )
+            context = {
+                "pk": kwargs["uidb64"],
+                "resetToken": activationToken,
+                "success": True
+            }
+            return render(request, "password_reset_template/reset_password_form.html", context)
         else:
             context = {
-                "pk": kwargs["uidb64"], 
-                "resetToken": activationToken,
+                "pk": "",
+                "resetToken": "",
                 "success": False
             }
-            return render(
-                request, "password_reset_template/reset_password_error.html", context
-            ) 
+            return render(request, "password_reset_template/reset_password_error.html", context)
 
     def post(self, request, *args, **kwargs):
         try:
-            newPassword = request.data["newPassword"]
+            new_password = request.data["newPassword"]
             pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
             activationToken = kwargs["resetToken"]
             user = User.objects.get(pk=pk)
+            if user.useraccount.password_change_date.date() == timezone.now().date():
+                # TODO: return a proper response of password change after 24 hours
+                # for now we will return this normal error response
+                context = {"pk": "", "resetToken": "", "error": str(e.args[0])}
+                return render( 
+                    request, "password_reset_template/reset_password_error.html", context
+                )
             if accountActivationTokenGenerator.check_token(user, activationToken):
-                passwordUpdated = self._updateUserPassword(newPassword, user)
-                if passwordUpdated:
+                password_updated = self._update_user_password(new_password, user)
+                if password_updated:
+                    self.set_user_password_change_date(user)
                     return render(
                         request, "password_reset_template/reset_password_done.html"
                     )
@@ -327,7 +335,16 @@ class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
                 request, "password_reset_template/reset_password_error.html", context
             )
 
-    def _updateUserPassword(self, newPassword, user: User):
+    def _update_user_password(self, newPassword, user: User):
         user.set_password(newPassword)
         user.save()
         return True
+    
+    def set_user_password_change_date(self, user):
+        try:
+            user_account = UserAccount.objects.get(user=user)
+            user_account.password_change_date = timezone.now()
+            user_account.save()
+        except Exception as e:
+            return Exception('Failed to set user password change date')
+
