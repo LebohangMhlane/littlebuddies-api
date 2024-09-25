@@ -61,7 +61,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.105", "localhost", APP_URL, DEVELOPEMENT_URL]
+ALLOWED_HOSTS = ["10.0.0.101", "localhost", APP_URL, DEVELOPEMENT_URL]
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

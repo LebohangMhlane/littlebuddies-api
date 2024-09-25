@@ -287,11 +287,24 @@ class PasswordReset(APIView, GlobalViewFunctions):
         pk = force_str(urlsafe_base64_decode(kwargs["uidb64"]))
         activationToken = kwargs["resetToken"]
         user = User.objects.get(pk=pk)
-        context = {"pk": kwargs["uidb64"], "resetToken": activationToken}
+        context = {
+            "pk": kwargs["uidb64"],
+            "resetToken": activationToken,
+            "success": True
+        }
         if accountActivationTokenGenerator.check_token(user, activationToken):
             return render(
                 request, "password_reset_template/reset_password.html", context
             )
+        else:
+            context = {
+                "pk": kwargs["uidb64"], 
+                "resetToken": activationToken,
+                "success": False
+            }
+            return render(
+                request, "password_reset_template/reset_password_error.html", context
+            ) 
 
     def post(self, request, *args, **kwargs):
         try:
@@ -305,6 +318,8 @@ class PasswordReset(APIView, GlobalViewFunctions):
                     return render(
                         request, "password_reset_template/reset_password_done.html"
                     )
+                raise Exception('Failed to update password')
+            else:
                 raise Exception('Failed to update password')
         except Exception as e:
             context = {"pk": "", "resetToken": "", "error": str(e.args[0])}
