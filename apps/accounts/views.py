@@ -251,7 +251,7 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
         pass
 
 
-class PasswordResetRequest(APIView, GlobalViewFunctions):
+class RequestPasswordReset(APIView, GlobalViewFunctions):
 
     permission_classes = []
 
@@ -274,7 +274,7 @@ class PasswordResetRequest(APIView, GlobalViewFunctions):
             )
 
 
-class PasswordReset(APIView, GlobalViewFunctions):
+class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
 
     permission_classes = []
 

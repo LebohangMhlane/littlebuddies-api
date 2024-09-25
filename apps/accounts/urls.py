@@ -26,6 +26,6 @@ urlpatterns = [
     path('resend-activation-email/', views.ResendActivationEmail.as_view(), name="resend_activation_email"),
     path('update-account/', views.UpdateAccountView.as_view(), name="update_account_view"),
     path('deactivate-account/', views.DeactivateAccountView.as_view(), name="deactivate_account_view"),
-    path('password-reset-request/<str:email>', views.PasswordResetRequest.as_view(), name="password_reset_request_view"),
-    path('password-reset/<uidb64>/<resetToken>/', views.PasswordReset.as_view(), name="password_reset_view"),
+    path('password-reset-request/<str:email>', views.RequestPasswordReset.as_view(), name="password_reset_request_view"),
+    path('password-reset/<uidb64>/<resetToken>/', views.RequestSubmitPasswordResetForm.as_view(), name="password_reset_view"),
 ]
