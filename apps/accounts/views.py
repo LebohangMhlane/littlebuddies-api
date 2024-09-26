@@ -261,7 +261,7 @@ class RequestPasswordReset(APIView, GlobalViewFunctions):
         try:
             userAccount = UserAccount.objects.get(user__email=kwargs["email"])
             if userAccount.password_change_date.date() == timezone.now().date():
-                raise Exception("Password can only be reset once every 24hours.")
+                raise Exception("Password can only be reset once every 24hrs.")
             self.sendPasswordResetRequestEmail(userAccount, request)
             return Response(
                 {

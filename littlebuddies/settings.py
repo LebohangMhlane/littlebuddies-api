@@ -52,7 +52,7 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
-DEVELOPEMENT_URL = "386a-41-10-114-235.ngrok-free.app" # using ngrok server during development
+DEVELOPEMENT_URL = "22d3-41-10-124-162.ngrok-free.app" # using ngrok server during development
 
 APP_URL = "54.160.249.30"
 

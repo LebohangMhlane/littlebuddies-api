@@ -137,7 +137,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         try:
             order = Order.objects.create(
                 transaction=transaction,
-                status=Order.PENDING_DELIVERY,
+                status=Order.PAYMENT_PENDING,
                 delivery=checkoutForm.delivery,
                 deliveryDate=checkoutForm.deliveryDate,
                 address=checkoutForm.address,
@@ -149,7 +149,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 orderedProduct.save()
             return order
         except Exception as e:
-            raise Exception("Failed to create order")
+            raise Exception(f"Failed to create order: {e.args[0]}")
 
     def successResponse(self, verifiedPayload, transaction, order):
         orderSerializer = OrderSerializer(order, many=False)
@@ -178,7 +178,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         )
 
 
-
 class PaymentNotificationView(APIView, GlobalViewFunctions):
 
     permission_classes = []
@@ -186,12 +185,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
     def post(self, request, *args, **kwargs):
         try:
             updatedTransaction = self.verifyAndUpdateTransactionStatus(request.data)
-            if updatedTransaction.status == updatedTransaction.COMPLETED:
-                order = self.updateOrder(updatedTransaction)
-                _ = FirebaseInstance().sendTransactionStatusNotification(
-                    updatedTransaction
-                )
-                self.sendOrderEmail(updatedTransaction, order)
+            self.update_and_send_notification(updatedTransaction)
         except Exception as e:
             pass
         return HttpResponse("OK")
@@ -230,12 +224,22 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             pass
 
     def updateOrder(self, transaction):
-        order = Order.objects.filter(transaction=transaction).first()
+        order = Order.objects.get(transaction=transaction)
         if order:
-            order.status = order.PENDING_DELIVERY
+            if order.transaction.status == Transaction.COMPLETED:
+                order.status = order.PENDING_DELIVERY
+            else:
+                order.status = order.transaction.status
             order.save()
             return order
         return None
+    
+    def update_and_send_notification(self, updatedTransaction):
+        order = self.updateOrder(updatedTransaction)
+        _ = FirebaseInstance().sendTransactionStatusNotification(
+            updatedTransaction
+        )
+        self.sendOrderEmail(updatedTransaction, order)
 
     def sendOrderEmail(self, updatedTransaction, order):
         pass
