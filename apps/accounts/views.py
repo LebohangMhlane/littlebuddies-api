@@ -72,6 +72,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 }
             )
         except Exception as e:
+            print(e, 'this is eeee')
             exception = e.args[0]
             displayableException = self.determineException(exception)
             return Response(

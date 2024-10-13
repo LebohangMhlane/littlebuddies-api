@@ -61,7 +61,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.101", "localhost", APP_URL, DEVELOPEMENT_URL]
+ALLOWED_HOSTS = ["10.0.0.101", "localhost", APP_URL, DEVELOPEMENT_URL, '127.0.0.1']
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -80,6 +80,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    
 }
 
 # Application definition
