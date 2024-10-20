@@ -51,16 +51,16 @@ class GlobalViewFunctions():
         branch = Branch.objects.get(id=branchId)
         return branch
 
-    def checkIfUserIsSuperAdmin(self, request):
+    def if_user_is_super_admin(self, request):
         if request.user.is_superuser and request.user.useraccount.canCreateMerchants:
             return True
         return False
     
-    def checkIfUserIsMerchant(self, request):
+    def if_user_is_merchant(self, request):
         if request.user.useraccount.isMerchant: return True
         return False
 
-    def checkIfUserMatchesMerchant(self, request):
+    def if_user_is_owner(self, request):
         merchant = MerchantBusiness.objects.get(pk=request.data["merchantPk"])
         if merchant.userAccount == request.user.useraccount: return True
         else: return False

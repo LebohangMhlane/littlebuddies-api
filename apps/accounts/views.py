@@ -11,11 +11,13 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from apps.accounts.models import UserAccount
+from apps.accounts.models import AccountSettings, UserAccount
+from apps.accounts.serializers.account_settings_serializer import AccountSettingsSerializer
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
 from apps.accounts.tokens import accountActivationTokenGenerator
 
+from apps.merchants.models import Branch, MerchantBusiness
 from global_serializer_functions.global_serializer_functions import SerializerFunctions
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -247,7 +249,7 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
     def validateKey(self, key, request):
         if key == "canCreateMerchants" or key == "isMerchant":
             exceptionString = f"You don't have permission to modify {key}"
-            self.checkIfUserIsSuperAdmin(request, exceptionString)
+            self.if_user_is_super_admin(request, exceptionString)
 
     def notifyAllOfUpdate(self):
         # send emails to relevant parties notifiying them of the deactivation:
@@ -340,7 +342,7 @@ class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
         user.set_password(newPassword)
         user.save()
         return True
-    
+
     def set_user_password_change_date(self, user):
         try:
             user_account = UserAccount.objects.get(user=user)
@@ -349,3 +351,55 @@ class RequestSubmitPasswordResetForm(APIView, GlobalViewFunctions):
         except Exception as e:
             return Exception('Failed to set user password change date')
 
+
+class AccountSettingsView(APIView, GlobalViewFunctions):
+
+    permission_classes = []
+
+    def get(self, request, **kwargs):
+        try:
+            user_account = request.user.useraccount
+            user_account_settings = AccountSettings.objects.get(user_account=user_account)
+            account_settings_serialized = AccountSettingsSerializer(
+                user_account_settings, many=False
+            )
+            return Response(
+                {
+                    "success": True,
+                    "message": "Account settings retrieved successfully!",
+                    "account_settings": account_settings_serialized.data,
+                }
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Failed to get account settings: {e.args[0]}",
+                }
+            )
+
+    def post(self, request, **kwargs):
+        try:
+            account_settings = AccountSettings()
+            account_settings.user_account = request.user.useraccount
+            account_settings.full_name = request.data['full_name']
+            account_settings.num_of_orders_fulfilled = request.data['num_of_orders_fulfilled']
+            account_settings.num_of_orders_placed = request.data['num_of_orders_placed']
+
+            merchants = MerchantBusiness.objects.filter(pk=request.data['fav_store_id'])
+            if merchants:
+                account_settings.fav_store = merchants.first()
+            else:
+                account_settings.fav_store = None
+
+            account_settings.save()
+            return Response({
+                "success": True,
+                "message": "account settings saved successfully!"
+            })
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "failed to save account settings",
+                "error": e.args[0]
+            })

@@ -17,11 +17,11 @@ class CreateProductView(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
-            if self.checkIfUserIsMerchant(request):
-                if self.checkIfUserMatchesMerchant(request):
-                    product = self.createProduct(request)
-            elif self.checkIfUserIsSuperAdmin(request):
-                product = self.createProduct(request)
+            if self.if_user_is_merchant(request):
+                if self.if_user_is_owner(request):
+                    product = self.create_product(request)
+            elif self.if_user_is_super_admin(request):
+                product = self.create_product(request)
             else: raise Exception(self.exceptionString1)
             return Response({
                 "success": True,
@@ -35,7 +35,7 @@ class CreateProductView(APIView, GlobalViewFunctions):
                 "error": str(e)
             }, status=500)
 
-    def createProduct(self, request):
+    def create_product(self, request):
         productSerializer = ProductSerializer(data=request.data)
         if productSerializer.is_valid():
             product = productSerializer.create(request.data, request)
@@ -46,7 +46,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
 
     def get(self, request, **kwargs):
         try:
-            if self.checkIfUserIsSuperAdmin(request) or self.checkIfUserIsMerchant(request):
+            if self.if_user_is_super_admin(request) or self.if_user_is_merchant(request):
                 self.deleteProduct(request, kwargs)
                 self.notifyAllOfItemCreation(None)
                 return Response({
@@ -64,7 +64,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
     def deleteProduct(self, request, kwargs):
         productPk = kwargs["productPk"]
         product = BranchProduct.objects.get(pk=productPk)
-        if self.checkIfUserIsMerchant(request):
+        if self.if_user_is_merchant(request):
             if self.checkIfUserMatchesProductMerchant(request, product.merchant):
                 product.delete()
             else: raise Exception("Merchant account does not match product merchant account")

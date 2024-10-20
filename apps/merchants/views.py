@@ -176,7 +176,7 @@ class CreateMerchantView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            if self.checkIfUserIsSuperAdmin(request):
+            if self.if_user_is_super_admin(request):
                 merchant = self.createMerchant(request.data)
                 if merchant:
                     self.notifyAllOfMerchantCreation()
@@ -241,7 +241,7 @@ class UpdateMerchant(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
-            if self.checkIfUserIsSuperAdmin(request):
+            if self.if_user_is_super_admin(request):
                 updatedMerchant = self.updateMerchant(request)
                 merchantSerializer = MerchantSerializer(updatedMerchant, many=False)
                 self.notifyAllOfUpdate()
@@ -281,7 +281,7 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         try:
-            if self.checkIfUserIsMerchant(request):
+            if self.if_user_is_merchant(request):
                 orderPk = kwargs["orderPk"]
                 order = Order.objects.filter(pk=orderPk).first()
                 notificationSent = self.sendNotificationOfOrderAcknowledgement(order)
@@ -315,7 +315,7 @@ class FulfillOrderView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             orderPk = kwargs["orderPk"]
-            if self.checkIfUserIsMerchant(request):
+            if self.if_user_is_merchant(request):
                 order = self.fulfillOrder(orderPk)
                 orderSerializer = OrderSerializer(order, many=False)
             else: raise Exception("You don't have permission to access this feature.")

@@ -15,7 +15,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     
     def get(self, request, **kwargs):
         try:
-            if self.checkIfUserIsMerchant(request):
+            if self.if_user_is_merchant(request):
                 orders = self.getOrdersAsMerchant(request)
             else:
                 orders = self.getOrdersAsCustomer(request)

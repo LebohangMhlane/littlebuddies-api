@@ -7,6 +7,7 @@ from rest_framework import status
 from apps.products.models import BranchProduct, Product 
 from django.urls import reverse
 
+
 class ProductSearchViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()

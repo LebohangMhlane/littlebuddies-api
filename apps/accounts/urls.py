@@ -28,4 +28,5 @@ urlpatterns = [
     path('deactivate-account/', views.DeactivateAccountView.as_view(), name="deactivate_account_view"),
     path('password-reset-request/<str:email>', views.RequestPasswordReset.as_view(), name="password_reset_request_view"),
     path('password-reset/<uidb64>/<resetToken>/', views.RequestSubmitPasswordResetForm.as_view(), name="password_reset_view"),
+    path('get-save-account-settings/', views.AccountSettingsView.as_view(), name="account_settings_view"),
 ]
