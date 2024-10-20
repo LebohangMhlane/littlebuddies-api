@@ -3,7 +3,8 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 
-class UserAccount(models.Model):
+class UserAccount(models.Model): 
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=255, blank=True, unique=False)
     phoneNumber = models.PositiveIntegerField(blank=False, null=True, unique=True)
@@ -22,6 +23,13 @@ class UserAccount(models.Model):
         self.isActive = self.user.is_active
         super(UserAccount, self).save(*args, **kwargs)
 
-
 class AccountSettings(models.Model):
-    pass
+
+    user_account = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False, null=True)
+    full_name = models.CharField(max_length=300, blank=False, null=True)
+    num_of_orders_placed = models.PositiveBigIntegerField(blank=True, null=True)
+    num_of_orders_fulfilled = models.PositiveBigIntegerField(blank=True, null=True)
+    fav_store = models.ForeignKey("merchants.MerchantBusiness", on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return self.full_name

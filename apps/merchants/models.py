@@ -4,8 +4,9 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.conf import settings
 
-from apps.accounts.models import UserAccount
 from cryptography.fernet import Fernet as fernet
+
+from apps.accounts.models import UserAccount
 
 class MerchantBusiness(models.Model):
 
@@ -19,7 +20,7 @@ class MerchantBusiness(models.Model):
     Durban_central = "Durban Central"
 
     logo = models.CharField(max_length=2000, blank=False, null=True)
-    userAccount = models.OneToOneField(UserAccount, on_delete=models.CASCADE)
+    userAccount = models.OneToOneField("accounts.UserAccount", on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
@@ -74,6 +75,7 @@ class MerchantBusiness(models.Model):
     
     def setBranchAreas(self, areas:list):
         self.branchAreas = json.dumps(areas)
+
 
 class Branch(models.Model):
 

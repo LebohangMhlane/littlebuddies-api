@@ -1,7 +1,5 @@
 from django.db import models
 
-from datetime import datetime, timedelta
-
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch
 
