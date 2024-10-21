@@ -22,6 +22,8 @@ from apps.products.serializers.serializers import ProductSerializer
 
 import logging
 
+from littlebuddies import settings
+
 logger = logging.getLogger(__name__)
 
 # functions shared by all views:
@@ -108,10 +110,11 @@ class GlobalViewFunctions():
             mail_subject, plain_message, to=[userAccount["user"]["email"]]
         )
         email.attach_alternative(message, "text/html")
-        if email.send():
-            pass
-        else:
-            raise Exception("Failed to send activation email")
+        if settings.DEBUG:
+            if email.send():
+                pass
+            else:
+                raise Exception("Failed to send activation email")
         
     def sendPasswordResetRequestEmail(self, userAccount:UserAccount, request):
         mail_subject = "Littlebuddies Password Reset"

@@ -1,4 +1,3 @@
-import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect

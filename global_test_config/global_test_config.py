@@ -24,6 +24,9 @@ class GlobalTestCaseConfig(TestCase):
 
     # TODO: remember to clean up test cases and move all repetitive tasks here:
 
+    def create_branch_product(self, branch):
+        pass
+
     def setUp(self) -> None:
         self.loginPayload = {
             "email": "asandamhlane@gmail.com",
