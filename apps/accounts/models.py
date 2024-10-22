@@ -33,3 +33,8 @@ class AccountSettings(models.Model):
 
     def __str__(self):
         return self.full_name
+    
+
+class DataRequest(models.Model):
+    user_account = models.ForeignKey(UserAccount, null=True, blank=False, on_delete=models.CASCADE)
+    date_requested = models.DateField(default=timezone.now())
