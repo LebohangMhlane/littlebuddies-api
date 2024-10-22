@@ -394,12 +394,12 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
             account_settings.save()
             return Response({
                 "success": True,
-                "message": "account settings saved successfully!"
+                "message": "Account settings saved successfully!"
             })
         except Exception as e:
             return Response({
                 "success": False,
-                "message": "failed to save account settings",
+                "message": "Failed to save account settings",
                 "error": e.args[0]
             })
         
@@ -408,16 +408,17 @@ class DataRequestView(APIView, GlobalViewFunctions):
     def get(self, request):
         try:
             data_request = DataRequest()
-            data_request.user_account = request.user.user_account
+            data_request.user_account = request.user.useraccount
             self.prep_and_send_data(request.user)
             return Response({
                 "success": True,
-                "message": "data request saved successfully"
+                "message": "Data request saved successfully"
             })
         except Exception as e:
             return Response({
                 "success": False,
-                "message": "failed to save data request",
+                "message": "Failed to save data request",
+                "error": e.args[0]
             })
 
     def prep_and_send_data(self, user):
