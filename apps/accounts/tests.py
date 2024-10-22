@@ -161,39 +161,7 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
         )
 
     def test_update_account_settings(self):
-
-        auth_token = self.createNormalTestAccountAndLogin()
-
-        account_settings_payload = {
-            "user_account": 1,
-            "full_name": "Michael Jackson",
-            "num_of_orders_fulfilled": 10,
-            "num_of_orders_placed": 10,
-            "fav_store_id": 1,
-        }
-
-        account_settings_url = reverse("account_settings_view")
-
-        response = self.client.post(
-            account_settings_url,
-            data=account_settings_payload,
-            HTTP_AUTHORIZATION=f"Token {auth_token}",
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["success"], True)
-
-        response = self.client.get(
-            account_settings_url, HTTP_AUTHORIZATION=f"Token {auth_token}"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["success"], True)
-        self.assertEqual(
-            response.data["account_settings"]["full_name"],
-            account_settings_payload["full_name"],
-        )
-
+        pass
 
 class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
 

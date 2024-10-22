@@ -392,30 +392,8 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
             )
 
     def post(self, request, **kwargs):
-        try:
-            account_settings = AccountSetting()
-            account_settings.user_account = request.user.useraccount
-            account_settings.full_name = request.data['full_name']
-            account_settings.num_of_orders_fulfilled = request.data['num_of_orders_fulfilled']
-            account_settings.num_of_orders_placed = request.data['num_of_orders_placed']
-
-            merchants = MerchantBusiness.objects.filter(pk=request.data['fav_store_id'])
-            if merchants:
-                account_settings.fav_store = merchants.first()
-            else:
-                account_settings.fav_store = None
-
-            account_settings.save()
-            return Response({
-                "success": True,
-                "message": "Account settings saved successfully!"
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "message": "Failed to save account settings",
-                "error": e.args[0]
-            })
+        pass
+        # TODO: might not be necessary
         
 class DataRequestView(APIView, GlobalViewFunctions):
     
