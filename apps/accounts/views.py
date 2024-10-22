@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
@@ -102,16 +102,21 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
     def _startRegistrationProcess(self, receivedData=dict) -> dict:
         userData, userAccountData = self.sortUserData(receivedData)
         userSerializer = UserSerializer(data=receivedData)
+
         if userSerializer.is_valid():
-            userInstance = userSerializer.create(validated_data=userData)
-            if userInstance:
-                userAccount = self.createUserAccount(userAccountData, userInstance)
-                userAccount = UserAccountSerializer(userAccount, many=False)
-                if userAccount:
-                    user_account_settings = AccountSettings()
-                    user_account_settings.user_account = userAccount.instance
-                    user_account_settings.full_name = userInstance.get_full_name()
-                return userAccount.data
+            with transaction.atomic():
+                userInstance = userSerializer.create(validated_data=userData)
+                if userInstance:
+                    userAccount = self.createUserAccount(userAccountData, userInstance)
+                    userAccount = UserAccountSerializer(userAccount, many=False)
+                    if userAccount:
+                        user_account_settings = AccountSettings()
+                        user_account_settings.user_account = userAccount.instance
+                        user_account_settings.full_name = userInstance.get_full_name()
+                        user_account_settings.save()
+
+                    return userAccount.data
+
 
     def sortUserData(self, receivedPayload):
         userData = {
