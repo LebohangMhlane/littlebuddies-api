@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from django.contrib.auth.models import User
 
 
@@ -14,7 +13,7 @@ class UserAccount(models.Model):
     deviceToken = models.CharField(max_length=1000, blank=False, unique=False)
     canCreateMerchants = models.BooleanField(default=False)
     isActive = models.BooleanField(default=True)
-    password_change_date = models.DateTimeField(default=timezone.now)
+    password_change_date = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
@@ -37,4 +36,7 @@ class AccountSettings(models.Model):
 
 class DataRequest(models.Model):
     user_account = models.ForeignKey(UserAccount, null=True, blank=False, on_delete=models.CASCADE)
-    date_requested = models.DateField(default=timezone.now())
+    date_requested = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.user_account.user.get_full_name()

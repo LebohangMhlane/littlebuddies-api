@@ -199,3 +199,17 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
             response.data["account_settings"]["full_name"],
             account_settings_payload["full_name"],
         )
+
+
+class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
+
+    def setUp(self):
+        return super().setUp()
+    
+    def test_request_data_copy(self):
+
+        auth_token = self.createNormalTestAccountAndLogin()
+        
+        url = reverse("request_data_copy")
+        response = self.client.get(url, HTTP_AUTHORIZATION=f"Token {auth_token}")
+        pass
