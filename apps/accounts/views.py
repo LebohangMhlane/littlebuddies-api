@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from apps.accounts.models import AccountSettings, UserAccount
+from apps.accounts.models import AccountSettings, DataRequest, UserAccount
 from apps.accounts.serializers.account_settings_serializer import AccountSettingsSerializer
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
@@ -394,11 +394,34 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
             account_settings.save()
             return Response({
                 "success": True,
-                "message": "account settings saved successfully!"
+                "message": "Account settings saved successfully!"
             })
         except Exception as e:
             return Response({
                 "success": False,
-                "message": "failed to save account settings",
+                "message": "Failed to save account settings",
                 "error": e.args[0]
             })
+        
+class DataRequestView(APIView, GlobalViewFunctions):
+    
+    def get(self, request):
+        try:
+            data_request = DataRequest()
+            data_request.user_account = request.user.useraccount
+            self.prep_and_send_data(request.user)
+            return Response({
+                "success": True,
+                "message": "Data request saved successfully"
+            })
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to save data request",
+                "error": e.args[0]
+            })
+
+    def prep_and_send_data(self, user):
+        # TODO: get all relevant data from users profile:
+        # TODO: send this data to provided user email address:
+        pass
