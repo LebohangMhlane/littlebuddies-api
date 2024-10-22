@@ -98,19 +98,19 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
 
     def test_search_with_no_results(self):
-        response = self.client.get(reverse('product-search'), {'query': 'Cat Food'})
+        response = self.client.get(reverse('search_products'), {'query': 'Cat Food'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 0)
 
     def test_search_with_empty_query(self):
-        response = self.client.get(reverse('product-search'), {'query': ''})
+        response = self.client.get(reverse('search_products'), {'query': ''})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 0)
 
     def test_search_excludes_inactive_or_out_of_stock(self):
-        response = self.client.get(reverse('product-search'), {'query': 'Dog Food'})
+        response = self.client.get(reverse('search_products'), {'query': 'Dog Food'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         product_ids = [product['id'] for product in response.data['products']]

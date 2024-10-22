@@ -14,18 +14,13 @@ class ProductSearchView(APIView, GlobalViewFunctions):
     def get(self, request):
         query = request.GET.get('query', '').strip()
 
-        # TODO: implement pagination (10):
-
         if query:
-            # Filter products based on the search query & sort by price
             products = BranchProduct.objects.filter(
                 Q(product__name__icontains=query),
                 inStock=True,
                 isActive=True
-            ).order_by('branchPrice') #we might need to use(-'branchPrice')
-
-            # TODO: add branch id and return it included in the results "branch_id"
-
+            ).order_by('branchPrice')
+            
             serializer = BranchProductSerializer(products, many=True)
             return Response({'products': serializer.data}, status=status.HTTP_200_OK)
         
