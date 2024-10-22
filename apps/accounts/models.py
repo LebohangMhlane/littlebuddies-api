@@ -22,7 +22,7 @@ class UserAccount(models.Model):
         self.isActive = self.user.is_active
         super(UserAccount, self).save(*args, **kwargs)
 
-class AccountSettings(models.Model):
+class AccountSetting(models.Model):
 
     user_account = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False, null=True)
     full_name = models.CharField(max_length=300, blank=False, null=True)

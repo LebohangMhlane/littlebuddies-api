@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
-from apps.accounts.models import AccountSettings, UserAccount
+from apps.accounts.models import AccountSetting, UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 
@@ -145,20 +145,14 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
 
         auth_token = self.createNormalTestAccountAndLogin()
 
-        merchant = self.createMerchantBusiness(self.userAccount)
-
-        account_settings = AccountSettings()
-        account_settings.user_account = self.userAccount
-        account_settings.full_name = "Michael Jackson"
-        account_settings.num_of_orders_fulfilled = 10
-        account_settings.num_of_orders_placed = 10
-        account_settings.fav_store = merchant
-        account_settings.save()
+        _ = self.createMerchantBusiness(self.userAccount)
 
         account_settings_url = reverse("account_settings_view")
         response = self.client.get(
             account_settings_url, HTTP_AUTHORIZATION=f"Token {auth_token}"
         )
+
+        account_settings = AccountSetting.objects.all().first()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["success"], True)
@@ -166,7 +160,7 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
             response.data["account_settings"]["full_name"], account_settings.full_name
         )
 
-    def test_save_account_settings(self):
+    def test_update_account_settings(self):
 
         auth_token = self.createNormalTestAccountAndLogin()
 

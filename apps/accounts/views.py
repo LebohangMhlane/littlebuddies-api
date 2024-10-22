@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from apps.accounts.models import AccountSettings, DataRequest, UserAccount
+from apps.accounts.models import AccountSetting, DataRequest, UserAccount
 from apps.accounts.serializers.account_settings_serializer import AccountSettingsSerializer
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
@@ -110,7 +110,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                     userAccount = self.createUserAccount(userAccountData, userInstance)
                     userAccount = UserAccountSerializer(userAccount, many=False)
                     if userAccount:
-                        user_account_settings = AccountSettings()
+                        user_account_settings = AccountSetting()
                         user_account_settings.user_account = userAccount.instance
                         user_account_settings.full_name = userInstance.get_full_name()
                         user_account_settings.save()
@@ -372,7 +372,7 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             user_account = request.user.useraccount
-            user_account_settings = AccountSettings.objects.get(user_account=user_account)
+            user_account_settings = AccountSetting.objects.get(user_account=user_account)
             account_settings_serialized = AccountSettingsSerializer(
                 user_account_settings, many=False
             )
@@ -393,7 +393,7 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
 
     def post(self, request, **kwargs):
         try:
-            account_settings = AccountSettings()
+            account_settings = AccountSetting()
             account_settings.user_account = request.user.useraccount
             account_settings.full_name = request.data['full_name']
             account_settings.num_of_orders_fulfilled = request.data['num_of_orders_fulfilled']
