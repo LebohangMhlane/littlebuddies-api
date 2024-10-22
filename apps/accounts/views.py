@@ -76,7 +76,6 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         except Exception as e:
             exception = e.args[0]
             displayableException = self.determineException(exception)
-            self.deleteAllUserRelatedInstances(pk=userAccount["pk"])
             return Response(
                 {
                     "success": False,
@@ -394,6 +393,7 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def post(self, request, **kwargs):
         pass
         # TODO: might not be necessary
+        
         
 class DataRequestView(APIView, GlobalViewFunctions):
     
