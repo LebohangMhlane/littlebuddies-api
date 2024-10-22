@@ -31,7 +31,7 @@ class AccountSetting(models.Model):
     fav_store = models.ForeignKey("merchants.MerchantBusiness", on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name}'s settings"
     
 
 class DataRequest(models.Model):
