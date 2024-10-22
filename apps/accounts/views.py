@@ -67,17 +67,22 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             self.sendActivationEmail(userAccount, request)
             return Response(
                 {
+                    "success": True,
                     "message": "Account created successfully",
                     "userAccount": userAccount,
                     "loginToken": authToken.key,
                 }
             )
         except Exception as e:
-            print(e, 'this is eeee')
             exception = e.args[0]
             displayableException = self.determineException(exception)
+            self.deleteAllUserRelatedInstances(pk=userAccount["pk"])
             return Response(
-                {"message": "Failed to create account", "error": displayableException},
+                {
+                    "success": False,
+                    "message": "Failed to create account",
+                    "error": displayableException
+                },
                 status=500,
             )
 
@@ -102,6 +107,10 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             if userInstance:
                 userAccount = self.createUserAccount(userAccountData, userInstance)
                 userAccount = UserAccountSerializer(userAccount, many=False)
+                if userAccount:
+                    user_account_settings = AccountSettings()
+                    user_account_settings.user_account = userAccount.instance
+                    user_account_settings.full_name = userInstance.get_full_name()
                 return userAccount.data
 
     def sortUserData(self, receivedPayload):
