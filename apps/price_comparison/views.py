@@ -4,11 +4,11 @@ from rest_framework import status
 
 from django.db.models import Q
 from apps.products.models import BranchProduct
-from .serializers import BranchProductSerializer
+from apps.products.serializers.serializers import BranchProductSerializer
+# from .serializers import BranchProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 class ProductSearchView(APIView, GlobalViewFunctions):
-
     permission_classes = []
 
     def get(self, request):
