@@ -1,9 +1,10 @@
 
-
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness
+from apps.merchants.serializers.merchant_serializer import BranchSerializer
 from apps.products.models import BranchProduct, Product
 
 class ProductSerializer(ModelSerializer):
@@ -55,8 +56,8 @@ class BranchProductSerializer(ModelSerializer):
 
         class Meta:
             model = BranchProduct
-            fields = ['id', 'inStock', 'isActive', 'branchPrice', 'storeReference', 'createdBy', 'product', 'branch']
-            depth = 4
+            fields = ['id', 'branchPrice', 'merchant_name', 'merchant_logo', 'product', 'branch']
+            depth = 1
 
         def is_valid(self, *, raise_exception=False):
             return super().is_valid(raise_exception=raise_exception)
