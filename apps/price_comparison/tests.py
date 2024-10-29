@@ -100,14 +100,17 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
     def test_search_with_no_results(self):
         response = self.client.get(reverse('search_products'), {'query': 'Cat Food'})
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['products']), 0)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Failed to retrieve products')
+        self.assertEqual(response.data['error'], 'No product matching this criteria was found')
 
     def test_search_with_empty_query(self):
         response = self.client.get(reverse('search_products'), {'query': ''})
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['products']), 0)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['error'], 'A search query was not specified')
 
     def test_search_excludes_inactive_or_out_of_stock(self):
         response = self.client.get(reverse('search_products'), {'query': 'Dog Food'})

@@ -41,3 +41,26 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
         pattern = r'0((60[3-9]|64[0-5]|66[0-5])\d{6}|(7[1-4689]|6[1-3]|8[1-4])\d{7})'
         if not re.match(pattern, phoneNumber): return False
         return True
+
+class AddressUpdateSerializer(serializers.ModelSerializer):
+    address = serializers.CharField(
+        required=True,
+        min_length=1,  
+        error_messages={
+            'required': 'Address field is required.',
+            'blank': 'Address cannot be blank.',
+            'min_length': 'Address cannot be empty.'
+        }
+    )
+
+    class Meta:
+        model = UserAccount
+        fields = ['address']
+
+    def validate_address(self, value):
+        """
+        Validate the address field.
+        """
+        if not value.strip(): 
+            raise serializers.ValidationError("Address cannot be blank or just whitespace.")
+        return value.strip()

@@ -30,4 +30,5 @@ urlpatterns = [
     path('password-reset/<uidb64>/<resetToken>/', views.RequestSubmitPasswordResetForm.as_view(), name="password_reset_view"),
     path('get-save-account-settings/', views.AccountSettingsView.as_view(), name="account_settings_view"),
     path('request-data-copy/', views.DataRequestView.as_view(), name="request_data_copy"),
+    path('update-address/', views.UpdateAddressView.as_view(), name='update-address'),
 ]

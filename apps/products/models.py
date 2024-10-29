@@ -1,4 +1,6 @@
 from django.db import models
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch
@@ -21,6 +23,8 @@ class BranchProduct(models.Model):
     inStock = models.BooleanField(default=True)
     isActive = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    merchant_name = models.CharField(max_length=250, null=True, blank=True)
+    merchant_logo = models.CharField(max_length=300, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     branchPrice = models.PositiveBigIntegerField(blank=False, null=True)
     storeReference = models.CharField(max_length=200, blank=False, default="")
@@ -28,3 +32,8 @@ class BranchProduct(models.Model):
 
     def __str__(self) -> str:
         return f"{self.branch.merchant.name} - Product {self.product.name}"
+    
+    @receiver(pre_save, sender="products.BranchProduct")
+    def update_merchant_name(instance, **kwargs):
+        instance.merchant_name = instance.branch.merchant.name
+        instance.merchant_logo = instance.branch.merchant.logo

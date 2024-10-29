@@ -4,6 +4,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from rest_framework import status, permissions
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,7 +13,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 
 from apps.accounts.models import AccountSetting, DataRequest, UserAccount
 from apps.accounts.serializers.account_settings_serializer import AccountSettingsSerializer
-from apps.accounts.serializers.user_account_serializer import UserAccountSerializer
+from apps.accounts.serializers.user_account_serializer import UserAccountSerializer, AddressUpdateSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
 from apps.accounts.tokens import accountActivationTokenGenerator
 
@@ -417,3 +418,49 @@ class DataRequestView(APIView, GlobalViewFunctions):
         # TODO: get all relevant data from users profile:
         # TODO: send this data to provided user email address:
         pass
+
+
+class UpdateAddressView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def patch(self, request, *args, **kwargs):
+        try:
+            user_account = UserAccount.objects.get(user=request.user)
+            
+            if 'address' not in request.data:
+                return Response({
+                    "success": False,
+                    "message": "Invalid data provided",
+                    "errors": {"address": ["Address field is required."]}
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = AddressUpdateSerializer(
+                instance=user_account,
+                data=request.data,
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "success": True,
+                    "message": "Address updated successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Invalid data provided",
+                    "errors": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except UserAccount.DoesNotExist:
+            return Response({
+                "success": False,
+                "message": "User account not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": "Failed to update address",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

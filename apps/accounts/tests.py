@@ -2,6 +2,9 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
+from rest_framework import status
+from rest_framework.test import APIClient
+import json
 
 from apps.accounts.models import AccountSetting, UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
@@ -175,3 +178,101 @@ class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
         url = reverse("request_data_copy")
         response = self.client.get(url, HTTP_AUTHORIZATION=f"Token {auth_token}")
         pass
+
+class UpdateAddressViewTests(TestCase):
+    def setUp(self):
+        create_account_url = reverse("create_account_view")
+        
+        self.userInputData = {
+            "username": "EnzoLunga0813492640",
+            "password": "King@2249",
+            "firstName": "Enzo",
+            "lastName": "Lunga",
+            "email": "enzo@gmail.com",
+            "address": "71 rethman street newgermany",
+            "phoneNumber": "0797281293",
+            "deviceToken": "fidfjowehfoewfhowvehwoueh394e",
+            "isMerchant": False,
+        }
+
+        self.client = APIClient()
+        response = self.client.post(
+            path=create_account_url,
+            data=self.userInputData,
+            format='json'
+        )
+        
+        user_id = response.data['userAccount']['user']['id']
+        self.user = User.objects.get(id=user_id)
+        self.user_account = UserAccount.objects.get(id=response.data['userAccount']['id'])
+        
+        self.token, _ = Token.objects.get_or_create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+        self.update_address_url = reverse("update-address") 
+
+    def test_update_address_successful(self):
+        payload = {"address": "123 New Address, City"}
+        
+        response = self.client.patch(
+            self.update_address_url,
+            data=payload,
+            format='json'
+        )
+        
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["message"], "Address updated successfully")
+        
+        self.user_account.refresh_from_db()
+        self.assertEqual(self.user_account.address, payload["address"])
+
+    def test_update_address_unauthorized(self):
+        self.client.credentials() 
+        payload = {"address": "456 Unauthorized Address"}
+        response = self.client.patch(
+            self.update_address_url,
+            data=payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_update_address_invalid_data(self):
+        """Test address update with invalid data."""
+        payload = {"address": ""}  # Invalid as address is required
+        response = self.client.patch(
+            self.update_address_url,
+            data=payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(response.data["success"])
+        self.assertEqual(response.data["message"], "Invalid data provided")
+        self.assertIn("errors", response.data)
+
+    def test_update_address_wrong_data_format(self):
+        payload = {"wrong_field": "123 New Address"}
+        response = self.client.patch(
+            self.update_address_url,
+            data=payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(response.data["success"])
+
+    def test_user_account_not_found(self):
+        self.user_account.delete()
+        
+        payload = {"address": "123 New Address"}
+        response = self.client.patch(
+            self.update_address_url,
+            data=payload,
+            format='json'
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertFalse(response.data["success"])
