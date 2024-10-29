@@ -18,6 +18,8 @@ from apps.accounts.serializers.user_serializer import UserSerializer
 from apps.accounts.tokens import accountActivationTokenGenerator
 
 from apps.merchants.models import Branch, MerchantBusiness
+from apps.orders.models import Order
+from apps.transactions.models import Transaction
 from global_serializer_functions.global_serializer_functions import SerializerFunctions
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -372,7 +374,22 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             user_account = request.user.useraccount
-            user_account_settings = AccountSetting.objects.get(user_account=user_account)
+            user_account_settings = AccountSetting.objects.get(
+                user_account=user_account
+            )
+            num_of_orders_placed = Order.objects.filter(
+                transaction__customer=user_account
+            ).count()
+            num_of_orders_completed = Order.objects.filter(
+                transaction__customer=user_account,
+                transaction__status=Transaction.COMPLETED,
+            ).count()
+            user_account_settings.num_of_orders_placed = num_of_orders_placed
+            user_account_settings.num_of_orders_fulfilled = num_of_orders_completed
+            user_account_settings.save()
+
+            date_joined = user_account.user.date_joined
+
             account_settings_serialized = AccountSettingsSerializer(
                 user_account_settings, many=False
             )
@@ -381,6 +398,8 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "success": True,
                     "message": "Account settings retrieved successfully!",
                     "account_settings": account_settings_serialized.data,
+                    "date_joined": date_joined,
+                    "email": user_account.user.email
                 }
             )
         except Exception as e:
@@ -390,12 +409,11 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "error": f"Failed to get account settings: {e.args[0]}",
                 }
             )
-
-    def post(self, request, **kwargs):
+        
+    def determine_favourite_store(self):
         pass
-        # TODO: might not be necessary
-        
-        
+
+
 class DataRequestView(APIView, GlobalViewFunctions):
     
     def get(self, request):
