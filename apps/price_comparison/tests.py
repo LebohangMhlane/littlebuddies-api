@@ -12,15 +12,7 @@ from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
-    def test_search_with_results(self):
-
-        # TODO: delete these comments once you see them:
-
-        # the GlobalTestCaseConfig class contains functions used by all test cases which I
-        # created to make life a little easier:
-        # GlobalTestCaseConfig also overrides the setup function so whatever extra data you need created
-        # should be created there.
-
+    def setUp(self):
         merchant_user_account_1 = self.createMerchantUserAccount()
         merchant_user_account_2 = self.createMerchantUserAccount(
             {
@@ -80,7 +72,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
             isActive=True
         )
 
-        self.branch_product3 = BranchProduct.objects.create(
+        self.branch_product4 = BranchProduct.objects.create(
             branch=merchant_business_2.branch_set.all()[0],
             product=self.product_2,
             createdBy=merchant_user_account_2,
@@ -88,6 +80,15 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
             inStock=True,
             isActive=True
         )
+
+        return super().setUp()
+
+    def test_search_with_results(self):
+
+        # the GlobalTestCaseConfig class contains functions used by all test cases which I
+        # created to make life a little easier:
+        # GlobalTestCaseConfig also overrides the setup function so whatever extra data you need created
+        # should be created there.
 
         url = reverse('search_products')
         response = self.client.get(url, {'query': 'Dog Food'})
@@ -113,10 +114,12 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['error'], 'A search query was not specified')
 
     def test_search_excludes_inactive_or_out_of_stock(self):
+        
+        self.branch_product1.inStock = False
+        self.branch_product1.save()
+
         response = self.client.get(reverse('search_products'), {'query': 'Dog Food'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        product_ids = [product['id'] for product in response.data['products']]
+        self.assertEqual(len(response.data['products']), 1)
 
-        self.assertNotIn(self.inactive_branch_product.id, product_ids)
-        self.assertNotIn(self.inactive_branch_product2.id, product_ids)
