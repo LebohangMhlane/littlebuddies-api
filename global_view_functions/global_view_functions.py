@@ -110,7 +110,7 @@ class GlobalViewFunctions():
             mail_subject, plain_message, to=[userAccount["user"]["email"]]
         )
         email.attach_alternative(message, "text/html")
-        if not settings.DEBUG:
+        if settings.DEBUG:
             if email.send():
                 pass
             else:

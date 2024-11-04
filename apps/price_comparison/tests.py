@@ -90,8 +90,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         # GlobalTestCaseConfig also overrides the setup function so whatever extra data you need created
         # should be created there.
 
-        url = reverse('search_products')
-        response = self.client.get(url, {'query': 'Dog Food'})
+        url = reverse('search_products', kwargs={"query": "Dog Food"})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
@@ -99,7 +99,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
 
     def test_search_with_no_results(self):
-        response = self.client.get(reverse('search_products'), {'query': 'Cat Food'})
+        url = reverse('search_products', kwargs={"query": "Cat Food"})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
@@ -107,7 +108,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['error'], 'No product matching this criteria was found')
 
     def test_search_with_empty_query(self):
-        response = self.client.get(reverse('search_products'), {'query': ''})
+        url = reverse('search_products', kwargs={"query": " "})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
@@ -118,7 +120,9 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product1.inStock = False
         self.branch_product1.save()
 
-        response = self.client.get(reverse('search_products'), {'query': 'Dog Food'})
+        url = reverse('search_products', kwargs={"query": "Dog Food"})
+
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)

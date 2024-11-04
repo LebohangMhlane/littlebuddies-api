@@ -11,9 +11,9 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, **kwargs):
         try:
-            query = request.GET.get('query', '').strip()
+            query = kwargs["query"].strip()
             if query:
                 products = BranchProduct.objects.filter(
                     Q(product__name__icontains=query),

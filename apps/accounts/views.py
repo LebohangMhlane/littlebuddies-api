@@ -179,7 +179,7 @@ class CheckAccountActivation(APIView, GlobalViewFunctions, SerializerFunctions):
                     "message": "Your account is not activated.",
                     "accountActivated": False,
                 },
-                status=401,
+                status=200,
             )
 
 
