@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You've Been Referred!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+        }
+        .voucher-box {
+            background-color: #f8f8f8;
+            border: 2px dashed #4CAF50;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .voucher-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            letter-spacing: 2px;
+        }
+        .expiry {
+            color: #666666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666666;
+            font-size: 12px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>You've Been Referred!</h1>
+        </div>
+        <div class="content">
+            <p>Hello!</p>
+            
+            <p>Great news! Your friend <strong>{{ referrer_email }}</strong> thinks you'll love our service and has sent you a special discount voucher!</p>
+            
+            <div class="voucher-box">
+                <h2>Your Voucher Code</h2>
+                <div class="voucher-code">{{ voucher_code }}</div>
+                <p class="expiry">Valid for 30 days (Expires: {{ expiry_date }})</p>
+            </div>
+            
+            <p>Use this voucher to get <strong>${{ discount_amount }} off</strong> on your first purchase!</p>
+            
+            <center>
+                <a href="{{ website_url }}" class="button">Shop Now</a>
+            </center>
+            
+            <p>If you have any questions, feel free to contact our support team.</p>
+            
+            <p>Best regards,<br>Your Company Name</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent to {{ friend_email }}. If you believe this was sent in error, please ignore this email.</p>
+        </div>
+    </div>
+</body>
+</html>

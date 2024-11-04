@@ -9,6 +9,8 @@ from django.utils import timezone
 import random
 import string
 from datetime import timedelta
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 from .serializers import ReferralSerializer
 from .models import Voucher
@@ -24,11 +26,9 @@ class ReferralView(APIView):
         if serializer.is_valid():
             friend_email = serializer.validated_data['friend_email']
             
-            # Generate voucher
             voucher_code = self.generate_voucher_code()
             expires_at = timezone.now() + timedelta(days=30)
             
-            # Create voucher
             voucher = Voucher.objects.create(
                 code=voucher_code,
                 user=request.user.useraccount,  
@@ -37,22 +37,26 @@ class ReferralView(APIView):
                 discount_amount=10.00
             )
 
-            # Send email, i need to create a template
             subject = 'You\'ve Been Referred!'
-            message = f'''
-            Hello!
-
-            Your friend {request.user.email} has referred you!
-            Here's your voucher code: {voucher_code}
-
-            This voucher is valid for 30 days.
-            '''
+            
+            context = {
+                'referrer_email': request.user.email,
+                'friend_email': friend_email,
+                'voucher_code': voucher_code,
+                'expiry_date': expires_at.strftime('%B %d, %Y'),
+                'discount_amount': '10.00',
+                'website_url': ''
+            }
+            
+            html_message = render_to_string('email_templates/voucher_email.html', context)
+            plain_message = strip_tags(html_message)
             
             send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [friend_email],
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[friend_email],
+                html_message=html_message,
                 fail_silently=False,
             )
 
