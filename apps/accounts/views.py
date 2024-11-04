@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
@@ -11,13 +11,15 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from apps.accounts.models import AccountSettings, DataRequest, UserAccount
+from apps.accounts.models import AccountSetting, DataRequest, UserAccount
 from apps.accounts.serializers.account_settings_serializer import AccountSettingsSerializer
 from apps.accounts.serializers.user_account_serializer import UserAccountSerializer, AddressUpdateSerializer
 from apps.accounts.serializers.user_serializer import UserSerializer
 from apps.accounts.tokens import accountActivationTokenGenerator
 
 from apps.merchants.models import Branch, MerchantBusiness
+from apps.orders.models import Order
+from apps.transactions.models import Transaction
 from global_serializer_functions.global_serializer_functions import SerializerFunctions
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
@@ -68,17 +70,21 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             self.sendActivationEmail(userAccount, request)
             return Response(
                 {
+                    "success": True,
                     "message": "Account created successfully",
                     "userAccount": userAccount,
                     "loginToken": authToken.key,
                 }
             )
         except Exception as e:
-            print(e, 'this is eeee')
             exception = e.args[0]
             displayableException = self.determineException(exception)
             return Response(
-                {"message": "Failed to create account", "error": displayableException},
+                {
+                    "success": False,
+                    "message": "Failed to create account",
+                    "error": displayableException
+                },
                 status=500,
             )
 
@@ -98,12 +104,21 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
     def _startRegistrationProcess(self, receivedData=dict) -> dict:
         userData, userAccountData = self.sortUserData(receivedData)
         userSerializer = UserSerializer(data=receivedData)
+
         if userSerializer.is_valid():
-            userInstance = userSerializer.create(validated_data=userData)
-            if userInstance:
-                userAccount = self.createUserAccount(userAccountData, userInstance)
-                userAccount = UserAccountSerializer(userAccount, many=False)
-                return userAccount.data
+            with transaction.atomic():
+                userInstance = userSerializer.create(validated_data=userData)
+                if userInstance:
+                    userAccount = self.createUserAccount(userAccountData, userInstance)
+                    userAccount = UserAccountSerializer(userAccount, many=False)
+                    if userAccount:
+                        user_account_settings = AccountSetting()
+                        user_account_settings.user_account = userAccount.instance
+                        user_account_settings.full_name = userInstance.get_full_name()
+                        user_account_settings.save()
+
+                    return userAccount.data
+
 
     def sortUserData(self, receivedPayload):
         userData = {
@@ -359,7 +374,22 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             user_account = request.user.useraccount
-            user_account_settings = AccountSettings.objects.get(user_account=user_account)
+            user_account_settings = AccountSetting.objects.get(
+                user_account=user_account
+            )
+            num_of_orders_placed = Order.objects.filter(
+                transaction__customer=user_account
+            ).count()
+            num_of_orders_completed = Order.objects.filter(
+                transaction__customer=user_account,
+                transaction__status=Transaction.COMPLETED,
+            ).count()
+            user_account_settings.num_of_orders_placed = num_of_orders_placed
+            user_account_settings.num_of_orders_fulfilled = num_of_orders_completed
+            user_account_settings.save()
+
+            date_joined = user_account.user.date_joined
+
             account_settings_serialized = AccountSettingsSerializer(
                 user_account_settings, many=False
             )
@@ -368,6 +398,8 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "success": True,
                     "message": "Account settings retrieved successfully!",
                     "account_settings": account_settings_serialized.data,
+                    "date_joined": date_joined,
+                    "email": user_account.user.email
                 }
             )
         except Exception as e:
@@ -377,33 +409,11 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "error": f"Failed to get account settings: {e.args[0]}",
                 }
             )
-
-    def post(self, request, **kwargs):
-        try:
-            account_settings = AccountSettings()
-            account_settings.user_account = request.user.useraccount
-            account_settings.full_name = request.data['full_name']
-            account_settings.num_of_orders_fulfilled = request.data['num_of_orders_fulfilled']
-            account_settings.num_of_orders_placed = request.data['num_of_orders_placed']
-
-            merchants = MerchantBusiness.objects.filter(pk=request.data['fav_store_id'])
-            if merchants:
-                account_settings.fav_store = merchants.first()
-            else:
-                account_settings.fav_store = None
-
-            account_settings.save()
-            return Response({
-                "success": True,
-                "message": "Account settings saved successfully!"
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "message": "Failed to save account settings",
-                "error": e.args[0]
-            })
         
+    def determine_favourite_store(self):
+        pass
+
+
 class DataRequestView(APIView, GlobalViewFunctions):
     
     def get(self, request):

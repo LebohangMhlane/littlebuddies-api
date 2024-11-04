@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 import json
 
-from apps.accounts.models import AccountSettings, UserAccount
+from apps.accounts.models import AccountSetting, UserAccount
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 
@@ -148,20 +148,14 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
 
         auth_token = self.createNormalTestAccountAndLogin()
 
-        merchant = self.createMerchantBusiness(self.userAccount)
-
-        account_settings = AccountSettings()
-        account_settings.user_account = self.userAccount
-        account_settings.full_name = "Michael Jackson"
-        account_settings.num_of_orders_fulfilled = 10
-        account_settings.num_of_orders_placed = 10
-        account_settings.fav_store = merchant
-        account_settings.save()
+        _ = self.createMerchantBusiness(self.userAccount)
 
         account_settings_url = reverse("account_settings_view")
         response = self.client.get(
             account_settings_url, HTTP_AUTHORIZATION=f"Token {auth_token}"
         )
+
+        account_settings = AccountSetting.objects.all().first()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["success"], True)
@@ -169,40 +163,8 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
             response.data["account_settings"]["full_name"], account_settings.full_name
         )
 
-    def test_save_account_settings(self):
-
-        auth_token = self.createNormalTestAccountAndLogin()
-
-        account_settings_payload = {
-            "user_account": 1,
-            "full_name": "Michael Jackson",
-            "num_of_orders_fulfilled": 10,
-            "num_of_orders_placed": 10,
-            "fav_store_id": 1,
-        }
-
-        account_settings_url = reverse("account_settings_view")
-
-        response = self.client.post(
-            account_settings_url,
-            data=account_settings_payload,
-            HTTP_AUTHORIZATION=f"Token {auth_token}",
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["success"], True)
-
-        response = self.client.get(
-            account_settings_url, HTTP_AUTHORIZATION=f"Token {auth_token}"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["success"], True)
-        self.assertEqual(
-            response.data["account_settings"]["full_name"],
-            account_settings_payload["full_name"],
-        )
-
+    def test_update_account_settings(self):
+        pass
 
 class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
 

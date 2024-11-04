@@ -22,7 +22,7 @@ class UserAccount(models.Model):
         self.isActive = self.user.is_active
         super(UserAccount, self).save(*args, **kwargs)
 
-class AccountSettings(models.Model):
+class AccountSetting(models.Model):
 
     user_account = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False, null=True)
     full_name = models.CharField(max_length=300, blank=False, null=True)
@@ -31,7 +31,7 @@ class AccountSettings(models.Model):
     fav_store = models.ForeignKey("merchants.MerchantBusiness", on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name}'s settings"
     
 
 class DataRequest(models.Model):
