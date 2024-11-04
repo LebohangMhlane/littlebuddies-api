@@ -16,9 +16,9 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             if self.if_user_is_merchant(request):
-                orders = self.getOrdersAsMerchant(request)
+                orders = self.get_orders_as_merchant(request)
             else:
-                orders = self.getOrdersAsCustomer(request)
+                orders = self.get_orders_as_customer(request)
             orders = OrderSerializer(orders, many=True)
             orders = orders.data
             return Response({
@@ -33,7 +33,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
                 "error": str(e)
             })
 
-    def getOrdersAsMerchant(self, request):
+    def get_orders_as_merchant(self, request):
         userAccount = request.user.useraccount
         orders = Order.objects.filter(
             transaction__branch__merchant__userAccount__pk=userAccount.pk, 
@@ -42,7 +42,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
         if orders:
             return orders
 
-    def getOrdersAsCustomer(self, request):
+    def get_orders_as_customer(self, request):
         userAccount = request.user.useraccount
         orders = Order.objects.filter(
             transaction__customer__id=userAccount.pk, 
