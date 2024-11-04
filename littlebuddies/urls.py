@@ -37,6 +37,7 @@ urlpatterns = [
     path('orders/', include("apps.orders.urls"), name="order_urls"),
     path('transactions/', include("apps.transactions.urls"), name="transaction_urls"),
     path('search/', include("apps.price_comparison.urls"), name="price_comparison_urls"),
+    path('discounts/', include("apps.discounts.urls"), name="discount"),
 ]
 
 if settings.DEBUG:
