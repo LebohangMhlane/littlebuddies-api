@@ -28,6 +28,7 @@ class AccountSetting(models.Model):
     full_name = models.CharField(max_length=300, blank=False, null=True)
     num_of_orders_placed = models.PositiveBigIntegerField(blank=True, null=True)
     num_of_orders_fulfilled = models.PositiveBigIntegerField(blank=True, null=True)
+    num_of_orders_cancelled = models.PositiveBigIntegerField(blank=True, null=True)
     fav_store = models.ForeignKey("merchants.MerchantBusiness", on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):

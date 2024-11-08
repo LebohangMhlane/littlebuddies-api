@@ -378,14 +378,23 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                 user_account=user_account
             )
             num_of_orders_placed = Order.objects.filter(
-                transaction__customer=user_account
+                transaction__customer=user_account,
+                transaction__status=Transaction.COMPLETED,
+                status=Order.PENDING_DELIVERY
             ).count()
             num_of_orders_completed = Order.objects.filter(
                 transaction__customer=user_account,
                 transaction__status=Transaction.COMPLETED,
+                status=Order.DELIVERED
+            ).count()
+            num_of_orders_cancelled = Order.objects.filter(
+                transaction__customer=user_account,
+                transaction__status=Transaction.CANCELLED,
+                status=Order.CANCELLED
             ).count()
             user_account_settings.num_of_orders_placed = num_of_orders_placed
             user_account_settings.num_of_orders_fulfilled = num_of_orders_completed
+            user_account_settings.num_of_orders_cancelled = num_of_orders_cancelled
             user_account_settings.save()
 
             date_joined = user_account.user.date_joined

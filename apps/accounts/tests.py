@@ -155,7 +155,7 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
             account_settings_url, HTTP_AUTHORIZATION=f"Token {auth_token}"
         )
 
-        account_settings = AccountSetting.objects.all().first()
+        account_settings = AccountSetting.objects.all()[0]
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["success"], True)
