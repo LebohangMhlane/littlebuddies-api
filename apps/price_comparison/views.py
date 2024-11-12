@@ -17,7 +17,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
             store_ids = eval(kwargs["store_ids"])
 
             # fail the endpoint if there is no query:
-            if not query:
+            if not query or len(query.strip()) == 0:
                 raise Exception("A search query was not specified")
 
             # find the products related to the query:
@@ -26,8 +26,8 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 'branch', 
                 'branch__merchant'
             ).filter(
-                Q(product__name__icontains=query),  
-                branch__merchant__id__in=store_ids,
+                Q(product__name__icontains=query) & 
+                Q(branch__merchant__id__in=store_ids),  
                 inStock=True,
                 isActive=True
             )
