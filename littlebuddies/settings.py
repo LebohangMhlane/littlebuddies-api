@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     'apps.orders',
     'apps.integrations',
     'apps.price_comparison',
+    'apps.discounts',
     'whitenoise.runserver_nostatic'
 ]
 
