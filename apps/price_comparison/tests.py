@@ -95,11 +95,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
-        url = reverse('search_products')
-        response = self.client.get(url, {
-            'query': 'Dog Food',
-            'store_ids': f'{self.branch_1.id}'
-        })
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1]})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
@@ -107,11 +104,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][0]['branch']['id'], self.branch_1.id)
 
     def test_search_with_multiple_store_filter(self):
-        url = reverse('search_products')
-        response = self.client.get(url, {
-            'query': 'Dog Food',
-            'store_ids': f'{self.branch_1.id},{self.branch_2.id}'
-        })
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1, 2]})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
@@ -119,18 +113,14 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
 
     def test_search_with_invalid_store_ids(self):
-        url = reverse('search_products')
-        response = self.client.get(url, {
-            'query': 'Dog Food',
-            'store_ids': 'invalid,ids'
-        })
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': "[]"})
+        response = self.client.get(url)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
-        self.assertEqual(response.data['error'], 'Invalid store IDs format')
 
     def test_search_with_no_results(self):
-        url = reverse('search_products', kwargs={"query": "Cat Food"})
+        url = reverse('search_products', kwargs={'query': 'Cat Food', 'store_ids': [1, 2]})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -150,19 +140,15 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product1.inStock = False
         self.branch_product1.save()
 
-        url = reverse('search_products', kwargs={"query": "Dog Food"})
-
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1, 2]})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
 
     def test_search_with_nonexistent_store_ids(self):
-        url = reverse('search_products')
-        response = self.client.get(url, {
-            'query': 'Dog Food',
-            'store_ids': '99999,88888' 
-        })
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [4, 5]})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)

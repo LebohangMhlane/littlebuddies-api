@@ -11,12 +11,16 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
     def get(self, request, **kwargs):
         try:
+
+            # prepare query parameters:
             query = kwargs["query"]
             store_ids = eval(kwargs["store_ids"])
 
+            # fail the endpoint if there is no query:
             if not query:
                 raise Exception("A search query was not specified")
 
+            # find the products related to the query:
             products = BranchProduct.objects.select_related(
                 'product',
                 'branch', 
@@ -28,13 +32,17 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 isActive=True
             )
 
-            products = products.order_by('branchPrice').distinct()
-
+            # if there are no products then raise exception:
             if not products.exists():
                 raise Exception("No product matching this criteria was found")
 
+            # order the products by price:
+            products = products.order_by('branchPrice').distinct()
+
+            # serialize the products:
             serializer = BranchProductSerializer(products, many=True)
             
+            # return the response:
             return Response({
                 "success": True,
                 "message": "Products retrieved successfully",
@@ -45,12 +53,6 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 }
             }, status=status.HTTP_200_OK)
             
-        except ValueError:
-            return Response({
-                "success": False,
-                "message": "Failed to retrieve products",
-                "error": "Invalid store IDs format"
-            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
                 "success": False,
