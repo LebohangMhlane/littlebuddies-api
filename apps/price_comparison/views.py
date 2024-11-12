@@ -14,7 +14,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             # prepare query parameters:
             query = kwargs["query"]
-            store_ids = eval(kwargs["store_ids"])
+            store_ids = kwargs["store_ids"].split(",")
 
             # fail the endpoint if there is no query:
             if not query or len(query.strip()) == 0:
