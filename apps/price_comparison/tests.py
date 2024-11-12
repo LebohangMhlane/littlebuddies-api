@@ -86,13 +86,13 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         return super().setUp()
 
     def test_search_with_results(self):
-        url = reverse('search_products')
-        response = self.client.get(url, {'query': 'Dog Food'})
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1]})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['products']), 2)
+        self.assertEqual(len(response.data['products']), 1)
         self.assertEqual(response.data['products'][0]['branchPrice'], 50.00)
-        self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
+        self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
         url = reverse('search_products')

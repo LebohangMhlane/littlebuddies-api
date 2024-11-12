@@ -11,26 +11,22 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
     def get(self, request, **kwargs):
         try:
-            query = request.GET.get('query', '').strip()
-            store_ids_param = request.GET.get('store_ids', '')
-            store_ids = [int(id) for id in store_ids_param.split(',')] if store_ids_param else []
+            query = kwargs["query"]
+            store_ids = eval(kwargs["store_ids"])
 
             if not query:
                 raise Exception("A search query was not specified")
 
             products = BranchProduct.objects.select_related(
-                'product', 
+                'product',
                 'branch', 
                 'branch__merchant'
             ).filter(
-                Q(product__name__icontains=query) |  
-                Q(merchant_name__icontains=query),   
+                Q(product__name__icontains=query),  
+                branch__merchant__id__in=store_ids,
                 inStock=True,
                 isActive=True
             )
-
-            if store_ids:
-                products = products.filter(branch_id__in=store_ids)
 
             products = products.order_by('branchPrice').distinct()
 
