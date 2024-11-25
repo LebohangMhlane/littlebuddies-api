@@ -36,7 +36,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     def post(self, request, *args, **kwargs):
         try:
             checkoutForm = CheckoutForm(payload=request.data)
-            branch = self.getBranch(checkoutForm.branchId)
+            branch = self.get_branch(checkoutForm.branchId)
             if checkoutForm.verifyPurchase():
                 paygatePayload, reference = self.preparePayGatePayload(checkoutForm, branch, request)
                 paygateResponse = self.sendInitiatePaymentRequestToPaygate(paygatePayload)
