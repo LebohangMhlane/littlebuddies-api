@@ -16,11 +16,10 @@ class ProductSearchView(APIView, GlobalViewFunctions):
         try:
             # Extract query parameters
             query = kwargs.get("query", "").strip()
-            store_ids = kwargs.get("store_ids", "[]")
+            store_ids = kwargs.get("store_ids", "").split(",")
             
             # Validate and parse store_ids
             try:
-                store_ids = eval(store_ids)
                 if not isinstance(store_ids, list):
                     raise ValueError("Store IDs should be a list.")
             except (SyntaxError, ValueError) as ex:
