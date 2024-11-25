@@ -2,8 +2,6 @@ from django.conf import settings
 
 import json
 
-import traceback
-
 import googlemaps.addressvalidation
 import googlemaps.client
 import googlemaps.convert

@@ -49,7 +49,7 @@ class GlobalViewFunctions():
         else:
             return (False, cleanedPayload)
 
-    def getBranch(self, branchId) -> Branch:
+    def get_branch(self, branchId) -> Branch:
         branch = Branch.objects.get(id=branchId)
         return branch
 

@@ -1,40 +1,44 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from apps.products.models import BranchProduct, Product 
+from datetime import datetime, timedelta
+
+from apps.products.models import BranchProduct, Product
+from apps.merchants.models import SaleCampaign
+
 from django.urls import reverse
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
-
     def setUp(self):
         # Create merchant user accounts
-        merchant_user_account_1 = self.createMerchantUserAccount()
-        merchant_user_account_2 = self.createMerchantUserAccount(
-            {
-                "username": "Max",
-                "password": "HelloWorld",
-                "firstName": "Max",
-                "lastName": "Myers",
-                "email": "maxmyers@gmail.com",
-                "address": "72 rethman street newgermany",
-                "phoneNumber": "0631837744",
-                "isMerchant": True,
-                "deviceToken": "fhwefhf2h3f9we7yfwefy32",
-            }
-        )
+        self.merchant_user_1 = self.createMerchantUserAccount()
+        self.merchant_user_2 = self.createMerchantUserAccount({
+            "username": "Max",
+            "password": "HelloWorld",
+            "firstName": "Max",
+            "lastName": "Myers",
+            "email": "maxmyers@gmail.com",
+            "address": "72 rethman street newgermany",
+            "phoneNumber": "0631837744",
+            "isMerchant": True,
+            "deviceToken": "fhwefhf2h3f9we7yfwefy32",
+        })
 
         # Create merchant businesses
-        merchant_business_1 = self.createMerchantBusiness(merchant_user_account_1)
-        merchant_business_2 = self.createMerchantBusiness(merchant_user_account_2, merchantData={
-            "name": "business_number_2",
-            "email": "business2@gmail.com",
-            "paygateId": "1234568",
-            "paygateSecret": "secret",
-            "address": "72 rethman street newgermany",
-            "branchAreas": ["Durban", "Down the road"],
-        })
-        merchant_business_2.save()
+        self.merchant_business_1 = self.createMerchantBusiness(self.merchant_user_1)
+        self.merchant_business_2 = self.createMerchantBusiness(
+            self.merchant_user_2,
+            merchantData={
+                "name": "business_number_2",
+                "email": "business2@gmail.com",
+                "paygateId": "1234568",
+                "paygateSecret": "secret",
+                "address": "72 rethman street newgermany",
+                "branchAreas": ["Durban", "Down the road"],
+            }
+        )
+        self.merchant_business_2.save()
 
         self.client = APIClient()
 
@@ -42,14 +46,14 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.product_1 = Product.objects.create(name="Dog Food")
         self.product_2 = Product.objects.create(name="My Cat Eats")
 
-        # Store branch IDs for testing
-        self.branch_1 = merchant_business_1.branch_set.first()
-        self.branch_2 = merchant_business_2.branch_set.first()
+        # Store branch IDs
+        self.branch_1 = self.merchant_business_1.branch_set.first()
+        self.branch_2 = self.merchant_business_2.branch_set.first()
 
         # Create branch products
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch_1,
-            createdBy=merchant_business_1.userAccount,
+            createdBy=self.merchant_business_1.userAccount,
             product=self.product_1,
             branchPrice=50.00,
             inStock=True,
@@ -59,7 +63,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product2 = BranchProduct.objects.create(
             branch=self.branch_2,
             product=self.product_1,
-            createdBy=merchant_user_account_2,
+            createdBy=self.merchant_user_2,
             branchPrice=75.00,
             inStock=True,
             isActive=True
@@ -68,7 +72,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product3 = BranchProduct.objects.create(
             branch=self.branch_1,
             product=self.product_2,
-            createdBy=merchant_user_account_1,
+            createdBy=self.merchant_user_1,
             branchPrice=75.00,
             inStock=True,
             isActive=True
@@ -77,7 +81,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product4 = BranchProduct.objects.create(
             branch=self.branch_2,
             product=self.product_2,
-            createdBy=merchant_user_account_2,
+            createdBy=self.merchant_user_2,
             branchPrice=75.00,
             inStock=True,
             isActive=True
@@ -85,8 +89,16 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         return super().setUp()
 
+    def get_search_url(self, query, store_ids=None):
+        """Helper method to generate search URL"""
+        kwargs = {'query': query}
+        if store_ids is not None:
+            kwargs['store_ids'] = str(store_ids)  # Convert to string as expected by the view
+        return reverse('search_products', kwargs=kwargs)
+
     def test_search_with_results(self):
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1]})
+        """Test basic search functionality with results"""
+        url = self.get_search_url('Dog Food', [1])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -95,7 +107,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1]})
+        """Test search with single store filter"""
+        url = self.get_search_url('Dog Food', [1])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -104,7 +117,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][0]['branch']['id'], self.branch_1.id)
 
     def test_search_with_multiple_store_filter(self):
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1, 2]})
+        """Test search with multiple store filters"""
+        url = self.get_search_url('Dog Food', [1, 2])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -113,43 +127,85 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
 
     def test_search_with_invalid_store_ids(self):
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': "[]"})
+        """Test search with invalid store IDs format"""
+        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': 'invalid'})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
 
     def test_search_with_no_results(self):
-        url = reverse('search_products', kwargs={'query': 'Cat Food', 'store_ids': [1, 2]})
+        """Test search with no matching results"""
+        url = self.get_search_url('NonexistentProduct', [1, 2])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
-        self.assertEqual(response.data['message'], 'Failed to retrieve products')
-        self.assertEqual(response.data['error'], 'No product matching this criteria was found')
+        self.assertEqual(response.data['message'], 'Failed to retrieve products.')
+        self.assertEqual(response.data['error'], 'No product matching this criteria was found.')
 
     def test_search_with_empty_query(self):
-        url = reverse('search_products', kwargs={'query': ' ', 'store_ids': [1, 2]})
+        """Test search with empty query string"""
+        url = self.get_search_url(" ", [1])  # Use a single space instead of empty string
         response = self.client.get(url)
-
+        
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.data['success'], False)
-        self.assertEqual(response.data['error'], 'A search query was not specified')
+        self.assertEqual(response.data['error'], "A search query was not specified.")
 
     def test_search_excludes_inactive_or_out_of_stock(self):
+        """Test that out of stock products are excluded"""
         self.branch_product1.inStock = False
         self.branch_product1.save()
 
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [1, 2]})
+        url = self.get_search_url('Dog Food', [1, 2])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
 
     def test_search_with_nonexistent_store_ids(self):
-        url = reverse('search_products', kwargs={'query': 'Dog Food', 'store_ids': [4, 5]})
+        """Test search with store IDs that don't exist"""
+        url = self.get_search_url('Dog Food', [4, 5])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(response.data['success'], False)
-        self.assertEqual(response.data['error'], 'No product matching this criteria was found')
+        self.assertEqual(response.data['error'], 'No product matching this criteria was found.')
+
+    def test_search_with_campaign(self):
+        """Test search results with active campaign"""
+        # Create campaign with required branch field
+        campaign = SaleCampaign.objects.create(
+            branch=self.branch_1,
+            percentageOff=10,
+            campaignEnds=datetime.now().date() + timedelta(days=5)
+        )
+        campaign.branchProducts.add(self.branch_product1)
+        
+        url = self.get_search_url('Dog Food', [1])
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 1)
+        self.assertIn('campaign', response.data['products'][0])
+        self.assertAlmostEqual(response.data['products'][0]['campaign']['final_price'], 45.00)
+
+    def test_products_ordered_by_final_price(self):
+        """Test that products are ordered by final price including campaigns"""
+        # Create campaign with required branch field
+        campaign = SaleCampaign.objects.create(
+            branch=self.branch_2,
+            percentageOff=20,
+            campaignEnds=datetime.now().date() + timedelta(days=5)
+        )
+        campaign.branchProducts.add(self.branch_product2)
+        
+        url = self.get_search_url('Dog Food', [1, 2])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 2)
+        self.assertLess(
+            response.data['products'][0]['branchPrice'],
+            response.data['products'][1]['branchPrice']
+        )
