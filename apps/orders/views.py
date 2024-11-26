@@ -66,6 +66,12 @@ class CancelOrder(APIView, GlobalViewFunctions):
 
     #  send emails to merchant
 
+    '''
+        {
+            "success": True,
+            "message": "Order cancelled successfully!",
+        }
+    '''
 
 class RepeatOrder(APIView, GlobalViewFunctions):
     pass
