@@ -336,6 +336,3 @@ class FulfillOrderView(APIView, GlobalViewFunctions):
             order.save()
             return order
         else: raise Exception("This order was not found")
-
-
-

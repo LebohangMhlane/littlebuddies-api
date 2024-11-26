@@ -49,3 +49,46 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
             transaction__status=Transaction.COMPLETED).order_by("created")
         if orders:
             return orders
+
+
+# TODO: create dashboard app 
+
+class CancelOrder(APIView, GlobalViewFunctions):
+    pass
+
+    # get order id
+
+    # get order
+
+    # update status
+
+    # send emails to customer
+
+    #  send emails to merchant
+
+
+class RepeatOrder(APIView, GlobalViewFunctions):
+    pass
+
+    # order id
+
+    # get order
+
+    # get branch
+
+    # checking if the products in the above order is still available in branch
+
+    # if its available check if the price has changed as well as if there is a SaleCampaign (on special)
+
+    # return 
+
+    '''
+        {
+            "order_id": "1",
+            "branch": "branch model",
+            "product_list": [], # dont forget price changes
+            "new_cost": R 0.00,
+            "out_of_stock": [],
+            "price_changes": [{}] # old price and new price
+        }
+    '''

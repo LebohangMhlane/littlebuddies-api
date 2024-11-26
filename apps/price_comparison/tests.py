@@ -98,7 +98,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_results(self):
         """Test basic search functionality with results"""
-        url = self.get_search_url('Dog Food', [1])
+        url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -108,7 +108,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_store_filter(self):
         """Test search with single store filter"""
-        url = self.get_search_url('Dog Food', [1])
+        url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -118,7 +118,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_multiple_store_filter(self):
         """Test search with multiple store filters"""
-        url = self.get_search_url('Dog Food', [1, 2])
+        url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -136,7 +136,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_no_results(self):
         """Test search with no matching results"""
-        url = self.get_search_url('NonexistentProduct', [1, 2])
+        url = self.get_search_url('NonexistentProduct', "1,2")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -146,7 +146,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_empty_query(self):
         """Test search with empty query string"""
-        url = self.get_search_url(" ", [1])  # Use a single space instead of empty string
+        url = self.get_search_url(" ", "1")  # Use a single space instead of empty string
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -157,7 +157,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.branch_product1.inStock = False
         self.branch_product1.save()
 
-        url = self.get_search_url('Dog Food', [1, 2])
+        url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -165,7 +165,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_with_nonexistent_store_ids(self):
         """Test search with store IDs that don't exist"""
-        url = self.get_search_url('Dog Food', [4, 5])
+        url = self.get_search_url('Dog Food', "4,5")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -182,7 +182,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         )
         campaign.branchProducts.add(self.branch_product1)
         
-        url = self.get_search_url('Dog Food', [1])
+        url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -200,7 +200,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         )
         campaign.branchProducts.add(self.branch_product2)
         
-        url = self.get_search_url('Dog Food', [1, 2])
+        url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
