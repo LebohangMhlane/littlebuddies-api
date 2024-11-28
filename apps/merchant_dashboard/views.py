@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views import View
 from rest_framework.authtoken.models import Token
 from apps.merchants.models import Branch
+from apps.orders.models import Order
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
@@ -16,8 +17,13 @@ class ManageOrdersView(GlobalViewFunctions, View):
             user = self.manually_authenticate_user(request)
             user_account = user.useraccount
 
-            # determine user permissions:
-            self.determine_permissions(user_account, kwargs["branch_id"])
+            # determine user permission and get the branch:
+            branch = self.determine_permission_and_return_branch(
+                user_account, kwargs["branch_id"]
+            )
+
+            # get branch orders:
+            all_branch_orders = Order.objects.filter(transaction__branch=branch)
 
             # return a response:
             context = {}
@@ -42,7 +48,7 @@ class ManageOrdersView(GlobalViewFunctions, View):
             if error in error_texts: status = 403
 
             context = {}
-            
+
             # return a response:
             return render(
                 request,
@@ -74,14 +80,14 @@ class ManageOrdersView(GlobalViewFunctions, View):
         except Exception as e:
             raise Exception(e.args[0])
 
-    def determine_permissions(self, user_account, branch_id):
+    def determine_permission_and_return_branch(self, user_account, branch_id):
         try:
             # get the branch being managed:
             branch = Branch.objects.get(id=branch_id)
             # check user permissions:
             if user_account.is_merchant:
                 if branch in user_account.permitted_branches.all():
-                    return True
+                    return branch
                 else:
                     raise Exception("You do not have permission to manage this branch")
         except Exception as e:
