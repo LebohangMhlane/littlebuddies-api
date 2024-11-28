@@ -11,39 +11,57 @@ class ManageOrdersView(GlobalViewFunctions, View):
     def get(self, request, *args, **kwargs):
         try:
             # determine what permissions a user has,
-            # either global access to all branches or 
+            # either global access to all branches or
             # access to only one branch:
             user = self.manually_authenticate_user(request)
             user_account = user.useraccount
 
-            # get the branch being managed:
-            branch_id = kwargs["branch_id"]
-            branch = Branch.objects.get(id=branch_id)
+            # determine user permissions:
+            self.determine_permissions(user_account, kwargs["branch_id"])
 
-            pass
+            # return a response:
+            context = {}
+            return render(
+                request, "merchant_dashboard_templates/dashboard_homepage.html", context
+            )
         except Exception as e:
             context = {}
-            return render(request, "", context)
-
+            return render(
+                request, "merchant_dashboard_templates/dashboard_homepage.html", context
+            )
+        
     def post(self, request, *args, **kwargs):
         pass
 
     def manually_authenticate_user(self, request):
+        try:
+            """
+            since we are using normal django view we don't have the luxury of
+            rest frameworks automatic authentication service
+            """
 
-        '''
-        since we are using normal django view we don't have the luxury of
-        rest frameworks automatic authentication service
-        '''
+            # determine if there is a token available:
+            if request.headers and request.headers.get("Authorization"):
+                token = request.headers.get("Authorization").split(" ")[1]
+                token_instance = Token.objects.filter(key=token)
 
-        # determine if there is a token available:
-        if request.headers and request.headers.get('Authorization'):
-            token = request.headers.get('Authorization').split(" ")[1]
-            token_instance = Token.objects.filter(key=token)
-            
-            # if there is one the return the user associated with it:
-            if token_instance: return token_instance.first().user
-            else: raise Exception("Authentication failed!")
+                # if there is one the return the user associated with it:
+                if token_instance:
+                    return token_instance.first().user
+                else:
+                    raise Exception("Authentication failed!")
+        except Exception as e:
+            raise Exception(f"Failed to manually authenticate user: {e.args[0]}")
 
-    def determine_permissions(user_account):
-        if user_account.is_merchant:
-            pass
+    def determine_permissions(self, user_account, branch_id):
+        try:
+            # get the branch being managed:
+            branch = Branch.objects.get(id=branch_id)
+            # check user permissions:
+            if user_account.is_merchant:
+                if branch in user_account.permitted_branches.all():
+                    return True
+                else:
+                    raise Exception("You do not have permission to manage this branch")
+        except Exception as e:
+            raise Exception(e.args[0])

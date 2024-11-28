@@ -97,7 +97,7 @@ class GlobalTestCaseConfig(TestCase):
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def create_merchant_user_account(self, userData={}):
+    def create_merchant_user_account(self, user_data={}):
         try:
             fake_user_data = {
                 "username": "Mike",
@@ -114,10 +114,10 @@ class GlobalTestCaseConfig(TestCase):
             _ = self.client.post(
                 path=create_account_url,
                 content_type=f"application/json",
-                data=fake_user_data if len(userData) == 0 else userData,
+                data=fake_user_data if len(user_data) == 0 else user_data,
             )
             merchant_user_account = UserAccount.objects.get(
-                user__email=fake_user_data["email"] if len(userData) == 0 else userData["email"]
+                user__email=fake_user_data["email"] if len(user_data) == 0 else user_data["email"]
             )
             merchant_user_account.is_merchant = True
             merchant_user_account.save()

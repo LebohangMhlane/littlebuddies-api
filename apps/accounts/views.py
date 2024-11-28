@@ -63,16 +63,16 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         pass
 
     def post(self, request, *args, **kwargs):
-        userAccount = None
+        user_account = None
         try:
-            userAccount = self._start_registration_process(receivedData=request.data)
-            authToken = Token.objects.get(user__id=userAccount["user"]["id"])
-            self.send_activation_email(userAccount, request)
+            user_account = self._start_registration_process(receivedData=request.data)
+            authToken = Token.objects.get(user__id=user_account["user"]["id"])
+            self.send_activation_email(user_account, request)
             return Response(
                 {
                     "success": True,
                     "message": "Account created successfully",
-                    "userAccount": userAccount,
+                    "userAccount": user_account,
                     "loginToken": authToken.key,
                 }
             )
@@ -102,14 +102,14 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         return default
 
     def _start_registration_process(self, receivedData=dict) -> dict:
-        user_data, user_account_data = self.sortUserData(receivedData)
+        user_data, user_account_data = self.sort_user_data(receivedData)
         user_serializer = UserSerializer(data=receivedData)
 
         if user_serializer.is_valid():
             with transaction.atomic():
                 user_instance = user_serializer.create(validated_data=user_data)
                 if user_instance:
-                    user_account = self.createUserAccount(user_account_data, user_instance)
+                    user_account = self.create_user_account(user_account_data, user_instance)
                     user_account = UserAccountSerializer(user_account, many=False)
                     if user_account:
                         user_account_settings = AccountSetting()
@@ -120,7 +120,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                     return user_account.data
 
 
-    def sortUserData(self, receivedPayload):
+    def sort_user_data(self, receivedPayload):
         userData = {
             "username": f"{receivedPayload['firstName']}{receivedPayload['lastName']}{receivedPayload['phoneNumber']}",
             "password": receivedPayload["password"],
@@ -138,11 +138,11 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         }
         return userData, userAccountData
 
-    def createUserAccount(self, userAccountData, userInstance):
-        userAccountData["user"] = userInstance
-        userAccountSerializer = UserAccountSerializer(data=userAccountData)
-        if userAccountSerializer.is_valid(raise_exception=True):
-            userAccount = userAccountSerializer.create(validated_data=userAccountData)
+    def create_user_account(self, user_account_data, user_instance):
+        user_account_data["user"] = user_instance
+        user_account_serializer = UserAccountSerializer(data=user_account_data)
+        if user_account_serializer.is_valid(raise_exception=True):
+            userAccount = user_account_serializer.create(validated_data=user_account_data)
             return userAccount
 
 

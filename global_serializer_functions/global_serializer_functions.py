@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 
 class SerializerFunctions():
 
-    def deleteAllUserRelatedInstances(self, userPk:int):
+    def delete_all_user_related_instances(self, userPk:int):
         if User.objects.filter(pk=userPk).exists():
             try: Token.objects.get(user__pk=userPk).delete()
             except: pass
