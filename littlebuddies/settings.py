@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'apps.integrations',
     'apps.price_comparison',
     'apps.discounts',
+    'apps.merchant_dashboard',
     'whitenoise.runserver_nostatic'
 ]
 
