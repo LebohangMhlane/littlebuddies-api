@@ -67,7 +67,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         try:
             userAccount = self._start_registration_process(receivedData=request.data)
             authToken = Token.objects.get(user__id=userAccount["user"]["id"])
-            self.sendActivationEmail(userAccount, request)
+            self.send_activation_email(userAccount, request)
             return Response(
                 {
                     "success": True,
@@ -151,7 +151,7 @@ class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
     def get(self, request, **kwargs):
         try:
             userAccount = UserAccountSerializer(request.user.useraccount)
-            self.sendActivationEmail(userAccount.data, request)
+            self.send_activation_email(userAccount.data, request)
             return Response(
                 {
                     "message": "Activation email sent successfully",
@@ -280,7 +280,7 @@ class RequestPasswordReset(APIView, GlobalViewFunctions):
             userAccount = UserAccount.objects.get(user__email=kwargs["email"])
             if userAccount.password_change_date.date() == timezone.now().date():
                 raise Exception("Password can only be reset once every 24hrs.")
-            self.sendPasswordResetRequestEmail(userAccount, request)
+            self.send_password_reset_request_email(userAccount, request)
             return Response(
                 {
                     "message": "Password reset email sent successfully",

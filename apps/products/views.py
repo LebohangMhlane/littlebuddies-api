@@ -48,7 +48,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
         try:
             if self.if_user_is_super_admin(request) or self.if_user_is_merchant(request):
                 self.deleteProduct(request, kwargs)
-                self.notifyAllOfItemCreation(None)
+                self.notify_all_of_item_creation(None)
                 return Response({
                     "success": True,
                     "message": "Product deleted successfully",
@@ -65,7 +65,7 @@ class DeleteProductView(APIView, GlobalViewFunctions):
         productPk = kwargs["productPk"]
         product = BranchProduct.objects.get(pk=productPk)
         if self.if_user_is_merchant(request):
-            if self.checkIfUserMatchesProductMerchant(request, product.merchant):
+            if self.check_if_user_matches_product_merchant(request, product.merchant):
                 product.delete()
             else: raise Exception("Merchant account does not match product merchant account")
         else: product.delete()

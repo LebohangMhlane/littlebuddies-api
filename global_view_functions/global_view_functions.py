@@ -36,7 +36,7 @@ class GlobalViewFunctions():
         "You don't have permission to create merchants"
     ]
 
-    def verifyPayloadIntegrity(self, payload:dict, secret="secret"):
+    def verify_payload_integrity(self, payload:dict, secret="secret"):
         cleanedPayload = payload.copy()
         checksum_to_compare = cleanedPayload["CHECKSUM"]
         del cleanedPayload["CHECKSUM"]
@@ -67,15 +67,15 @@ class GlobalViewFunctions():
         if merchant.userAccount == request.user.useraccount: return True
         else: return False
 
-    def checkIfUserMatchesProductMerchant(self, request, productMerchant:MerchantBusiness):
+    def check_if_user_matches_product_merchant(self, request, productMerchant:MerchantBusiness):
         userAccount = request.user.useraccount
         if userAccount == productMerchant.userAccount: return True
         return False
 
-    def notifyAllOfItemCreation(self, instance):
+    def notify_all_of_item_creation(self, instance):
         pass
 
-    def getProducts(self, branch):
+    def get_products(self, branch):
         logger.info("Getting updated stores near customer...")
         try:
             products = Product.objects.filter(
@@ -92,7 +92,7 @@ class GlobalViewFunctions():
             tb = traceback.format_exc()
             raise Exception(f"{tb}")
 
-    def sendActivationEmail(self, userAccount, request):
+    def send_activation_email(self, userAccount, request):
         mail_subject = "Littlebuddies Email Activation"
         user = User.objects.get(id=userAccount["user"]["id"])
         message = render_to_string(
@@ -116,7 +116,7 @@ class GlobalViewFunctions():
             else:
                 raise Exception("Failed to send activation email")
         
-    def sendPasswordResetRequestEmail(self, userAccount:UserAccount, request):
+    def send_password_reset_request_email(self, userAccount:UserAccount, request):
         mail_subject = "Littlebuddies Password Reset"
         user = userAccount.user
         context = {

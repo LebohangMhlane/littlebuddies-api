@@ -43,7 +43,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 
                 if paygateResponse.status_code == 200:
                     responseAsDict = self.convertResponseToDict(paygateResponse.text.split("&"))
-                    dataIntegritySecure, verifiedPayload = self.verifyPayloadIntegrity(
+                    dataIntegritySecure, verifiedPayload = self.verify_payload_integrity(
                         responseAsDict, secret=branch.merchant.getMerchantSecretKey()
                     )
                     
@@ -211,7 +211,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
         try:
             payRequestId = receivedPayload["PAY_REQUEST_ID"]
             transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
-            dataIntegritySecure, validatedPayload = self.verifyPayloadIntegrity(
+            dataIntegritySecure, validatedPayload = self.verify_payload_integrity(
                 receivedPayload,
                 secret=transaction.branch.merchant.getMerchantSecretKey(),
             )  # TODO: investigate checksum check failure in this step:

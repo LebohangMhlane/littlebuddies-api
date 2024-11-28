@@ -148,7 +148,7 @@ class GetUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
             merchants = MerchantBusiness.objects.filter(
                 id__in=storeIds)
             for index, merchant in enumerate(merchants):
-                products = self.getProducts(merchant)
+                products = self.get_products(merchant)
                 serializer = MerchantSerializer(merchant, many=False)
                 updatedMerchantsNearby.append({
                     "merchant": serializer.data,
