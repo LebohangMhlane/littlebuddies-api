@@ -59,7 +59,7 @@ class GlobalViewFunctions():
         return False
     
     def if_user_is_merchant(self, request):
-        if request.user.useraccount.isMerchant: return True
+        if request.user.useraccount.is_merchant: return True
         return False
 
     def if_user_is_owner(self, request):
