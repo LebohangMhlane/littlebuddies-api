@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from django.views import View
 from rest_framework.authtoken.models import Token
-from apps.merchants.models import Branch
+from apps.merchants.models import Branch, SaleCampaign
 from apps.orders.models import Order
 from apps.products.models import BranchProduct
 from global_view_functions.global_view_functions import GlobalViewFunctions
@@ -23,6 +23,8 @@ class ManageBranchView(GlobalViewFunctions, View):
                 user_account, kwargs["branch_id"]
             )
 
+            '''These may require pagination'''
+
             # get branch orders:
             all_branch_orders = Order.objects.filter(transaction__branch=branch)
 
@@ -30,6 +32,7 @@ class ManageBranchView(GlobalViewFunctions, View):
             all_branch_products = BranchProduct.objects.filter(branch=branch)
 
             # get all current sale campaigns:
+            all_sale_campaigns = SaleCampaign.objects.filter(branch=branch)
 
             # return a response:
             context = {}
