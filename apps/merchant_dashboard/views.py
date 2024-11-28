@@ -21,15 +21,36 @@ class ManageOrdersView(GlobalViewFunctions, View):
 
             # return a response:
             context = {}
+
             return render(
-                request, "merchant_dashboard_templates/dashboard_homepage.html", context
+                request,
+                "merchant_dashboard_templates/dashboard_homepage.html",
+                context,
+                status=200,
             )
         except Exception as e:
+
+            # returnable values:
+            status = 500
+            error = e.args[0]
+            error_texts = [
+                "You do not have permission to manage this branch",
+                "User is not authenticated",
+            ]
+
+            # determine the status to return:
+            if error in error_texts: status = 403
+
             context = {}
+            
+            # return a response:
             return render(
-                request, "merchant_dashboard_templates/dashboard_homepage.html", context
+                request,
+                "merchant_dashboard_templates/dashboard_homepage.html",
+                context,
+                status=status,
             )
-        
+
     def post(self, request, *args, **kwargs):
         pass
 
@@ -49,9 +70,9 @@ class ManageOrdersView(GlobalViewFunctions, View):
                 if token_instance:
                     return token_instance.first().user
                 else:
-                    raise Exception("Authentication failed!")
+                    raise Exception("User is not authenticated")
         except Exception as e:
-            raise Exception(f"Failed to manually authenticate user: {e.args[0]}")
+            raise Exception(e.args[0])
 
     def determine_permissions(self, user_account, branch_id):
         try:

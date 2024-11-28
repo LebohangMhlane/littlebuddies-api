@@ -29,4 +29,5 @@ class MerchantDashboardTestCase(GlobalTestCaseConfig):
             HTTP_AUTHORIZATION=f"Token {token}"
         )
 
-        pass
+        # assertions:
+        self.assertEqual(response.status_code, 200)
