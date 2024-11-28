@@ -7,7 +7,7 @@ from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class MerchantDashboardTestCase(GlobalTestCaseConfig):
 
-    def test_get_initial_dashboard(self):
+    def test_manage_branch_initial_dashboard(self):
 
         # create a merchant user account:
         merchant_user_account = self.create_merchant_user_account()
@@ -28,7 +28,7 @@ class MerchantDashboardTestCase(GlobalTestCaseConfig):
         token = self.login_as_merchant()
 
         # set the url:
-        url = reverse("get_merchant_dashboard", kwargs={"branch_id": 1})
+        url = reverse("manage_branch_dashboard", kwargs={"branch_id": 1})
 
         # make a get request to get the orders:
         response = self.client.get(

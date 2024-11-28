@@ -4,10 +4,11 @@ from django.views import View
 from rest_framework.authtoken.models import Token
 from apps.merchants.models import Branch
 from apps.orders.models import Order
+from apps.products.models import BranchProduct
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 
-class ManageOrdersView(GlobalViewFunctions, View):
+class ManageBranchView(GlobalViewFunctions, View):
 
     def get(self, request, *args, **kwargs):
         try:
@@ -24,6 +25,11 @@ class ManageOrdersView(GlobalViewFunctions, View):
 
             # get branch orders:
             all_branch_orders = Order.objects.filter(transaction__branch=branch)
+
+            # get all current branch products:
+            all_branch_products = BranchProduct.objects.filter(branch=branch)
+
+            # get all current sale campaigns:
 
             # return a response:
             context = {}
