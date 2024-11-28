@@ -33,7 +33,7 @@ class GlobalTestCaseConfig(TestCase):
             "password": "HelloWorld",
         }
         
-    def createNormalTestAccount(self):
+    def create_normal_test_account(self):
         userInputData = {
             "username": "Lebo",
             "password": "HelloWorld",
@@ -56,7 +56,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         return testUserAccount
     
-    def createTestCustomer(self):
+    def create_test_customer(self):
         userInputData = {
             "username": "customer",
             "password": "HelloWorld",
@@ -87,7 +87,7 @@ class GlobalTestCaseConfig(TestCase):
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def createMerchantUserAccount(self, userData={}):
+    def create_merchant_user_account(self, userData={}):
         try:
             fakeUserData = {
                 "username": "Mike",
@@ -115,7 +115,7 @@ class GlobalTestCaseConfig(TestCase):
         except Exception as e:
             pass
     
-    def createTestMerchantUserAccountDynamic(self, userData):
+    def create_dynamic_merchant_user_account(self, userData):
         userInputData = {
             "username": userData["username"],
             "password": userData["password"],
@@ -136,8 +136,8 @@ class GlobalTestCaseConfig(TestCase):
         testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
         return testMerchantUserAccount
     
-    def createNormalTestAccountAndLogin(self):
-        userAccount = self.createNormalTestAccount()
+    def create_normal_test_account_and_login(self):
+        userAccount = self.create_normal_test_account()
         loginUrl = reverse("login")
         response = self.client.post(
             path=loginUrl,
@@ -148,7 +148,7 @@ class GlobalTestCaseConfig(TestCase):
         self.userAccount = userAccount
         return self.authToken
 
-    def loginAsMerchant(self):
+    def login_as_merchant(self):
         loginUrl = reverse("login")
         loginPayload = {
             "email": "mikemyers@gmail.com",
@@ -161,7 +161,7 @@ class GlobalTestCaseConfig(TestCase):
         self.authToken = response.data["token"]
         return self.authToken
 
-    def loginAsCustomer(self):
+    def login_as_customer(self):
         loginUrl = reverse("login")
         loginPayload = {
             "email": "customer@gmail.com",
@@ -174,16 +174,16 @@ class GlobalTestCaseConfig(TestCase):
         self.authToken = response.data["token"]
         return self.authToken
 
-    def loginAsSuperAdmin(self):
+    def login_as_super_admin(self):
         pass
     
-    def makeUserAccountAMerchant(self, userAccount:UserAccount) -> UserAccount:
+    def make_user_account_a_merchant(self, userAccount:UserAccount) -> UserAccount:
         userAccount.isMerchant = True
         userAccount.save()
         return userAccount
 
-    def createMerchantBusiness(self, userAccount:UserAccount, merchantData={}):
-        userAccount = self.makeUserAccountAMerchant(userAccount)
+    def create_merchant_business(self, userAccount:UserAccount, merchantData={}):
+        userAccount = self.make_user_account_a_merchant(userAccount)
         try:
             merchant = MerchantBusiness()
             if len(merchantData) == 0:
@@ -233,7 +233,7 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return merchant
     
-    def makeNormalAccountSuperAdmin(self, userAccountPk:int):
+    def make_normal_account_super_admin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
@@ -241,7 +241,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount.save()
         return userAccount
 
-    def createProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
+    def create_product(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
 
@@ -280,7 +280,7 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return branchProduct
     
-    def makeDate(self, daysFromNow):
+    def make_date(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)
         date = date.strftime("%d %B %Y")
         return date

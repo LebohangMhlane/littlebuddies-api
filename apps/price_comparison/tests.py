@@ -12,8 +12,8 @@ from global_test_config.global_test_config import GlobalTestCaseConfig
 class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
     def setUp(self):
         # Create merchant user accounts
-        self.merchant_user_1 = self.createMerchantUserAccount()
-        self.merchant_user_2 = self.createMerchantUserAccount({
+        self.merchant_user_1 = self.create_merchant_user_account()
+        self.merchant_user_2 = self.create_merchant_user_account({
             "username": "Max",
             "password": "HelloWorld",
             "firstName": "Max",
@@ -26,8 +26,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         })
 
         # Create merchant businesses
-        self.merchant_business_1 = self.createMerchantBusiness(self.merchant_user_1)
-        self.merchant_business_2 = self.createMerchantBusiness(
+        self.merchant_business_1 = self.create_merchant_business(self.merchant_user_1)
+        self.merchant_business_2 = self.create_merchant_business(
             self.merchant_user_2,
             merchantData={
                 "name": "business_number_2",

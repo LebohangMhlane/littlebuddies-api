@@ -14,14 +14,14 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_get_store_range(self):
 
-        merchantUserAccount = self.createMerchantUserAccount({})
-        merchantBusiness = self.createMerchantBusiness(merchantUserAccount)
+        merchantUserAccount = self.create_merchant_user_account({})
+        merchantBusiness = self.create_merchant_business(merchantUserAccount)
         
-        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
-        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
+        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
+        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
 
-        customer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
 
         storeRangeUrl = reverse('get_store_range', args=['randomCoordinates']) # TODO: remember to test finding a store range within the devices radius
         response = self.client.get(
@@ -35,10 +35,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_get_nearest_branch(self):
 
-        _ = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
+        _ = self.create_test_customer()
+        authToken = self.login_as_customer()
 
-        merchantUserAccount = self.createMerchantUserAccount({
+        merchantUserAccount = self.create_merchant_user_account({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -50,7 +50,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "deviceToken": "dfwhefoewhofh328rh2"
         })
         
-        merchantBusiness = self.createMerchantBusiness(
+        merchantBusiness = self.create_merchant_business(
             merchantUserAccount, merchantData={
                 "name": "Orsum Pets",
                 "email": "orsumpets@gmail.com",
@@ -63,8 +63,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
-        _ = self.createProduct(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
+        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
+        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
 
         # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
         # deviceLocation = "-29.857298, 31.024362"
@@ -82,11 +82,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
 
     def test_get_updated_petstores_near_me(self):
-        _ = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount1 = self.createMerchantUserAccount({})
-        merchantBusiness1 = self.createMerchantBusiness(merchantUserAccount1, {})
-        merchantUserAccount2 = self.createTestMerchantUserAccountDynamic({
+        _ = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount1 = self.create_merchant_user_account({})
+        merchantBusiness1 = self.create_merchant_business(merchantUserAccount1, {})
+        merchantUserAccount2 = self.create_dynamic_merchant_user_account({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -97,7 +97,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "dfwhefoewhofh328rh2"
         })
-        merchantBusiness2 = self.createMerchantBusiness(
+        merchantBusiness2 = self.create_merchant_business(
             merchantUserAccount2, {
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
@@ -110,11 +110,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        p1 = self.createProduct(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
-        p2 = self.createProduct(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+        p1 = self.create_product(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
+        p2 = self.create_product(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
 
-        p3 = self.createProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
-        p4 = self.createProduct(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p3 = self.create_product(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p4 = self.create_product(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
 
         getNearByStoresUrl = reverse("get_updated_petstores_near_me", kwargs={
         "storeIds": '[{"id": 1, "distance": "10 mins"}, {"id": 2, "distance": "10 mins"}]'
@@ -134,9 +134,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateId": "10011072130",
             "paygateSecret": "secret",
         }
-        token = self.createNormalTestAccountAndLogin()
-        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        merchantUserAccount = self.createMerchantUserAccount({})
+        token = self.create_normal_test_account_and_login()
+        self.make_normal_account_super_admin(self.userAccount.pk)
+        merchantUserAccount = self.create_merchant_user_account({})
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
             createMerchantUrl,
@@ -157,7 +157,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateId": "10011072130",
             "paygateSecret": "secret",
         }
-        token = self.createNormalTestAccountAndLogin()
+        token = self.create_normal_test_account_and_login()
         createMerchantUrl = reverse("create_merchant_view")
         response = self.client.post(
             createMerchantUrl,
@@ -169,10 +169,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(merchant, None)
 
     def test_deactivate_merchant(self):
-        testAccountToken = self.createNormalTestAccountAndLogin()
-        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createMerchantUserAccount({})
-        merchant = self.createMerchantBusiness(testMerchantUserAccount)
+        testAccountToken = self.create_normal_test_account_and_login()
+        self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantUserAccount = self.create_merchant_user_account({})
+        merchant = self.create_merchant_business(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 1,
@@ -189,10 +189,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(merchant.isActive, False)
 
     def test_deactivate_merchant_failure(self):
-        testAccountToken = self.createNormalTestAccountAndLogin()
-        _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(testMerchantUserAccount)
+        testAccountToken = self.create_normal_test_account_and_login()
+        _ = self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(testMerchantUserAccount)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 100, # id doesn't exist
@@ -210,10 +210,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(merchant.isActive, True)
 
     def test_update_merchant(self):
-        testAccountToken = self.createNormalTestAccountAndLogin()
-        _ = self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(testMerchantUserAccount)
+        testAccountToken = self.create_normal_test_account_and_login()
+        _ = self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(testMerchantUserAccount)
         self.assertEqual(merchant.name, "Absolute Pets")
         self.assertEqual(merchant.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
         payload = {
@@ -237,18 +237,18 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        _ = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        _ = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         checkoutFormPayload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -268,7 +268,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         # merchant should now acknowledge the order:
         acknowlegeOrderUrl = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
-        merchantAuthToken = self.loginAsMerchant()
+        merchantAuthToken = self.login_as_merchant()
         response = self.client.get(
             acknowlegeOrderUrl,
             data=checkoutFormPayload,
@@ -284,12 +284,12 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         
         mockedResponse.return_value = MockedPaygateResponse()
 
-        _ = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        _ = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
             "branchId": str(branch.pk),
@@ -297,7 +297,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(daysFromNow=1),
+            "deliveryDate": self.make_date(daysFromNow=1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -317,7 +317,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         # merchant should now acknowledge the order at this point:
         order = Order.objects.all().first()
         acknowlegeOrderUrl = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
-        merchantAuthToken = self.loginAsMerchant()
+        merchantAuthToken = self.login_as_merchant()
         acknowlegeOrderResponse = self.client.get(
             acknowlegeOrderUrl,
             data=checkoutFormPayload,

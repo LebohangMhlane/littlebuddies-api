@@ -10,7 +10,8 @@ class ManageOrdersView(View, GlobalViewFunctions):
 
         try:
             # determine what permissions a user has,
-            # either global access to all branches or access to only one branch:
+            # either global access to all branches or 
+            # access to only one branch:
             user_account = request.user.useraccount
 
             pass
@@ -20,3 +21,8 @@ class ManageOrdersView(View, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         pass
+
+
+    def determine_permissions(user_account):
+        if user_account.is_merchant:
+            pass

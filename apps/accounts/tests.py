@@ -70,7 +70,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
-        response = self.createNormalTestAccount()
+        response = self.create_normal_test_account()
         loginUrl = reverse("login")
         loginPayload = {
             "email": userInputData["email"],
@@ -87,7 +87,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(token.key, tokenInResponse)
 
     def test_authorized_navigation(self):
-        authToken = self.createNormalTestAccountAndLogin()
+        authToken = self.create_normal_test_account_and_login()
         getOrdersUrl = reverse("get_all_orders_view")
         response = self.client.get(
             path=getOrdersUrl,
@@ -96,7 +96,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_unauthorized_navigation(self):
-        self.createNormalTestAccountAndLogin()
+        self.create_normal_test_account_and_login()
         getOrdersUrl = reverse("get_all_orders_view")
         response = self.client.get(
             path=getOrdersUrl,
@@ -104,7 +104,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_update_account(self):
-        authToken = self.createNormalTestAccountAndLogin()
+        authToken = self.create_normal_test_account_and_login()
         updateAccountUrl = reverse("update_account_view")
         payload = {
             "phoneNumber": "0733084465"
@@ -121,7 +121,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         )
 
     def test_deactivate_account(self):
-        authToken = self.createNormalTestAccountAndLogin()
+        authToken = self.create_normal_test_account_and_login()
         deactivateAccountUrl = reverse("deactivate_account_view")
         response = self.client.get(
             deactivateAccountUrl,
@@ -133,7 +133,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertTrue(userAccount.user.is_active == False)
 
     def test_password_reset(self):
-        accountToken = self.createNormalTestAccountAndLogin()
+        accountToken = self.create_normal_test_account_and_login()
         resetPasswordUrl = reverse("password_reset_request_view", 
             kwargs={"email": "asandamhlane@gmail.com"})
         response = self.client.get(
@@ -146,9 +146,9 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
 
     def test_get_account_settings(self):
 
-        auth_token = self.createNormalTestAccountAndLogin()
+        auth_token = self.create_normal_test_account_and_login()
 
-        _ = self.createMerchantBusiness(self.userAccount)
+        _ = self.create_merchant_business(self.userAccount)
 
         account_settings_url = reverse("account_settings_view")
         response = self.client.get(
@@ -173,7 +173,7 @@ class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
     
     def test_request_data_copy(self):
 
-        auth_token = self.createNormalTestAccountAndLogin()
+        auth_token = self.create_normal_test_account_and_login()
         
         url = reverse("request_data_copy")
         response = self.client.get(url, HTTP_AUTHORIZATION=f"Token {auth_token}")
