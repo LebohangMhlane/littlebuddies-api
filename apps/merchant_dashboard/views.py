@@ -93,9 +93,12 @@ class ManageBranchView(GlobalViewFunctions, View):
         try:
             # get the branch being managed:
             branch = Branch.objects.get(id=branch_id)
+
             # check user permissions:
             if user_account.is_merchant:
                 if branch in user_account.permitted_branches.all():
+
+                    # return the branch if the user is permitted to access it:
                     return branch
                 else:
                     raise Exception("You do not have permission to manage this branch")
