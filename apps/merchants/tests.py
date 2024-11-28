@@ -145,7 +145,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         merchant = MerchantBusiness.objects.filter(name=createMerchantPayload["name"]).first()
-        self.assertEqual(merchant.userAccount.pk, merchantUserAccount.pk)
+        self.assertEqual(merchant.user_account.pk, merchantUserAccount.pk)
         self.assertEqual(response.data["merchant"]["name"], createMerchantPayload["name"])
 
     def test_unauthorized_create_merchant(self):

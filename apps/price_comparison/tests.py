@@ -53,7 +53,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         # Create branch products
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch_1,
-            createdBy=self.merchant_business_1.userAccount,
+            createdBy=self.merchant_business_1.user_account,
             product=self.product_1,
             branchPrice=50.00,
             inStock=True,

@@ -64,12 +64,12 @@ class GlobalViewFunctions():
 
     def if_user_is_owner(self, request):
         merchant = MerchantBusiness.objects.get(pk=request.data["merchantPk"])
-        if merchant.userAccount == request.user.useraccount: return True
+        if merchant.user_account == request.user.useraccount: return True
         else: return False
 
     def check_if_user_matches_product_merchant(self, request, productMerchant:MerchantBusiness):
         userAccount = request.user.useraccount
-        if userAccount == productMerchant.userAccount: return True
+        if userAccount == productMerchant.user_account: return True
         return False
 
     def notify_all_of_item_creation(self, instance):

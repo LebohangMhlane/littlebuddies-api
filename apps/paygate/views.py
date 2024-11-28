@@ -44,7 +44,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 if paygateResponse.status_code == 200:
                     responseAsDict = self.convertResponseToDict(paygateResponse.text.split("&"))
                     dataIntegritySecure, verifiedPayload = self.verify_payload_integrity(
-                        responseAsDict, secret=branch.merchant.getMerchantSecretKey()
+                        responseAsDict, secret=branch.merchant.get_merchant_secret_key()
                     )
                     
                     if dataIntegritySecure:
@@ -65,7 +65,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         reference = self.createReference(branch, request)
         totalCheckoutAmount = checkoutFormPayload.totalCheckoutAmount.replace(".", "") # paygate doesn't use decimals
         paygatePayload = {
-            "PAYGATE_ID": branch.merchant.paygateId,
+            "PAYGATE_ID": branch.merchant.paygate_id,
             "REFERENCE": reference,
             "AMOUNT": f"{totalCheckoutAmount}", 
             "CURRENCY": "ZAR",
@@ -73,9 +73,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             "TRANSACTION_DATE": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "LOCALE": "en-za",
             "COUNTRY": "ZAF",
-            "EMAIL": branch.merchant.userAccount.user.email,
+            "EMAIL": branch.merchant.user_account.user.email,
         }
-        paygatePayload["CHECKSUM"] = self.generateChecksum(paygatePayload, branch.merchant.getMerchantSecretKey())
+        paygatePayload["CHECKSUM"] = self.generateChecksum(paygatePayload, branch.merchant.get_merchant_secret_key())
         return paygatePayload, reference
 
     def createReference(self, branch: Branch, request):
@@ -213,7 +213,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
             dataIntegritySecure, validatedPayload = self.verify_payload_integrity(
                 receivedPayload,
-                secret=transaction.branch.merchant.getMerchantSecretKey(),
+                secret=transaction.branch.merchant.get_merchant_secret_key(),
             )  # TODO: investigate checksum check failure in this step:
             transactionStatus = int(validatedPayload["TRANSACTION_STATUS"])
             transaction = setTransactionStatus(transactionStatus, transaction)
