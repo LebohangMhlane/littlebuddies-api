@@ -51,7 +51,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         })
         
         merchantBusiness = self.create_merchant_business(
-            merchantUserAccount, merchantData={
+            merchantUserAccount, merchant_data={
                 "name": "Orsum Pets",
                 "email": "orsumpets@gmail.com",
                 "address": 'Shop No, 55 Shepstone Rd, New Germany, Durban, 3610, South Africa',

@@ -29,7 +29,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.merchant_business_1 = self.create_merchant_business(self.merchant_user_1)
         self.merchant_business_2 = self.create_merchant_business(
             self.merchant_user_2,
-            merchantData={
+            merchant_data={
                 "name": "business_number_2",
                 "email": "business2@gmail.com",
                 "paygateId": "1234568",

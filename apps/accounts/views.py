@@ -194,7 +194,7 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
             user = User.objects.get(pk=pk)
             if accountActivationTokenGenerator.check_token(user, activationToken):
                 userAccount = UserAccount.objects.get(user=user)
-                userAccount.emailVerified = True
+                userAccount.email_verified = True
                 userAccount.save()
                 return render(
                     request,

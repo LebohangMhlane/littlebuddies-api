@@ -48,7 +48,7 @@ class MerchantBusiness(models.Model):
         self.paygateSecret = ""
     
     def verifyUserAccount(self, userAccount: UserAccount):
-        if not userAccount.isMerchant:
+        if not userAccount.is_merchant:
             raise Exception("User account is not a merchant")
         
     def getMerchantSecretKey(self):
@@ -79,7 +79,7 @@ class MerchantBusiness(models.Model):
 
 class Branch(models.Model):
 
-    isActive = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
     address = models.CharField(max_length=200)
     area = models.CharField(max_length=200, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)

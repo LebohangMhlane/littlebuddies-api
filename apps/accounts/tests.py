@@ -109,7 +109,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         payload = {
             "phoneNumber": "0733084465"
         }
-        self.assertTrue(payload["phoneNumber"] != self.userAccount.phoneNumber)
+        self.assertTrue(payload["phoneNumber"] != self.userAccount.phone_number)
         response = self.client.post(
             path=updateAccountUrl,
             data=payload,
@@ -129,7 +129,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.data["message"], "Account deactivated successfully")
         userAccount = UserAccount.objects.get(pk=self.userAccount.pk)
-        self.assertTrue(userAccount.isActive == False)
+        self.assertTrue(userAccount.is_active == False)
         self.assertTrue(userAccount.user.is_active == False)
 
     def test_password_reset(self):

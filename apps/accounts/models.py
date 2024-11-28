@@ -6,20 +6,20 @@ class UserAccount(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=255, blank=True, unique=False)
-    phoneNumber = models.PositiveIntegerField(blank=False, null=True, unique=True)
-    phoneNumberVerified = models.BooleanField(default=False)
-    emailVerified = models.BooleanField(default=False)
-    isMerchant = models.BooleanField(default=False)
-    deviceToken = models.CharField(max_length=1000, blank=False, unique=False)
-    canCreateMerchants = models.BooleanField(default=False)
-    isActive = models.BooleanField(default=True)
+    phone_number = models.PositiveIntegerField(blank=False, null=True, unique=True)
+    phone_number_verified = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
+    is_merchant = models.BooleanField(default=False)
+    device_token = models.CharField(max_length=1000, blank=False, unique=False)
+    can_create_merchants = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     password_change_date = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         return f"{self.user.username}'s - User Account"
     
     def save(self, *args, **kwargs):
-        self.isActive = self.user.is_active
+        self.is_active = self.user.is_active
         super(UserAccount, self).save(*args, **kwargs)
 
 class AccountSetting(models.Model):

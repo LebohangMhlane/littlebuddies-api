@@ -27,6 +27,16 @@ class GlobalTestCaseConfig(TestCase):
     def create_branch_product(self, branch):
         pass
 
+    def create_a_branch(self, merchant):
+        
+        # create a dummy branch:
+        branch = Branch()
+        branch.is_active = True
+        branch.address = "12 down the road street, Durban, 3000"
+        branch.merchant = merchant
+        branch.area = "Westville"
+        branch.save()
+
     def setUp(self) -> None:
         self.loginPayload = {
             "email": "asandamhlane@gmail.com",
@@ -109,7 +119,7 @@ class GlobalTestCaseConfig(TestCase):
             merchantUserAccount = UserAccount.objects.get(
                 user__email=fakeUserData["email"] if len(userData) == 0 else userData["email"]
             )
-            merchantUserAccount.isMerchant = True
+            merchantUserAccount.is_merchant = True
             merchantUserAccount.save()
             return merchantUserAccount
         except Exception as e:
@@ -178,15 +188,15 @@ class GlobalTestCaseConfig(TestCase):
         pass
     
     def make_user_account_a_merchant(self, userAccount:UserAccount) -> UserAccount:
-        userAccount.isMerchant = True
+        userAccount.is_merchant = True
         userAccount.save()
         return userAccount
 
-    def create_merchant_business(self, userAccount:UserAccount, merchantData={}):
+    def create_merchant_business(self, userAccount:UserAccount, merchant_data={}):
         userAccount = self.make_user_account_a_merchant(userAccount)
         try:
             merchant = MerchantBusiness()
-            if len(merchantData) == 0:
+            if len(merchant_data) == 0:
                 merchant.userAccount = userAccount
                 merchant.name="Absolute Pets"
                 merchant.email="absolutepets@gmail.com"
@@ -198,36 +208,36 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.save()
             else:
                 merchant.userAccount=userAccount
-                merchant.name=merchantData["name"]
-                merchant.email=merchantData["email"]
-                merchant.address=merchantData["address"]
+                merchant.name=merchant_data["name"]
+                merchant.email=merchant_data["email"]
+                merchant.address=merchant_data["address"]
                 merchant.paygateReference="pgtest_123456789"
-                merchant.paygateId=merchantData["paygateId"]
-                merchant.paygateSecret=merchantData["paygateSecret"]
-                merchant.setBranchAreas(merchantData["branchAreas"])
+                merchant.paygateId=merchant_data["paygateId"]
+                merchant.paygateSecret=merchant_data["paygateSecret"]
+                merchant.setBranchAreas(merchant_data["branchAreas"])
                 merchant.save()
         except Exception as e:
             pass
         try:
             branch1 = Branch()
-            if len(merchantData) == 0:
-                branch1.isActive=True
+            if len(merchant_data) == 0:
+                branch1.is_active=True
                 branch1.address = "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
                 branch1.save()
                 
                 branch2 = Branch()
-                branch2.isActive=True
+                branch2.is_active=True
                 branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
                 branch2.merchant = merchant
                 branch2.area = "Durban Central"
                 branch2.save()
             else:
-                branch1.isActive=True
-                branch1.address = merchantData["address"]
+                branch1.is_active=True
+                branch1.address = merchant_data["address"]
                 branch1.merchant = merchant
-                branch1.area = merchantData["branchAreas"][0]
+                branch1.area = merchant_data["branchAreas"][0]
                 branch1.save()
         except Exception as e:
             pass
@@ -237,7 +247,7 @@ class GlobalTestCaseConfig(TestCase):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
-        userAccount.canCreateMerchants = True
+        userAccount.can_create_merchants = True
         userAccount.save()
         return userAccount
 
