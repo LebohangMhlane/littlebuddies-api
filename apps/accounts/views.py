@@ -65,7 +65,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
     def post(self, request, *args, **kwargs):
         userAccount = None
         try:
-            userAccount = self._startRegistrationProcess(receivedData=request.data)
+            userAccount = self._start_registration_process(receivedData=request.data)
             authToken = Token.objects.get(user__id=userAccount["user"]["id"])
             self.sendActivationEmail(userAccount, request)
             return Response(
@@ -78,7 +78,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             )
         except Exception as e:
             exception = e.args[0]
-            displayableException = self.determineException(exception)
+            displayableException = self.determine_exception(exception)
             return Response(
                 {
                     "success": False,
@@ -88,36 +88,36 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 status=500,
             )
 
-    def determineException(self, exception):
+    def determine_exception(self, exception):
         default = "An error has occured. We are looking into it"
-        possibleErrors = ["UNIQUE", "Invalid phone number"]
-        displayableErrors = [
+        possible_errors = ["UNIQUE", "Invalid phone number"]
+        displayable_errors = [
             "A user with these details already exists",
             "Invalid phone number",
         ]
-        for index, possibleError in enumerate(possibleErrors):
-            if possibleError in exception:
-                displayableError = displayableErrors[index]
-                return displayableError
+        for index, possible_error in enumerate(possible_errors):
+            if possible_error in exception:
+                displayable_error = displayable_errors[index]
+                return displayable_error
         return default
 
-    def _startRegistrationProcess(self, receivedData=dict) -> dict:
-        userData, userAccountData = self.sortUserData(receivedData)
-        userSerializer = UserSerializer(data=receivedData)
+    def _start_registration_process(self, receivedData=dict) -> dict:
+        user_data, user_account_data = self.sortUserData(receivedData)
+        user_serializer = UserSerializer(data=receivedData)
 
-        if userSerializer.is_valid():
+        if user_serializer.is_valid():
             with transaction.atomic():
-                userInstance = userSerializer.create(validated_data=userData)
-                if userInstance:
-                    userAccount = self.createUserAccount(userAccountData, userInstance)
-                    userAccount = UserAccountSerializer(userAccount, many=False)
-                    if userAccount:
+                user_instance = user_serializer.create(validated_data=user_data)
+                if user_instance:
+                    user_account = self.createUserAccount(user_account_data, user_instance)
+                    user_account = UserAccountSerializer(user_account, many=False)
+                    if user_account:
                         user_account_settings = AccountSetting()
-                        user_account_settings.user_account = userAccount.instance
-                        user_account_settings.full_name = userInstance.get_full_name()
+                        user_account_settings.user_account = user_account.instance
+                        user_account_settings.full_name = user_instance.get_full_name()
                         user_account_settings.save()
 
-                    return userAccount.data
+                    return user_account.data
 
 
     def sortUserData(self, receivedPayload):

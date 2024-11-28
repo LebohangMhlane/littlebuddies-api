@@ -36,8 +36,9 @@ class GetStoreRange(APIView, GlobalViewFunctions):
             mb = MerchantBusiness.objects.all()
             sc = SaleCampaign.objects.filter(branch__merchant__in=mb)
             saleCampaigns = []
-            if sc: scs = SaleCampaignSerializer(sc, many=True) 
-            saleCampaigns = scs.data
+            if sc: 
+                scs = SaleCampaignSerializer(sc, many=True) 
+                saleCampaigns = scs.data
             if mb: ms = MerchantSerializer(mb, many=True)
             else: raise Exception("No Pet stores were found")
             return Response({
