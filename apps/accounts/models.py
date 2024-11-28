@@ -10,6 +10,7 @@ class UserAccount(models.Model):
     phone_number_verified = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     is_merchant = models.BooleanField(default=False)
+    permitted_branches = models.ManyToManyField("merchants.Branch")
     device_token = models.CharField(max_length=1000, blank=False, unique=False)
     can_create_merchants = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
