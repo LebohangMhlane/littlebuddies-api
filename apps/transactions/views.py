@@ -12,10 +12,10 @@ class CheckTransactionStatusView(APIView, GlobalViewFunctions):
         try:
             reference = kwargs["reference"]
             transaction = Transaction.objects.get(reference=reference)
-            transactionStatus = transaction.status
+            transaction_status = transaction.status
             return Response({
                 "message": f"Transaction {reference} status retrieved successfully",
-                "transactionStatus": transactionStatus
+                "transactionStatus": transaction_status
             })
         except Exception as e:
             return Response({
