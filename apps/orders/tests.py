@@ -4,7 +4,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
-from django.core import mail
+from django.core.mail import send_mail
 
 from django.contrib.auth import get_user_model
 from apps.orders.models import Order, OrderedProduct
@@ -13,7 +13,6 @@ from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness, Branch
 from apps.products.models import Product, BranchProduct
-from .serializers import OrderSerializer
 
 User = get_user_model()
 
@@ -198,8 +197,9 @@ class CancelOrderTests(TestCase):
         )
         self.customer_account = UserAccount.objects.create(
             user=self.customer_user,
-            phoneNumber=1234567890,
-            deviceToken='test_device_token_1'
+            phone_number=1234567890,
+            device_token='test_device_token_1',
+            is_merchant=True 
         )
 
         self.another_customer_user = User.objects.create_user(
@@ -209,8 +209,9 @@ class CancelOrderTests(TestCase):
         )
         self.another_customer_account = UserAccount.objects.create(
             user=self.another_customer_user,
-            phoneNumber=9876543210,
-            deviceToken='test_device_token_2'
+            phone_number=9876543210,
+            device_token='test_device_token_2',
+            is_merchant=True 
         )
 
         # Create merchant setup
@@ -221,12 +222,13 @@ class CancelOrderTests(TestCase):
         )
         self.merchant_account = UserAccount.objects.create(
             user=self.merchant_user,
-            phoneNumber=5555555555,
-            deviceToken='merchant_device_token'
+            phone_number=5555555555,
+            device_token='merchant_device_token',
+            is_merchant=True 
         )
 
         self.merchant_business = MerchantBusiness.objects.create(
-            userAccount=self.merchant_account,
+            user_account=self.merchant_account,
             name="Test Merchant Business",
             email="merchant@example.com"
         )
@@ -350,44 +352,47 @@ class CancelOrderTests(TestCase):
 
 class RepeatOrderViewTestCase(TestCase):
     def setUp(self):
-        # Create test data
         self.client = APIClient()
         
-        # Create a user
         self.user = User.objects.create_user(
             username='testuser', 
             email='testuser@example.com',
             password='testpassword'
         )
         
-        # Create a user account
         self.user_account = UserAccount.objects.create(
             user=self.user, 
-            phoneNumber=1234567890
+            phone_number=1234567890,
+            is_merchant=True,
+            device_token='test_device_token'
         )
         
-        # Create a merchant 
         self.merchant = MerchantBusiness.objects.create(
-            userAccount=self.user_account,
-            name='Test Merchant', 
-            logo='merchant_logo_url'
+            user_account=self.user_account,
+            name='Test Merchant',
+            logo='merchant_logo_url',
+            email='merchant@example.com',
+            address='123 Test St',
+            paygate_reference='test_ref',
+            paygate_id='test_id',
+            paygate_secret='test_secret'
         )
+
         
-        # Create a branch
         self.branch = Branch.objects.create(
-            merchant_business=self.merchant,
-            name='Test Branch', 
-            address='123 Test St'
+            merchant=self.merchant,
+            address='123 Test St',
+            area='Test Area',  
+            is_active=True    
         )
+
         
-        # Create a transaction
         self.transaction = Transaction.objects.create(
             customer=self.user_account,
             branch=self.branch, 
             reference='TEST123'
         )
         
-        # Create products
         self.product1 = Product.objects.create(
             name='Product 1', 
             description='Test Product 1',
@@ -401,7 +406,6 @@ class RepeatOrderViewTestCase(TestCase):
             image='product2_image_url'
         )
         
-        # Create branch products
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch, 
             product=self.product1, 
@@ -421,14 +425,12 @@ class RepeatOrderViewTestCase(TestCase):
             createdBy=self.user_account
         )
         
-        # Create the original order
         self.order = Order.objects.create(
             transaction=self.transaction, 
             status=Order.PAYMENT_PENDING,
             delivery=True
         )
         
-        # Create ordered products
         self.ordered_product1 = OrderedProduct.objects.create(
             branchProduct=self.branch_product1, 
             quantityOrdered=2
@@ -438,104 +440,79 @@ class RepeatOrderViewTestCase(TestCase):
             quantityOrdered=1
         )
         
-        # Add ordered products to the order
         self.order.orderedProducts.add(self.ordered_product1, self.ordered_product2)
 
+
     def test_repeat_order_success(self):
-        """
-        Test successful repeat order retrieval
-        """
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
-        
-        with patch('django.core.mail.send_mail') as mock_send_mail:
-            # Authenticate the user
+
+        with patch('apps.orders.views.send_mail') as mock_send_mail:
             self.client.force_authenticate(user=self.user)
-            
+
             response = self.client.get(url)
-        
-        # Check response status
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Verify response data
-        data = response.data
-        self.assertEqual(data['order_id'], self.order.id)
-        self.assertEqual(data['branch']['id'], self.branch.id)
-        
-        # Check product list
-        self.assertEqual(len(data['product_list']), 1)  # Only in-stock product
-        in_stock_product = data['product_list'][0]
-        self.assertEqual(in_stock_product['product_id'], self.product1.id)
-        self.assertEqual(in_stock_product['quantity_ordered'], 2)
-        self.assertEqual(in_stock_product['current_price'], 100)
-        
-        # Check out of stock products
-        self.assertEqual(len(data['out_of_stock']), 1)
-        out_of_stock_product = data['out_of_stock'][0]
-        self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
-        
-        # Check new cost calculation
-        self.assertEqual(data['new_cost'], 'R 200.00')
-        
-        # Verify email was sent
-        mock_send_mail.assert_called_once()
-        
+            
+            mock_send_mail.assert_called_once()
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            data = response.data
+            self.assertEqual(data['order_id'], self.order.id)
+            self.assertEqual(data['branch']['id'], self.branch.id)
+
+            self.assertEqual(len(data['product_list']), 1)  
+            in_stock_product = data['product_list'][0]
+            self.assertEqual(in_stock_product['product_id'], self.product1.id)
+            self.assertEqual(in_stock_product['quantity_ordered'], 2)
+            self.assertEqual(in_stock_product['current_price'], 100)
+
+            self.assertEqual(len(data['out_of_stock']), 1)
+            out_of_stock_product = data['out_of_stock'][0]
+            self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
+
+            self.assertEqual(data['new_cost'], 'R 200.00')
+
+
+            
     def test_repeat_order_not_found(self):
-        """
-        Test retrieving a non-existent order
-        """
-        non_existent_order_id = 9999  # Assume this ID doesn't exist
+        
+        non_existent_order_id = 9999 
         url = reverse('repeat-order', kwargs={'order_id': non_existent_order_id})
         
-        # Authenticate the user
         self.client.force_authenticate(user=self.user)
         
         response = self.client.get(url)
         
-        # Check response status and error message
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data.get('error'), 'Order not found')
     
     def test_email_sending_failure(self):
-        """
-        Test handling of email sending failure
-        """
-        # Patch send_mail to raise an exception
-        with patch('django.core.mail.send_mail', side_effect=Exception('SMTP Error')):
-            url = reverse('repeat-order', kwargs={'order_id': self.order.id})
-            
-            # Authenticate the user
-            self.client.force_authenticate(user=self.user)
-            
-            response = self.client.get(url)
         
-        # Check response status for email failure
+        with patch('apps.orders.views.send_mail', side_effect=Exception("Email sending failed")):
+            url = reverse('repeat-order', kwargs={'order_id': self.order.id})
+
+            self.client.force_authenticate(user=self.user)
+
+            response = self.client.get(url)
+
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.data.get('error'), 'Failed to send email')
+        self.assertIn("Failed to send email", response.data['error'])
     
     def test_repeat_order_with_no_stock(self):
-        """
-        Test repeat order with all products out of stock
-        """
-        # Set all branch products to out of stock
+        
         self.branch_product1.inStock = False
         self.branch_product1.save()
         
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
         
-        # Authenticate the user
         self.client.force_authenticate(user=self.user)
         
         response = self.client.get(url)
-        
-        # Check response status
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Verify no in-stock products
         data = response.data
         self.assertEqual(len(data['product_list']), 0)
         
-        # Verify both products are out of stock
         self.assertEqual(len(data['out_of_stock']), 2)
         
-        # Check new cost calculation
         self.assertEqual(data['new_cost'], 'R 0.00')

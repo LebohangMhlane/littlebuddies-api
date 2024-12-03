@@ -9,12 +9,15 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import datetime
 from django.db import transaction
+import logging
 
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.transactions.models import Transaction
+from apps.merchants.models import SaleCampaign
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
+logger = logging.getLogger(__name__)
 
 class GetAllOrdersView(APIView, GlobalViewFunctions):
 
@@ -129,10 +132,13 @@ class CancelOrder(APIView, GlobalViewFunctions):
     
 
 class RepeatOrder(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, order_id):
         try:
-            order = Order.objects.prefetch_related("orderedProducts__branchProduct__product").get(id=order_id)
+            order = Order.objects.prefetch_related(
+                "orderedProducts__branchProduct__product"
+            ).get(id=order_id)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -143,13 +149,25 @@ class RepeatOrder(APIView):
         price_changes = []
         new_cost = 0.00
 
+        # Get active sale campaigns for the branch
+        active_sales = SaleCampaign.objects.filter(
+            branch=branch,
+            campaignEnds__gte=datetime.datetime.now()
+        )
+
         for ordered_product in order.orderedProducts.all():
             branch_product = ordered_product.branchProduct
+            special_price = branch_product.branchPrice
 
-            if branch_product.quantity > 0:
-                current_price = branch_product.price
-                special_price = branch_product.sale_price if branch_product.sale_price else current_price
+            if branch_product.inStock:
+                # Check if the branch_product is part of any active sale campaign
+                sale_campaign = active_sales.filter(branchProducts=branch_product).first()
+                if sale_campaign:
+                    # Apply discount if the sale campaign is active
+                    discount = sale_campaign.percentageOff
+                    special_price = branch_product.branchPrice * (1 - discount / 100)
 
+                # Add the product details
                 product_details = {
                     "product_id": branch_product.product.id,
                     "name": branch_product.product.name,
@@ -157,11 +175,12 @@ class RepeatOrder(APIView):
                     "current_price": special_price,
                 }
 
-                if current_price != special_price:
+                # Check if price has changed due to sale
+                if branch_product.branchPrice != special_price:
                     price_changes.append({
                         "product_id": branch_product.product.id,
                         "name": branch_product.product.name,
-                        "old_price": current_price,
+                        "old_price": branch_product.branchPrice,
                         "new_price": special_price,
                     })
 
@@ -177,7 +196,7 @@ class RepeatOrder(APIView):
             "order_id": order.id,
             "branch": {
                 "id": branch.id,
-                "name": branch.name,
+                "name": branch.address,
             },
             "product_list": product_list,
             "new_cost": f"R {new_cost:.2f}",
@@ -185,25 +204,40 @@ class RepeatOrder(APIView):
             "price_changes": price_changes,
         }
 
-        customer_context = {
-            'order': order,
-            'product_list': product_list,
-            'out_of_stock': out_of_stock,
-            'price_changes': price_changes,
-            'new_cost': new_cost,
-        }
-        customer_html_message = render_to_string('email_templates/repeat_order_summary.html', customer_context)
-        customer_plain_message = strip_tags(customer_html_message)
-
+        # Validate email before sending
         try:
+            customer_email = order.transaction.customer.user.email
+            if not customer_email:
+                return Response(
+                    {"error": "No customer email available"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Prepare email context
+            customer_context = {
+                'order': order,
+                'product_list': product_list,
+                'out_of_stock': out_of_stock,
+                'price_changes': price_changes,
+                'new_cost': new_cost,
+            }
+            customer_html_message = render_to_string('email_templates/repeat_order_summary.html', customer_context)
+            customer_plain_message = strip_tags(customer_html_message)
+
+            # Attempt to send email
             send_mail(
                 subject='Repeat Order Summary',
                 message=customer_plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.transaction.customer.user.email],
+                recipient_list=[customer_email],
                 html_message=customer_html_message,
             )
         except Exception as e:
-            return Response({"error": "Failed to send email", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Log the error for debugging
+            logger.error(f"Email sending failed: {str(e)}")
+            return Response(
+                {"error": "Failed to send email", "details": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(response_data, status=status.HTTP_200_OK)
