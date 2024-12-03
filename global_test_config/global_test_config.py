@@ -27,13 +27,23 @@ class GlobalTestCaseConfig(TestCase):
     def create_branch_product(self, branch):
         pass
 
+    def create_a_branch(self, merchant):
+        
+        # create a dummy branch:
+        branch = Branch()
+        branch.is_active = True
+        branch.address = "12 down the road street, Durban, 3000"
+        branch.merchant = merchant
+        branch.area = "Westville"
+        branch.save()
+
     def setUp(self) -> None:
         self.loginPayload = {
             "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
         
-    def createNormalTestAccount(self):
+    def create_normal_test_account(self):
         userInputData = {
             "username": "Lebo",
             "password": "HelloWorld",
@@ -56,7 +66,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         return testUserAccount
     
-    def createTestCustomer(self):
+    def create_test_customer(self):
         userInputData = {
             "username": "customer",
             "password": "HelloWorld",
@@ -87,9 +97,9 @@ class GlobalTestCaseConfig(TestCase):
         token = Token.objects.create(user=customer)
         return testUserAccount
     
-    def createMerchantUserAccount(self, userData={}):
+    def create_merchant_user_account(self, user_data={}):
         try:
-            fakeUserData = {
+            fake_user_data = {
                 "username": "Mike",
                 "password": "HelloWorld",
                 "firstName": "Mike",
@@ -104,18 +114,18 @@ class GlobalTestCaseConfig(TestCase):
             _ = self.client.post(
                 path=create_account_url,
                 content_type=f"application/json",
-                data=fakeUserData if len(userData) == 0 else userData,
+                data=fake_user_data if len(user_data) == 0 else user_data,
             )
-            merchantUserAccount = UserAccount.objects.get(
-                user__email=fakeUserData["email"] if len(userData) == 0 else userData["email"]
+            merchant_user_account = UserAccount.objects.get(
+                user__email=fake_user_data["email"] if len(user_data) == 0 else user_data["email"]
             )
-            merchantUserAccount.isMerchant = True
-            merchantUserAccount.save()
-            return merchantUserAccount
+            merchant_user_account.is_merchant = True
+            merchant_user_account.save()
+            return merchant_user_account
         except Exception as e:
             pass
     
-    def createTestMerchantUserAccountDynamic(self, userData):
+    def create_dynamic_merchant_user_account(self, userData):
         userInputData = {
             "username": userData["username"],
             "password": userData["password"],
@@ -136,8 +146,8 @@ class GlobalTestCaseConfig(TestCase):
         testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
         return testMerchantUserAccount
     
-    def createNormalTestAccountAndLogin(self):
-        userAccount = self.createNormalTestAccount()
+    def create_normal_test_account_and_login(self):
+        userAccount = self.create_normal_test_account()
         loginUrl = reverse("login")
         response = self.client.post(
             path=loginUrl,
@@ -148,7 +158,7 @@ class GlobalTestCaseConfig(TestCase):
         self.userAccount = userAccount
         return self.authToken
 
-    def loginAsMerchant(self):
+    def login_as_merchant(self):
         loginUrl = reverse("login")
         loginPayload = {
             "email": "mikemyers@gmail.com",
@@ -161,7 +171,7 @@ class GlobalTestCaseConfig(TestCase):
         self.authToken = response.data["token"]
         return self.authToken
 
-    def loginAsCustomer(self):
+    def login_as_customer(self):
         loginUrl = reverse("login")
         loginPayload = {
             "email": "customer@gmail.com",
@@ -174,74 +184,74 @@ class GlobalTestCaseConfig(TestCase):
         self.authToken = response.data["token"]
         return self.authToken
 
-    def loginAsSuperAdmin(self):
+    def login_as_super_admin(self):
         pass
     
-    def makeUserAccountAMerchant(self, userAccount:UserAccount) -> UserAccount:
-        userAccount.isMerchant = True
-        userAccount.save()
-        return userAccount
+    def make_user_account_a_merchant(self, user_account:UserAccount) -> UserAccount:
+        user_account.is_merchant = True
+        user_account.save()
+        return user_account
 
-    def createMerchantBusiness(self, userAccount:UserAccount, merchantData={}):
-        userAccount = self.makeUserAccountAMerchant(userAccount)
+    def create_merchant_business(self, user_account:UserAccount, merchant_data={}):
+        user_account = self.make_user_account_a_merchant(user_account)
         try:
             merchant = MerchantBusiness()
-            if len(merchantData) == 0:
-                merchant.userAccount = userAccount
+            if len(merchant_data) == 0:
+                merchant.user_account = user_account
                 merchant.name="Absolute Pets"
                 merchant.email="absolutepets@gmail.com"
                 merchant.address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
-                merchant.paygateReference="pgtest_123456789"
-                merchant.paygateId="10011072130"
-                merchant.paygateSecret="secret"
-                merchant.setBranchAreas(["New Germany", "Durban Central"])
+                merchant.paygate_reference="pgtest_123456789"
+                merchant.paygate_id="10011072130"
+                merchant.paygate_secret="secret"
+                merchant.set_branch_areas(["New Germany", "Durban Central"])
                 merchant.save()
             else:
-                merchant.userAccount=userAccount
-                merchant.name=merchantData["name"]
-                merchant.email=merchantData["email"]
-                merchant.address=merchantData["address"]
-                merchant.paygateReference="pgtest_123456789"
-                merchant.paygateId=merchantData["paygateId"]
-                merchant.paygateSecret=merchantData["paygateSecret"]
-                merchant.setBranchAreas(merchantData["branchAreas"])
+                merchant.user_account=user_account
+                merchant.name=merchant_data["name"]
+                merchant.email=merchant_data["email"]
+                merchant.address=merchant_data["address"]
+                merchant.paygate_reference="pgtest_123456789"
+                merchant.paygate_id=merchant_data["paygateId"]
+                merchant.paygate_secret=merchant_data["paygateSecret"]
+                merchant.set_branch_areas(merchant_data["branchAreas"])
                 merchant.save()
         except Exception as e:
             pass
         try:
             branch1 = Branch()
-            if len(merchantData) == 0:
-                branch1.isActive=True
+            if len(merchant_data) == 0:
+                branch1.is_active=True
                 branch1.address = "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
                 branch1.save()
                 
                 branch2 = Branch()
-                branch2.isActive=True
+                branch2.is_active=True
                 branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
                 branch2.merchant = merchant
                 branch2.area = "Durban Central"
                 branch2.save()
             else:
-                branch1.isActive=True
-                branch1.address = merchantData["address"]
+                branch1.is_active=True
+                branch1.address = merchant_data["address"]
                 branch1.merchant = merchant
-                branch1.area = merchantData["branchAreas"][0]
+                branch1.area = merchant_data["branchAreas"][0]
                 branch1.save()
         except Exception as e:
             pass
         return merchant
     
-    def makeNormalAccountSuperAdmin(self, userAccountPk:int):
+    def make_normal_account_super_admin(self, userAccountPk:int):
         userAccount = UserAccount.objects.get(pk=userAccountPk)
         userAccount.user.is_superuser = True
         userAccount.user.save()
-        userAccount.canCreateMerchants = True
+        userAccount.can_create_merchants = True
         userAccount.save()
         return userAccount
 
-    def createProduct(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
+    def create_product(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
 
@@ -280,7 +290,7 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return branchProduct
     
-    def makeDate(self, daysFromNow):
+    def make_date(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)
         date = date.strftime("%d %B %Y")
         return date

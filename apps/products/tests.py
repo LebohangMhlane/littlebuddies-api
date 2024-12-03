@@ -8,9 +8,9 @@ from apps.products.models import BranchProduct, Product
 class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_product_as_merchant(self):
-        testMerchantAccount = self.createMerchantUserAccount()
-        self.createMerchantBusiness(testMerchantAccount)
-        _ = self.loginAsMerchant()
+        testMerchantAccount = self.create_merchant_user_account()
+        self.create_merchant_business(testMerchantAccount)
+        _ = self.login_as_merchant()
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
             "merchantPk": testMerchantAccount.pk,
@@ -34,10 +34,10 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["product"]["id"], product.pk)
 
     def test_create_product_as_superadmin(self):
-        _ = self.createNormalTestAccountAndLogin()
-        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantAccount = self.createMerchantUserAccount()
-        self.createMerchantBusiness(testMerchantAccount)
+        _ = self.create_normal_test_account_and_login()
+        self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantAccount = self.create_merchant_user_account()
+        self.create_merchant_business(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         createProductPayload = {
             "merchantPk": 1,
@@ -71,10 +71,10 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "storeReference": "ADDEHFIE12I4",
             "discountPercentage": 0,
         }
-        _ = self.createNormalTestAccountAndLogin()
-        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantAccount = self.createMerchantUserAccount()
-        self.createMerchantBusiness(testMerchantAccount)
+        _ = self.create_normal_test_account_and_login()
+        self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantAccount = self.create_merchant_user_account()
+        self.create_merchant_business(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -96,9 +96,9 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "storeReference": "ADDEHFIE12I4",
             "discountPercentage": 0,
         }
-        _ = self.createNormalTestAccountAndLogin()
-        testMerchantAccount = self.createMerchantUserAccount()
-        self.createMerchantBusiness(testMerchantAccount)
+        _ = self.create_normal_test_account_and_login()
+        testMerchantAccount = self.create_merchant_user_account()
+        self.create_merchant_business(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
         response = self.client.post(
             createProductUrl,
@@ -110,15 +110,15 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         self.assertTrue(product == None)
 
     def test_delete_product_as_superadmin(self):
-        _ = self.createNormalTestAccountAndLogin()
-        self.makeNormalAccountSuperAdmin(self.userAccount.pk)
-        testMerchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(testMerchantUserAccount)
-        product1 = self.createProduct(
+        _ = self.create_normal_test_account_and_login()
+        self.make_normal_account_super_admin(self.userAccount.pk)
+        testMerchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(testMerchantUserAccount)
+        product1 = self.create_product(
             merchant, testMerchantUserAccount, 
             name="Bob's Cat Food", price=200.0
         )
-        product2 = self.createProduct(
+        product2 = self.create_product(
             merchant, testMerchantUserAccount, 
             name="Bob's Dog Food", price=200.0
         )

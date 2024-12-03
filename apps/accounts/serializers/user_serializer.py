@@ -33,16 +33,16 @@ class UserSerializer(serializers.ModelSerializer, SerializerFunctions):
             user.first_name = validated_data["firstName"]
             user.last_name = validated_data["lastName"]
             user.save()
-            self.createUserAuthenticationToken(user)
+            self.create_user_authentication_token(user)
             return user
         except Exception as e:
             if user.pk:
-                self.deleteAllUserRelatedInstances(userPk=user.pk)
+                self.delete_all_user_related_instances(userPk=user.pk)
             raise Exception(f"Failed to create User: {str(e.args[0])}")
     
-    def createUserAuthenticationToken(self, user):
+    def create_user_authentication_token(self, user):
         try:
             Token.objects.create(user=user)
         except:
-            self.deleteAllUserRelatedInstances(userPk=user.pk)
+            self.delete_all_user_related_instances(userPk=user.pk)
             raise Exception("Failed to create user token")

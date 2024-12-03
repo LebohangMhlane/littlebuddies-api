@@ -12,74 +12,74 @@ class MerchantBusiness(models.Model):
 
     # TODO: find a cleaner way to do this.
     # I anticipate more locations in the future
-    Kloof = "Kloof"
-    NewGermany = "New Germany"
-    Westville = "Westville"
-    Pinetown = "Pinetown"
-    Hillcrest = "Hillcrest"
-    Durban_central = "Durban Central"
+    kloof = "Kloof"
+    new_germany = "New Germany"
+    westville = "Westville"
+    pinetown = "Pinetown"
+    hillcrest = "Hillcrest"
+    durban_central = "Durban Central"
 
     logo = models.CharField(max_length=2000, blank=False, null=True)
-    userAccount = models.OneToOneField("accounts.UserAccount", on_delete=models.CASCADE)
+    user_account = models.OneToOneField("accounts.UserAccount", on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
-    branchAreas = models.TextField(default="[]")
+    branch_address = models.TextField(default="[]")
     isActive = models.BooleanField(default=True)
-    paygateReference = models.CharField(max_length=1000, blank=False, default="")
-    paygateId = models.CharField(max_length=20, blank=False, unique=True)
-    paygateSecret = models.CharField(max_length=32, blank=False, null=True)
-    fernetToken = models.CharField(max_length=2000, blank=True, unique=True)
+    paygate_reference = models.CharField(max_length=1000, blank=False, default="")
+    paygate_id = models.CharField(max_length=20, blank=False, unique=True)
+    paygate_secret = models.CharField(max_length=32, blank=False, null=True)
+    fernet_token = models.CharField(max_length=2000, blank=True, unique=True)
 
     def __str__(self) -> str:
-        return f"{self.name} - {self.userAccount.user.username}"
+        return f"{self.name} - {self.user_account.user.username}"
     
     def save(self, *args, **kwargs):
-        self.verifyUserAccount(self.userAccount)
+        self.verify_user_account(self.user_account)
         if not self.pk:
-            self.encryptPaygateSecret()
+            self.encrypt_paygate_secret()
         super(MerchantBusiness, self).save(*args, **kwargs)
 
-    def encryptPaygateSecret(self):
+    def encrypt_paygate_secret(self):
         key = settings.FERNET_KEY
         fernet_instance = fernet(key=key)
-        token = fernet_instance.encrypt(f"{self.paygateSecret}".encode())
-        self.fernetToken = token
-        self.paygateSecret = ""
+        token = fernet_instance.encrypt(f"{self.paygate_secret}".encode())
+        self.fernet_token = token
+        self.paygate_secret = ""
     
-    def verifyUserAccount(self, userAccount: UserAccount):
-        if not userAccount.isMerchant:
+    def verify_user_account(self, userAccount: UserAccount):
+        if not userAccount.is_merchant:
             raise Exception("User account is not a merchant")
         
-    def getMerchantSecretKey(self):
+    def get_merchant_secret_key(self):
         try:
-            fernetToken = self.fernetToken.encode('utf-8')[2:-1]
+            fernetToken = self.fernet_token.encode('utf-8')[2:-1]
             fernetInstance = fernet(key=settings.FERNET_KEY)
             secret = fernetInstance.decrypt(fernetToken).decode("utf-8")
             return secret
         except Exception as e:
             raise Exception(f"Failed to decrypt token: {str(e)}")
 
-    def getAreasList(self):
+    def get_areas_list(self):
         return [
-            self.Kloof,
-            self.NewGermany,
-            self.Westville,
-            self.Pinetown,
-            self.Hillcrest,
-            self.Durban_central,
+            self.kloof,
+            self.new_germany,
+            self.westville,
+            self.pinetown,
+            self.hillcrest,
+            self.durban_central,
         ]
 
-    def getBranchAreas(self):
-        return json.loads(self.branchAreas)
+    def get_branch_areas(self):
+        return json.loads(self.branch_address)
     
-    def setBranchAreas(self, areas:list):
-        self.branchAreas = json.dumps(areas)
+    def set_branch_areas(self, areas:list):
+        self.branch_address = json.dumps(areas)
 
 
 class Branch(models.Model):
 
-    isActive = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
     address = models.CharField(max_length=200)
     area = models.CharField(max_length=200, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)

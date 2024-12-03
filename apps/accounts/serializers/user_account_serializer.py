@@ -19,24 +19,24 @@ class UserAccountSerializer(serializers.ModelSerializer, SerializerFunctions):
     
     def is_valid(self, *, raise_exception=True):
         initialData = self.initial_data
-        if self.checkIfPhoneNumberIsValid(initialData["phoneNumber"]): return True
+        if self.check_if_phone_number_is_valid(initialData["phoneNumber"]): return True
         else:
-            self.deleteAllUserRelatedInstances(initialData["user"].pk)
+            self.delete_all_user_related_instances(initialData["user"].pk)
             raise Exception("Invalid phone number")
     
     def create(self, validated_data):
         try:
             userAccount = UserAccount.objects.create(
                 user = validated_data["user"],
-                phoneNumber = validated_data["phoneNumber"],
-                deviceToken = validated_data["deviceToken"],
+                phone_number = validated_data["phoneNumber"],
+                device_token = validated_data["deviceToken"],
             )
             return userAccount
         except Exception as e:
-            self.deleteAllUserRelatedInstances(validated_data["user"].pk)
+            self.delete_all_user_related_instances(validated_data["user"].pk)
             raise Exception(f"Failed to create User Account {str(e)}")
 
-    def checkIfPhoneNumberIsValid(self, phoneNumber):
+    def check_if_phone_number_is_valid(self, phoneNumber):
         if not len(phoneNumber) == 10: return False
         pattern = r'0((60[3-9]|64[0-5]|66[0-5])\d{6}|(7[1-4689]|6[1-3]|8[1-4])\d{7})'
         if not re.match(pattern, phoneNumber): return False

@@ -23,7 +23,7 @@ class FirebaseInstance():
                     'transactionStatus': transactionStatus,
                     'time': str(datetime.datetime.now()),
                 },
-                token = transaction.customer.deviceToken,
+                token = transaction.customer.device_token,
             )
             _ = messaging.send(message)
             return True
@@ -38,7 +38,7 @@ class FirebaseInstance():
                     body="You will receive your order soon."
                 ),
                 data={},
-                token = order.transaction.customer.deviceToken,
+                token = order.transaction.customer.device_token,
             )
             _ = messaging.send(message)
             return True

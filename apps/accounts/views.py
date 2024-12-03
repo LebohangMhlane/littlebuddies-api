@@ -63,22 +63,22 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         pass
 
     def post(self, request, *args, **kwargs):
-        userAccount = None
+        user_account = None
         try:
-            userAccount = self._startRegistrationProcess(receivedData=request.data)
-            authToken = Token.objects.get(user__id=userAccount["user"]["id"])
-            self.sendActivationEmail(userAccount, request)
+            user_account = self._start_registration_process(receivedData=request.data)
+            authToken = Token.objects.get(user__id=user_account["user"]["id"])
+            self.send_activation_email(user_account, request)
             return Response(
                 {
                     "success": True,
                     "message": "Account created successfully",
-                    "userAccount": userAccount,
+                    "userAccount": user_account,
                     "loginToken": authToken.key,
                 }
             )
         except Exception as e:
             exception = e.args[0]
-            displayableException = self.determineException(exception)
+            displayableException = self.determine_exception(exception)
             return Response(
                 {
                     "success": False,
@@ -88,39 +88,39 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 status=500,
             )
 
-    def determineException(self, exception):
+    def determine_exception(self, exception):
         default = "An error has occured. We are looking into it"
-        possibleErrors = ["UNIQUE", "Invalid phone number"]
-        displayableErrors = [
+        possible_errors = ["UNIQUE", "Invalid phone number"]
+        displayable_errors = [
             "A user with these details already exists",
             "Invalid phone number",
         ]
-        for index, possibleError in enumerate(possibleErrors):
-            if possibleError in exception:
-                displayableError = displayableErrors[index]
-                return displayableError
+        for index, possible_error in enumerate(possible_errors):
+            if possible_error in exception:
+                displayable_error = displayable_errors[index]
+                return displayable_error
         return default
 
-    def _startRegistrationProcess(self, receivedData=dict) -> dict:
-        userData, userAccountData = self.sortUserData(receivedData)
-        userSerializer = UserSerializer(data=receivedData)
+    def _start_registration_process(self, receivedData=dict) -> dict:
+        user_data, user_account_data = self.sort_user_data(receivedData)
+        user_serializer = UserSerializer(data=receivedData)
 
-        if userSerializer.is_valid():
+        if user_serializer.is_valid():
             with transaction.atomic():
-                userInstance = userSerializer.create(validated_data=userData)
-                if userInstance:
-                    userAccount = self.createUserAccount(userAccountData, userInstance)
-                    userAccount = UserAccountSerializer(userAccount, many=False)
-                    if userAccount:
+                user_instance = user_serializer.create(validated_data=user_data)
+                if user_instance:
+                    user_account = self.create_user_account(user_account_data, user_instance)
+                    user_account = UserAccountSerializer(user_account, many=False)
+                    if user_account:
                         user_account_settings = AccountSetting()
-                        user_account_settings.user_account = userAccount.instance
-                        user_account_settings.full_name = userInstance.get_full_name()
+                        user_account_settings.user_account = user_account.instance
+                        user_account_settings.full_name = user_instance.get_full_name()
                         user_account_settings.save()
 
-                    return userAccount.data
+                    return user_account.data
 
 
-    def sortUserData(self, receivedPayload):
+    def sort_user_data(self, receivedPayload):
         userData = {
             "username": f"{receivedPayload['firstName']}{receivedPayload['lastName']}{receivedPayload['phoneNumber']}",
             "password": receivedPayload["password"],
@@ -138,11 +138,11 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
         }
         return userData, userAccountData
 
-    def createUserAccount(self, userAccountData, userInstance):
-        userAccountData["user"] = userInstance
-        userAccountSerializer = UserAccountSerializer(data=userAccountData)
-        if userAccountSerializer.is_valid(raise_exception=True):
-            userAccount = userAccountSerializer.create(validated_data=userAccountData)
+    def create_user_account(self, user_account_data, user_instance):
+        user_account_data["user"] = user_instance
+        user_account_serializer = UserAccountSerializer(data=user_account_data)
+        if user_account_serializer.is_valid(raise_exception=True):
+            userAccount = user_account_serializer.create(validated_data=user_account_data)
             return userAccount
 
 
@@ -151,7 +151,7 @@ class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
     def get(self, request, **kwargs):
         try:
             userAccount = UserAccountSerializer(request.user.useraccount)
-            self.sendActivationEmail(userAccount.data, request)
+            self.send_activation_email(userAccount.data, request)
             return Response(
                 {
                     "message": "Activation email sent successfully",
@@ -194,7 +194,7 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
             user = User.objects.get(pk=pk)
             if accountActivationTokenGenerator.check_token(user, activationToken):
                 userAccount = UserAccount.objects.get(user=user)
-                userAccount.emailVerified = True
+                userAccount.email_verified = True
                 userAccount.save()
                 return render(
                     request,
@@ -280,7 +280,7 @@ class RequestPasswordReset(APIView, GlobalViewFunctions):
             userAccount = UserAccount.objects.get(user__email=kwargs["email"])
             if userAccount.password_change_date.date() == timezone.now().date():
                 raise Exception("Password can only be reset once every 24hrs.")
-            self.sendPasswordResetRequestEmail(userAccount, request)
+            self.send_password_reset_request_email(userAccount, request)
             return Response(
                 {
                     "message": "Password reset email sent successfully",

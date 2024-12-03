@@ -38,6 +38,7 @@ urlpatterns = [
     path('transactions/', include("apps.transactions.urls"), name="transaction_urls"),
     path('price_comparison/', include("apps.price_comparison.urls"), name="price_comparison_urls"),
     path('discounts/', include("apps.discounts.urls"), name="discount"),
+    path('merchant_dashboard/', include("apps.merchant_dashboard.urls"), name="merchant_dashboard"),
 ]
 
 if settings.DEBUG:

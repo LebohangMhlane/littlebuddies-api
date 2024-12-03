@@ -17,12 +17,12 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        testCustomer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        testCustomer = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
             "branchId": str(branch.pk),
@@ -30,7 +30,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -54,12 +54,12 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        createTestCustomer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        createTestCustomer = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkoutFormPayload = {
             "branchId": str(branch.pk),
@@ -67,7 +67,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -97,12 +97,12 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        customer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkoutFormPayload = {
             "branchId": str(branch.pk),

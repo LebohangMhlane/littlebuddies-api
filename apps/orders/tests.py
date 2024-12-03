@@ -25,12 +25,12 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        customer = self.createTestCustomer()
-        authToken = self.loginAsCustomer()
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkoutFormPayload = {
             "branchId": str(merchant.pk),
@@ -38,7 +38,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -68,14 +68,14 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        customer = self.createTestCustomer()
-        customerAuthToken = self.loginAsCustomer()
+        customer = self.create_test_customer()
+        customerAuthToken = self.login_as_customer()
 
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
 
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 
@@ -85,7 +85,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -129,14 +129,14 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
 
         mockedResponse.return_value = MockedPaygateResponse()
 
-        customer = self.createTestCustomer()
-        customerAuthToken = self.loginAsCustomer()
+        customer = self.create_test_customer()
+        customerAuthToken = self.login_as_customer()
 
-        merchantUserAccount = self.createMerchantUserAccount()
-        merchant = self.createMerchantBusiness(merchantUserAccount)
+        merchantUserAccount = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchantUserAccount)
 
-        p1 = self.createProduct(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.createProduct(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 
@@ -146,7 +146,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
-            "deliveryDate": self.makeDate(1),
+            "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -164,7 +164,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             content_type='application/x-www-form-urlencoded'
         )
 
-        merchantAuthToken = self.loginAsMerchant()
+        merchantAuthToken = self.login_as_merchant()
 
         getAllOrdersUrl = reverse("get_all_orders_view")
         getAllOrdersResponse = self.client.get(

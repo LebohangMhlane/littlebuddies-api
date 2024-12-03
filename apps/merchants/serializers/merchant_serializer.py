@@ -23,12 +23,12 @@ class MerchantSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             merchant = MerchantBusiness()
-            merchant.userAccount = UserAccount.objects.get(pk=validated_data["userAccountPk"])
+            merchant.user_account = UserAccount.objects.get(pk=validated_data["userAccountPk"])
             merchant.name = validated_data["name"]
             merchant.email = validated_data["email"]
             merchant.address = validated_data["address"]
-            merchant.paygateId = validated_data["paygateId"]
-            merchant.paygateSecret = validated_data["paygateSecret"]
+            merchant.paygate_id = validated_data["paygateId"]
+            merchant.paygate_secret = validated_data["paygateSecret"]
             merchant.save()
             return merchant
         except Exception as e:

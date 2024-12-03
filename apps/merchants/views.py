@@ -36,8 +36,9 @@ class GetStoreRange(APIView, GlobalViewFunctions):
             mb = MerchantBusiness.objects.all()
             sc = SaleCampaign.objects.filter(branch__merchant__in=mb)
             saleCampaigns = []
-            if sc: scs = SaleCampaignSerializer(sc, many=True) 
-            saleCampaigns = scs.data
+            if sc: 
+                scs = SaleCampaignSerializer(sc, many=True) 
+                saleCampaigns = scs.data
             if mb: ms = MerchantSerializer(mb, many=True)
             else: raise Exception("No Pet stores were found")
             return Response({
@@ -147,7 +148,7 @@ class GetUpdatedMerchantsNearby(APIView, GlobalViewFunctions):
             merchants = MerchantBusiness.objects.filter(
                 id__in=storeIds)
             for index, merchant in enumerate(merchants):
-                products = self.getProducts(merchant)
+                products = self.get_products(merchant)
                 serializer = MerchantSerializer(merchant, many=False)
                 updatedMerchantsNearby.append({
                     "merchant": serializer.data,
