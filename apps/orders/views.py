@@ -131,7 +131,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
         )
     
 
-class RepeatOrder(APIView):
+class RepeatOrder(APIView, GlobalViewFunctions):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, order_id):
