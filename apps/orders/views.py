@@ -73,7 +73,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
 
         order = get_object_or_404(Order, id=order_id)
         
-        if order.transaction.customer != request.user:
+        if order.transaction.customer.user != request.user:
             return Response(
                 {"success": False, "message": "You are not authorized to cancel this order."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -100,7 +100,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
                     subject='Your Order Has Been Cancelled',
                     message=customer_plain_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[order.transaction.customer.email],
+                    recipient_list=[order.transaction.customer.user.email],
                     html_message=customer_html_message,
                 )
 
@@ -113,7 +113,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
                     subject='Order Cancelled',
                     message=merchant_plain_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[order.transaction.branch.merchant.email],
+                    recipient_list=[order.transaction.branch.merchant.user_account.user.email], 
                     html_message=merchant_html_message,
                 )
             except Exception as e:
@@ -149,7 +149,6 @@ class RepeatOrder(APIView):
         price_changes = []
         new_cost = 0.00
 
-        # Get active sale campaigns for the branch
         active_sales = SaleCampaign.objects.filter(
             branch=branch,
             campaignEnds__gte=datetime.datetime.now()
@@ -160,14 +159,11 @@ class RepeatOrder(APIView):
             special_price = branch_product.branchPrice
 
             if branch_product.inStock:
-                # Check if the branch_product is part of any active sale campaign
                 sale_campaign = active_sales.filter(branchProducts=branch_product).first()
                 if sale_campaign:
-                    # Apply discount if the sale campaign is active
                     discount = sale_campaign.percentageOff
                     special_price = branch_product.branchPrice * (1 - discount / 100)
 
-                # Add the product details
                 product_details = {
                     "product_id": branch_product.product.id,
                     "name": branch_product.product.name,
@@ -175,7 +171,6 @@ class RepeatOrder(APIView):
                     "current_price": special_price,
                 }
 
-                # Check if price has changed due to sale
                 if branch_product.branchPrice != special_price:
                     price_changes.append({
                         "product_id": branch_product.product.id,
@@ -204,7 +199,6 @@ class RepeatOrder(APIView):
             "price_changes": price_changes,
         }
 
-        # Validate email before sending
         try:
             customer_email = order.transaction.customer.user.email
             if not customer_email:
@@ -213,7 +207,6 @@ class RepeatOrder(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Prepare email context
             customer_context = {
                 'order': order,
                 'product_list': product_list,
@@ -224,7 +217,6 @@ class RepeatOrder(APIView):
             customer_html_message = render_to_string('email_templates/repeat_order_summary.html', customer_context)
             customer_plain_message = strip_tags(customer_html_message)
 
-            # Attempt to send email
             send_mail(
                 subject='Repeat Order Summary',
                 message=customer_plain_message,
@@ -233,7 +225,6 @@ class RepeatOrder(APIView):
                 html_message=customer_html_message,
             )
         except Exception as e:
-            # Log the error for debugging
             logger.error(f"Email sending failed: {str(e)}")
             return Response(
                 {"error": "Failed to send email", "details": str(e)}, 
