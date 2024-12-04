@@ -379,13 +379,13 @@ class RepeatOrderViewTestCase(TestCase):
         self.product1 = Product.objects.create(
             name='Product 1', 
             description='Test Product 1',
-            recommendedRetailPrice=120,
+            recommended_retail_price=120,
             image='product1_image_url'
         )
         self.product2 = Product.objects.create(
             name='Product 2', 
             description='Test Product 2',
-            recommendedRetailPrice=60,
+            recommended_retail_price=60,
             image='product2_image_url'
         )
         
@@ -395,7 +395,7 @@ class RepeatOrderViewTestCase(TestCase):
             in_stock=True,
             is_active=True,
             branch_price=100,
-            storeReference='BP1',
+            store_reference='BP1',
             created_by=self.user_account
         )
         self.branch_product2 = BranchProduct.objects.create(
@@ -404,7 +404,7 @@ class RepeatOrderViewTestCase(TestCase):
             in_stock=False,
             is_active=True,
             branch_price=50,
-            storeReference='BP2',
+            store_reference='BP2',
             created_by=self.user_account
         )
         

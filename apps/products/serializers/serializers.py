@@ -42,7 +42,7 @@ class ProductSerializer(ModelSerializer):
             product.originalPrice = validated_data["originalPrice"]
             product.in_stock = bool(validated_data["in_stock"])
             product.image = validated_data["image"]
-            product.storeReference = validated_data["storeReference"]
+            product.store_reference = validated_data["store_reference"]
             product.discountPercentage = validated_data["discountPercentage"]
             product.created_by = user_account
             product.save()

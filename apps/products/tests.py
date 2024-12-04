@@ -19,7 +19,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "originalPrice": 100,
             "in_stock": False,
             "image": "secret",
-            "storeReference": "ADDEHFIE12I4 ",
+            "store_reference": "ADDEHFIE12I4 ",
             "discountPercentage": 0,
         }
         response = self.client.post(
@@ -46,7 +46,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "originalPrice": 100,
             "in_stock": False,
             "image": "secret",
-            "storeReference": "ADDEHFIE12I4",
+            "store_reference": "ADDEHFIE12I4",
             "discountPercentage": 0,
         }
         response = self.client.post(
@@ -68,7 +68,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "originalPrice": 0, # price can never be zero
             "in_stock": False,
             "image": "secret",
-            "storeReference": "ADDEHFIE12I4",
+            "store_reference": "ADDEHFIE12I4",
             "discountPercentage": 0,
         }
         _ = self.create_normal_test_account_and_login()
@@ -93,7 +93,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "originalPrice": 230,
             "in_stock": False,
             "image": "secret",
-            "storeReference": "ADDEHFIE12I4",
+            "store_reference": "ADDEHFIE12I4",
             "discountPercentage": 0,
         }
         _ = self.create_normal_test_account_and_login()
