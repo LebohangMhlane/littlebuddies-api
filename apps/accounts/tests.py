@@ -30,13 +30,13 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             content_type=f"application/json",
             data=userInputData,
         )
-        user = User.objects.get(username=response.data["userAccount"]["user"]["username"])
-        userAccount = UserAccount.objects.get(pk=response.data["userAccount"]["id"])
+        user = User.objects.get(username=response.data["user_account"]["user"]["username"])
+        user_account = UserAccount.objects.get(pk=response.data["user_account"]["id"])
         token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(token != None)
         self.assertEqual(user.username, userInputData["username"])
-        self.assertEqual(userAccount.user.username, userInputData["username"])
+        self.assertEqual(user_account.user.username, userInputData["username"])
 
     def test_create_account_failure(self):
         userInputData = {
@@ -59,11 +59,11 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             data=userInputData,
         )
         user = User.objects.all().first()
-        userAccount = UserAccount.objects.all().first()
+        user_account = UserAccount.objects.all().first()
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data["error"], "Invalid phone number")
         self.assertEqual(user, None)
-        self.assertEqual(userAccount, None)
+        self.assertEqual(user_account, None)
 
     def test_log_in(self):
         userInputData = {
@@ -104,20 +104,20 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_update_account(self):
-        authToken = self.create_normal_test_account_and_login()
-        updateAccountUrl = reverse("update_account_view")
+        auth_token = self.create_normal_test_account_and_login()
+        update_account_url = reverse("update_account_view")
         payload = {
-            "phoneNumber": "0733084465"
+            "phone_number": "0733084465"
         }
-        self.assertTrue(payload["phoneNumber"] != self.userAccount.phone_number)
+        self.assertTrue(payload["phone_number"] != self.user_account.phone_number)
         response = self.client.post(
-            path=updateAccountUrl,
+            path=update_account_url,
             data=payload,
-            HTTP_AUTHORIZATION=f"Token {authToken}",
+            HTTP_AUTHORIZATION=f"Token {auth_token}",
         )
-        receivedPhoneNumber = f"0{response.data['updatedAccount']['phoneNumber']}"
-        self.assertEqual(receivedPhoneNumber, 
-            payload["phoneNumber"]
+        received_phone_number = f"0{response.data['updated_account']['phone_number']}"
+        self.assertEqual(received_phone_number, 
+            payload["phone_number"]
         )
 
     def test_deactivate_account(self):
@@ -128,9 +128,9 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         self.assertEqual(response.data["message"], "Account deactivated successfully")
-        userAccount = UserAccount.objects.get(pk=self.userAccount.pk)
-        self.assertTrue(userAccount.is_active == False)
-        self.assertTrue(userAccount.user.is_active == False)
+        user_account = UserAccount.objects.get(pk=self.user_account.pk)
+        self.assertTrue(user_account.is_active == False)
+        self.assertTrue(user_account.user.is_active == False)
 
     def test_password_reset(self):
         accountToken = self.create_normal_test_account_and_login()
@@ -148,7 +148,7 @@ class AccountSettingsTestCase(GlobalTestCaseConfig, TestCase):
 
         auth_token = self.create_normal_test_account_and_login()
 
-        _ = self.create_merchant_business(self.userAccount)
+        _ = self.create_merchant_business(self.user_account)
 
         account_settings_url = reverse("account_settings_view")
         response = self.client.get(
@@ -202,9 +202,9 @@ class UpdateAddressViewTests(TestCase):
             format='json'
         )
         
-        user_id = response.data['userAccount']['user']['id']
+        user_id = response.data['user_account']['user']['id']
         self.user = User.objects.get(id=user_id)
-        self.user_account = UserAccount.objects.get(id=response.data['userAccount']['id'])
+        self.user_account = UserAccount.objects.get(id=response.data['user_account']['id'])
         
         self.token, _ = Token.objects.get_or_create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")

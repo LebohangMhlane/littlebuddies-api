@@ -34,9 +34,9 @@ class ReferralVoucherTests(GlobalTestCaseConfig, TestCase):
             format='json'
         )
         
-        user_id = response.data['userAccount']['user']['id']
+        user_id = response.data['user_account']['user']['id']
         self.user = User.objects.get(id=user_id)
-        self.user_account = UserAccount.objects.get(id=response.data['userAccount']['id'])
+        self.user_account = UserAccount.objects.get(id=response.data['user_account']['id'])
         
         self.token, _ = Token.objects.get_or_create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")

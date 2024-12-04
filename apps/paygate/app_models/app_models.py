@@ -7,7 +7,7 @@ from apps.products.models import BranchProduct, Product
 
 class CheckoutForm():
     branchId = 0
-    totalCheckoutAmount = "0.0"
+    total_checkout_amount = "0.0"
     branchProducts = []
     productIds = []
     discountTotal = 0
@@ -19,7 +19,7 @@ class CheckoutForm():
     def __init__(self, payload):
         payload = payload.copy()
         self.branchId = int(payload.get("branchId"))
-        self.totalCheckoutAmount = payload["totalCheckoutAmount"]
+        self.total_checkout_amount = payload["totalCheckoutAmount"]
         self.branchProducts = self._setProducts(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
         self.deliveryDate = payload.get("deliveryDate")
@@ -27,7 +27,7 @@ class CheckoutForm():
         self.productIds = self._setProductIds(payload["products"])
         self.setProductCount()
     
-    def verifyPurchase(self):
+    def verify_purchase(self):
 
         def verifyProductExistence():
             # TODO: disabling this for now: i dont think there will be a time in 

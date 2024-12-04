@@ -8,7 +8,7 @@ from apps.transactions.models import Transaction
 
 class FirebaseInstance():
 
-    def sendTransactionStatusNotification(self, transaction:Transaction):
+    def send_transaction_status_notification(self, transaction:Transaction):
         try:
             transactionStatus = transaction.getTransactionStatus()
             message = messaging.Message(

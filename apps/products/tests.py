@@ -35,7 +35,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_create_product_as_superadmin(self):
         _ = self.create_normal_test_account_and_login()
-        self.make_normal_account_super_admin(self.userAccount.pk)
+        self.make_normal_account_super_admin(self.user_account.pk)
         testMerchantAccount = self.create_merchant_user_account()
         self.create_merchant_business(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
@@ -72,7 +72,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             "discountPercentage": 0,
         }
         _ = self.create_normal_test_account_and_login()
-        self.make_normal_account_super_admin(self.userAccount.pk)
+        self.make_normal_account_super_admin(self.user_account.pk)
         testMerchantAccount = self.create_merchant_user_account()
         self.create_merchant_business(testMerchantAccount)
         createProductUrl = reverse("create_product_view")
@@ -111,15 +111,15 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
 
     def test_delete_product_as_superadmin(self):
         _ = self.create_normal_test_account_and_login()
-        self.make_normal_account_super_admin(self.userAccount.pk)
-        testMerchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(testMerchantUserAccount)
+        self.make_normal_account_super_admin(self.user_account.pk)
+        testmerchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(testmerchant_user_account)
         product1 = self.create_product(
-            merchant, testMerchantUserAccount, 
+            merchant, testmerchant_user_account, 
             name="Bob's Cat Food", price=200.0
         )
         product2 = self.create_product(
-            merchant, testMerchantUserAccount, 
+            merchant, testmerchant_user_account, 
             name="Bob's Dog Food", price=200.0
         )
         deleteProductUrl = reverse(

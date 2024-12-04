@@ -47,8 +47,8 @@ class MerchantBusiness(models.Model):
         self.fernet_token = token
         self.paygate_secret = ""
     
-    def verify_user_account(self, userAccount: UserAccount):
-        if not userAccount.is_merchant:
+    def verify_user_account(self, user_account: UserAccount):
+        if not user_account.is_merchant:
             raise Exception("User account is not a merchant")
         
     def get_merchant_secret_key(self):

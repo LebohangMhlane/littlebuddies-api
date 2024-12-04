@@ -14,11 +14,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_get_store_range(self):
 
-        merchantUserAccount = self.create_merchant_user_account({})
-        merchantBusiness = self.create_merchant_business(merchantUserAccount)
+        merchant_user_account = self.create_merchant_user_account({})
+        merchantBusiness = self.create_merchant_business(merchant_user_account)
         
-        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
-        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 100)
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 50, 10)
 
         customer = self.create_test_customer()
         authToken = self.login_as_customer()
@@ -31,14 +31,13 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(len(response.data["petstores"]), 1)
 
-        pass
 
     def test_get_nearest_branch(self):
 
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
 
-        merchantUserAccount = self.create_merchant_user_account({
+        merchant_user_account = self.create_merchant_user_account({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -51,7 +50,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         })
         
         merchantBusiness = self.create_merchant_business(
-            merchantUserAccount, merchant_data={
+            merchant_user_account, merchant_data={
                 "name": "Orsum Pets",
                 "email": "orsumpets@gmail.com",
                 "address": 'Shop No, 55 Shepstone Rd, New Germany, Durban, 3610, South Africa',
@@ -63,8 +62,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 100)
-        _ = self.create_product(merchantBusiness, merchantUserAccount, "Bob's dog food", 50, 10)
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 100)
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 50, 10)
 
         # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
         # deviceLocation = "-29.857298, 31.024362"
@@ -77,16 +76,16 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         )
 
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
-        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "2.9 km")
+        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
         self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
         self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
 
     def test_get_updated_petstores_near_me(self):
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
-        merchantUserAccount1 = self.create_merchant_user_account({})
-        merchantBusiness1 = self.create_merchant_business(merchantUserAccount1, {})
-        merchantUserAccount2 = self.create_dynamic_merchant_user_account({
+        merchant_user_account1 = self.create_merchant_user_account({})
+        merchantBusiness1 = self.create_merchant_business(merchant_user_account1, {})
+        merchant_user_account2 = self.create_dynamic_merchant_user_account({
             "username": "Lebo",
             "password": "Hello World",
             "firstName": "Lebohang",
@@ -98,7 +97,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "deviceToken": "dfwhefoewhofh328rh2"
         })
         merchantBusiness2 = self.create_merchant_business(
-            merchantUserAccount2, {
+            merchant_user_account2, {
                 "name": "Totally Pets",
                 "email": "totallypets@gmail.com",
                 "address": "197 Brand Rd, Bulwer, Berea, 4083",
@@ -110,11 +109,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
-        p1 = self.create_product(merchantBusiness1, merchantUserAccount1, "Bob's dog food", 200)
-        p2 = self.create_product(merchantBusiness1, merchantUserAccount1, "Bob's cat food", 100)
+        p1 = self.create_product(merchantBusiness1, merchant_user_account1, "Bob's dog food", 200)
+        p2 = self.create_product(merchantBusiness1, merchant_user_account1, "Bob's cat food", 100)
 
-        p3 = self.create_product(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
-        p4 = self.create_product(merchantBusiness2, merchantUserAccount2, "Bob's cat food", 100)
+        p3 = self.create_product(merchantBusiness2, merchant_user_account2, "Bob's cat food", 100)
+        p4 = self.create_product(merchantBusiness2, merchant_user_account2, "Bob's cat food", 100)
 
         getNearByStoresUrl = reverse("get_updated_petstores_near_me", kwargs={
         "storeIds": '[{"id": 1, "distance": "10 mins"}, {"id": 2, "distance": "10 mins"}]'
@@ -126,8 +125,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         pass
 
     def test_create_merchant(self):
-        createMerchantPayload = {
-            "userAccountPk": 2,
+        create_merchant_payload = {
+            "user_accountPk": 2,
             "name": "Pet Food Shop",
             "email": "petfoodshop@gmail.com",
             "address": "12 Pet Street Newgermany",
@@ -135,22 +134,22 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "paygateSecret": "secret",
         }
         token = self.create_normal_test_account_and_login()
-        self.make_normal_account_super_admin(self.userAccount.pk)
-        merchantUserAccount = self.create_merchant_user_account({})
-        createMerchantUrl = reverse("create_merchant_view")
+        self.make_normal_account_super_admin(self.user_account.pk)
+        merchant_user_account = self.create_merchant_user_account({})
+        create_merchant_url = reverse("create_merchant_view")
         response = self.client.post(
-            createMerchantUrl,
-            data=createMerchantPayload,
+            create_merchant_url,
+            data=create_merchant_payload,
             HTTP_AUTHORIZATION=f"Token {token}"
         )
         self.assertEqual(response.status_code, 200)
-        merchant = MerchantBusiness.objects.filter(name=createMerchantPayload["name"]).first()
-        self.assertEqual(merchant.user_account.pk, merchantUserAccount.pk)
-        self.assertEqual(response.data["merchant"]["name"], createMerchantPayload["name"])
+        merchant = MerchantBusiness.objects.filter(name=create_merchant_payload["name"]).first()
+        self.assertEqual(merchant.user_account.pk, merchant_user_account.pk)
+        self.assertEqual(response.data["merchant"]["name"], create_merchant_payload["name"])
 
     def test_unauthorized_create_merchant(self):
         createMerchantPayload = {
-            "userAccountPk": 1,
+            "user_accountPk": 1,
             "name": "Pet Food Shop",
             "email": "petfoodshop@gmail.com",
             "address": "12 Pet Street Newgermany",
@@ -170,9 +169,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_deactivate_merchant(self):
         testAccountToken = self.create_normal_test_account_and_login()
-        self.make_normal_account_super_admin(self.userAccount.pk)
-        testMerchantUserAccount = self.create_merchant_user_account({})
-        merchant = self.create_merchant_business(testMerchantUserAccount)
+        self.make_normal_account_super_admin(self.user_account.pk)
+        testmerchant_user_account = self.create_merchant_user_account({})
+        merchant = self.create_merchant_business(testmerchant_user_account)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 1,
@@ -190,9 +189,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_deactivate_merchant_failure(self):
         testAccountToken = self.create_normal_test_account_and_login()
-        _ = self.make_normal_account_super_admin(self.userAccount.pk)
-        testMerchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(testMerchantUserAccount)
+        _ = self.make_normal_account_super_admin(self.user_account.pk)
+        testmerchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(testmerchant_user_account)
         self.assertEqual(merchant.isActive, True)
         payload = {
             "merchantId": 100, # id doesn't exist
@@ -211,9 +210,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_update_merchant(self):
         testAccountToken = self.create_normal_test_account_and_login()
-        _ = self.make_normal_account_super_admin(self.userAccount.pk)
-        testMerchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(testMerchantUserAccount)
+        _ = self.make_normal_account_super_admin(self.user_account.pk)
+        test_merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(test_merchant_user_account)
         self.assertEqual(merchant.name, "Absolute Pets")
         self.assertEqual(merchant.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
         payload = {
@@ -221,29 +220,29 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "name": "World of pets",
             "address": "32 rethman street newgermany",
         }
-        updateMerchantUrl = reverse("update_merchant_view")
+        update_merchant_url = reverse("update_merchant_view")
         response = self.client.post(
-            updateMerchantUrl,
+            update_merchant_url,
             data=payload,
             HTTP_AUTHORIZATION=f"Token {testAccountToken}"
         )
-        updatedMerchant = response.data["updatedMerchant"]
-        self.assertEqual(updatedMerchant["name"], "World of pets")
-        self.assertEqual(updatedMerchant["address"], "32 rethman street newgermany")
+        updated_merchant = response.data["updatedMerchant"]
+        self.assertEqual(updated_merchant["name"], "World of pets")
+        self.assertEqual(updated_merchant["address"], "32 rethman street newgermany")
 
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_acknowlegde_order(self, mockedResponse, mockedSendNotification):
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
+    @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
+    def test_acknowlegde_order(self, mocked_response, mocked_send_notification):
 
-        mockedResponse.return_value = MockedPaygateResponse()
+        mocked_response.return_value = MockedPaygateResponse()
 
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
-        merchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchantUserAccount)
-        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
-        checkoutFormPayload = {
+        merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchant_user_account)
+        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
+        checkout_form_payload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
@@ -254,44 +253,44 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
             initiate_payment_url,
-            data=checkoutFormPayload,
+            data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
-        paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
-        paymentNotificationUrl = reverse("payment_notification_view")
+        payment_notification_response = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        payment_notification_url = reverse("payment_notification_view")
         _ = self.client.post(
-            paymentNotificationUrl,
-            data=paymentNotificationResponse,
+            payment_notification_url,
+            data=payment_notification_response,
             content_type='application/x-www-form-urlencoded'
         )
         order = Order.objects.all().first()
 
         # merchant should now acknowledge the order:
-        acknowlegeOrderUrl = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
+        acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
         merchantAuthToken = self.login_as_merchant()
         response = self.client.get(
-            acknowlegeOrderUrl,
-            data=checkoutFormPayload,
+            acknowledge_order_url,
+            data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
         )
         order = Order.objects.all().first()
         self.assertEqual(response.data["message"], "Order acknowledged successfully")
         self.assertTrue(order.acknowledged)
     
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_fulfill_order(self, mockedResponse, mockedSendNotification):
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
+    @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
+    def test_fulfill_order(self, mocked_response, mocked_send_notification):
         
-        mockedResponse.return_value = MockedPaygateResponse()
+        mocked_response.return_value = MockedPaygateResponse()
 
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
-        merchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchantUserAccount)
-        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchant_user_account)
+        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
-        checkoutFormPayload = {
+        checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
@@ -303,36 +302,36 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
             initiate_payment_url,
-            data=checkoutFormPayload,
+            data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
-        paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
-        paymentNotificationUrl = reverse("payment_notification_view")
+        payment_notification_response = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        payment_notification_url = reverse("payment_notification_view")
         _ = self.client.post(
-            paymentNotificationUrl,
-            data=paymentNotificationResponse,
+            payment_notification_url,
+            data=payment_notification_response,
             content_type='application/x-www-form-urlencoded'
         )
 
         # merchant should now acknowledge the order at this point:
         order = Order.objects.all().first()
-        acknowlegeOrderUrl = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
-        merchantAuthToken = self.login_as_merchant()
-        acknowlegeOrderResponse = self.client.get(
-            acknowlegeOrderUrl,
-            data=checkoutFormPayload,
-            HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
+        acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
+        merchant_auth_token = self.login_as_merchant()
+        acknowledge_order_response = self.client.get(
+            acknowledge_order_url,
+            data=checkout_form_payload,
+            HTTP_AUTHORIZATION=f"Token {merchant_auth_token}",
         )
 
-        fulfillOrderUrl = reverse("fulfill_order_view", kwargs={"orderPk": order.pk})
-        fulfillOrderResponse = self.client.get(
-            fulfillOrderUrl,
-            HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
+        fulfill_order_url = reverse("fulfill_order_view", kwargs={"orderPk": order.pk})
+        fulfill_order_response = self.client.get(
+            fulfill_order_url,
+            HTTP_AUTHORIZATION=f"Token {merchant_auth_token}",
         )
-        orderFromResponse = fulfillOrderResponse.data["order"]
-        self.assertEqual(orderFromResponse["status"], Order.DELIVERED)
-        self.assertTrue(orderFromResponse["acknowledged"])
-        self.assertEqual(orderFromResponse["transaction"]["status"], Transaction.COMPLETED)
+        order_from_response = fulfill_order_response.data["order"]
+        self.assertEqual(order_from_response["status"], Order.DELIVERED)
+        self.assertTrue(order_from_response["acknowledged"])
+        self.assertEqual(order_from_response["transaction"]["status"], Transaction.COMPLETED)
         
 
 

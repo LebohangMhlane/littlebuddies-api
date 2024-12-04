@@ -23,7 +23,7 @@ class MerchantSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             merchant = MerchantBusiness()
-            merchant.user_account = UserAccount.objects.get(pk=validated_data["userAccountPk"])
+            merchant.user_account = UserAccount.objects.get(pk=validated_data["user_accountPk"])
             merchant.name = validated_data["name"]
             merchant.email = validated_data["email"]
             merchant.address = validated_data["address"]

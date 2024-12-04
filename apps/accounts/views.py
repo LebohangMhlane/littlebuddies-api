@@ -33,13 +33,13 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
             user = User.objects.get(email=request.data["email"])
             if user.check_password(request.data["password"]):
                 authToken = Token.objects.get(user=user)
-                userAccount = UserAccount.objects.get(user=user)
-                userAccountSerializer = UserAccountSerializer(userAccount, many=False)
-                self._saveDeviceToken(user, request, userAccount)
+                user_account = UserAccount.objects.get(user=user)
+                user_accountSerializer = UserAccountSerializer(user_account, many=False)
+                self._saveDeviceToken(user, request, user_account)
             else:
                 raise Exception("Invalid username or password")
             return Response(
-                {"token": authToken.key, "userProfile": userAccountSerializer.data}
+                {"token": authToken.key, "userProfile": user_accountSerializer.data}
             )
         except Exception as e:
             error = e.args[0]
@@ -49,10 +49,10 @@ class LoginView(ObtainAuthToken, GlobalViewFunctions):
                 {"message": "Failed to authenticate user", "error": str(e)}, status=401
             )
 
-    def _saveDeviceToken(self, user, request, userAccount):
+    def _saveDeviceToken(self, user, request, user_account):
         if "deviceToken" in request.data:  # only for test cases:
-            userAccount.deviceToken = request.data["deviceToken"]
-        userAccount.save()
+            user_account.deviceToken = request.data["deviceToken"]
+        user_account.save()
 
 
 class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
@@ -72,7 +72,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 {
                     "success": True,
                     "message": "Account created successfully",
-                    "userAccount": user_account,
+                    "user_account": user_account,
                     "loginToken": authToken.key,
                 }
             )
@@ -128,7 +128,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             "lastName": receivedPayload["lastName"],
             "email": receivedPayload["email"],
         }
-        userAccountData = {
+        user_accountData = {
             "deviceToken": (
                 receivedPayload["deviceToken"]
                 if "deviceToken" in receivedPayload
@@ -136,22 +136,22 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             ),
             "phoneNumber": receivedPayload["phoneNumber"],
         }
-        return userData, userAccountData
+        return userData, user_accountData
 
     def create_user_account(self, user_account_data, user_instance):
         user_account_data["user"] = user_instance
         user_account_serializer = UserAccountSerializer(data=user_account_data)
         if user_account_serializer.is_valid(raise_exception=True):
-            userAccount = user_account_serializer.create(validated_data=user_account_data)
-            return userAccount
+            user_account = user_account_serializer.create(validated_data=user_account_data)
+            return user_account
 
 
 class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, **kwargs):
         try:
-            userAccount = UserAccountSerializer(request.user.useraccount)
-            self.send_activation_email(userAccount.data, request)
+            user_account = UserAccountSerializer(request.user.useraccount)
+            self.send_activation_email(user_account.data, request)
             return Response(
                 {
                     "message": "Activation email sent successfully",
@@ -170,8 +170,8 @@ class ResendActivationEmail(APIView, GlobalViewFunctions, SerializerFunctions):
 class CheckAccountActivation(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, **kwargs):
-        userAccount = request.user.useraccount
-        if userAccount.emailVerified:
+        user_account = request.user.useraccount
+        if user_account.emailVerified:
             return Response({"message": "Account activated.", "accountActivated": True})
         else:
             return Response(
@@ -193,9 +193,9 @@ class ActivateAccountView(APIView, GlobalViewFunctions, SerializerFunctions):
             activationToken = kwargs["activationToken"]
             user = User.objects.get(pk=pk)
             if accountActivationTokenGenerator.check_token(user, activationToken):
-                userAccount = UserAccount.objects.get(user=user)
-                userAccount.email_verified = True
-                userAccount.save()
+                user_account = UserAccount.objects.get(user=user)
+                user_account.email_verified = True
+                user_account.save()
                 return render(
                     request,
                     template_name="email_templates/successful_account_activation.html",
@@ -221,11 +221,11 @@ class DeactivateAccountView(APIView, GlobalViewFunctions):
         )
 
     def deactivateAccount(self, request):
-        userAccount = request.user.useraccount
+        user_account = request.user.useraccount
         user = request.user
         user.is_active = False
         user.save()
-        userAccount.save()
+        user_account.save()
 
 
 class UpdateAccountView(APIView, GlobalViewFunctions):
@@ -233,12 +233,12 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
     def post(self, request):
         try:
             updatedAccount = self.updateAccount(request)
-            userAccountSerializer = UserAccountSerializer(updatedAccount, many=False)
+            user_accountSerializer = UserAccountSerializer(updatedAccount, many=False)
             return Response(
                 {
                     "success": True,
                     "message": "Account updated successfully",
-                    "updatedAccount": userAccountSerializer.data,
+                    "updated_account": user_accountSerializer.data,
                 },
                 status=200,
             )
@@ -254,15 +254,15 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
 
     def updateAccount(self, request):
         receivedPayload = request.data.copy()
-        userAccount = request.user.useraccount
+        user_account = request.user.useraccount
         for key, value in receivedPayload.items():
             self.validateKey(key, request)
-            userAccount.__setattr__(key, value)
-        userAccount.save()
-        return userAccount
+            user_account.__setattr__(key, value)
+        user_account.save()
+        return user_account
 
     def validateKey(self, key, request):
-        if key == "canCreateMerchants" or key == "isMerchant":
+        if key == "can_create_merchants" or key == "isMerchant":
             exceptionString = f"You don't have permission to modify {key}"
             self.if_user_is_super_admin(request, exceptionString)
 
@@ -277,10 +277,10 @@ class RequestPasswordReset(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         try:
-            userAccount = UserAccount.objects.get(user__email=kwargs["email"])
-            if userAccount.password_change_date.date() == timezone.now().date():
+            user_account = UserAccount.objects.get(user__email=kwargs["email"])
+            if user_account.password_change_date.date() == timezone.now().date():
                 raise Exception("Password can only be reset once every 24hrs.")
-            self.send_password_reset_request_email(userAccount, request)
+            self.send_password_reset_request_email(user_account, request)
             return Response(
                 {
                     "message": "Password reset email sent successfully",

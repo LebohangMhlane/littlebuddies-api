@@ -18,20 +18,20 @@ User = get_user_model()
 
 class OrderTests(GlobalTestCaseConfig, TestCase):
 
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_create_order(self, mockedResponse, mockedSendNotification):
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
+    @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
+    def test_create_order(self, mocked_response, mocked_send_notification):
 
-        mockedResponse.return_value = MockedPaygateResponse()
+        mocked_response.return_value = MockedPaygateResponse()
 
         customer = self.create_test_customer()
         authToken = self.login_as_customer()
-        merchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchantUserAccount)
-        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
+        merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchant_user_account)
+        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
-        checkoutFormPayload = {
+        checkout_form_payload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
@@ -43,42 +43,42 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
             initiate_payment_url,
-            data=checkoutFormPayload,
+            data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
-        paymentNotificationUrl = reverse("payment_notification_view")
+        payment_notification_url = reverse("payment_notification_view")
         response = self.client.post(
-            paymentNotificationUrl,
+            payment_notification_url,
             data=paymentNotificationResponse,
             content_type='application/x-www-form-urlencoded'
         )
         order = Order.objects.all().first()
         products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(order.transaction.branch.id, int(checkoutFormPayload["branchId"]))
+        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branchId"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
 
 
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_get_all_orders_as_customer(self, mockedResponse, mockedSendNotification):
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
+    @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
+    def test_get_all_orders_as_customer(self, mocked_response, mocked_send_notification):
 
-        mockedResponse.return_value = MockedPaygateResponse()
+        mocked_response.return_value = MockedPaygateResponse()
 
         customer = self.create_test_customer()
-        customerAuthToken = self.login_as_customer()
+        customer_auth_token = self.login_as_customer()
 
-        merchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchantUserAccount)
+        merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchant_user_account)
 
-        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 
-        checkoutFormPayload = {
+        checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
@@ -88,16 +88,16 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             "address": "71 downthe street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
-        initiatePaymentResponse = self.client.post(
+        initiate_payment_response = self.client.post(
             initiate_payment_url,
-            data=checkoutFormPayload,
-            HTTP_AUTHORIZATION=f"Token {customerAuthToken}",
+            data=checkout_form_payload,
+            HTTP_AUTHORIZATION=f"Token {customer_auth_token}",
         )
 
         paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
-        paymentNotificationUrl = reverse("payment_notification_view")
+        payment_notification_url = reverse("payment_notification_view")
         paymentNotificatonResponse = self.client.post(
-            paymentNotificationUrl,
+            payment_notification_url,
             data=paymentNotificationResponse,
             content_type='application/x-www-form-urlencoded'
         )
@@ -105,7 +105,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         getAllOrdersUrl = reverse("get_all_orders_view")
         getAllOrdersResponse = self.client.get(
             getAllOrdersUrl,
-            HTTP_AUTHORIZATION=f"Token {customerAuthToken}"
+            HTTP_AUTHORIZATION=f"Token {customer_auth_token}"
         )
         order = Order.objects.all().first()
         orderFromResponse = getAllOrdersResponse.data["orders"][0]
@@ -115,73 +115,73 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
         self.assertEqual(
             orderFromResponse["transaction"]["branch"]["id"], 
-            int(checkoutFormPayload["branchId"]))
+            int(checkout_form_payload["branchId"]))
         self.assertEqual(
             float(orderFromResponse["transaction"]["amount"]), 
-            float(checkoutFormPayload["totalCheckoutAmount"])
+            float(checkout_form_payload["totalCheckoutAmount"])
         )
 
 
-    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.sendTransactionStatusNotification")
-    @patch("apps.paygate.views.PaymentInitializationView.sendInitiatePaymentRequestToPaygate")
-    def test_get_all_orders_as_merchant(self, mockedResponse, mockedSendNotification):
+    @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
+    @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
+    def test_get_all_orders_as_merchant(self, mocked_response, mocked_send_notification):
 
-        mockedResponse.return_value = MockedPaygateResponse()
+        mocked_response.return_value = MockedPaygateResponse()
 
         customer = self.create_test_customer()
-        customerAuthToken = self.login_as_customer()
+        customer_auth_token = self.login_as_customer()
 
-        merchantUserAccount = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchantUserAccount)
+        merchant_user_account = self.create_merchant_user_account()
+        merchant = self.create_merchant_business(merchant_user_account)
 
-        p1 = self.create_product(merchant, merchantUserAccount, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchantUserAccount, "Bob's cat food", 100)
+        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
 
         branch = merchant.branch_set.all().first()
 
-        checkoutFormPayload = {
+        checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 downthe street Bergville"
+            "address": "71 down the street Bergville"
         }
         initiate_payment_url = reverse("initiate_payment_view")
-        initiatePaymentResponse = self.client.post(
+        initiate_payment_response = self.client.post(
             initiate_payment_url,
-            data=checkoutFormPayload,
-            HTTP_AUTHORIZATION=f"Token {customerAuthToken}",
+            data=checkout_form_payload,
+            HTTP_AUTHORIZATION=f"Token {customer_auth_token}",
         )
 
-        paymentNotificationResponse = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
-        paymentNotificationUrl = reverse("payment_notification_view")
-        paymentNotificatonResponse = self.client.post(
-            paymentNotificationUrl,
-            data=paymentNotificationResponse,
+        payment_notification_response = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        payment_notification_url = reverse("payment_notification_view")
+        _ = self.client.post(
+            payment_notification_url,
+            data=payment_notification_response,
             content_type='application/x-www-form-urlencoded'
         )
 
-        merchantAuthToken = self.login_as_merchant()
+        merchant_auth_token = self.login_as_merchant()
 
-        getAllOrdersUrl = reverse("get_all_orders_view")
-        getAllOrdersResponse = self.client.get(
-            getAllOrdersUrl,
-            HTTP_AUTHORIZATION=f"Token {merchantAuthToken}"
+        get_all_orders_url = reverse("get_all_orders_view")
+        get_all_orders_response = self.client.get(
+            get_all_orders_url,
+            HTTP_AUTHORIZATION=f"Token {merchant_auth_token}"
         )
         order = Order.objects.all().first()
-        orderFromResponse = getAllOrdersResponse.data["orders"][0]
+        order_from_response = get_all_orders_response.data["orders"][0]
         self.assertEqual(
-            orderFromResponse["id"], order.id
+            order_from_response["id"], order.id
         )
-        self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
+        self.assertEqual(order_from_response["transaction"]["id"], order.transaction.id)
         self.assertEqual(
-            orderFromResponse["transaction"]["branch"]["id"], 
-            int(checkoutFormPayload["branchId"]))
+            order_from_response["transaction"]["branch"]["id"], 
+            int(checkout_form_payload["branchId"]))
         self.assertEqual(
-            float(orderFromResponse["transaction"]["amount"]), 
-            float(checkoutFormPayload["totalCheckoutAmount"])
+            float(order_from_response["transaction"]["amount"]), 
+            float(checkout_form_payload["totalCheckoutAmount"])
         )
 
 class CancelOrderTests(TestCase):

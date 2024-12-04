@@ -54,7 +54,7 @@ class GlobalViewFunctions():
         return branch
 
     def if_user_is_super_admin(self, request):
-        if request.user.is_superuser and request.user.useraccount.canCreateMerchants:
+        if request.user.is_superuser and request.user.useraccount.can_create_merchants:
             return True
         return False
     
@@ -68,8 +68,8 @@ class GlobalViewFunctions():
         else: return False
 
     def check_if_user_matches_product_merchant(self, request, productMerchant:MerchantBusiness):
-        userAccount = request.user.useraccount
-        if userAccount == productMerchant.user_account: return True
+        user_account = request.user.useraccount
+        if user_account == productMerchant.user_account: return True
         return False
 
     def notify_all_of_item_creation(self, instance):
@@ -92,13 +92,13 @@ class GlobalViewFunctions():
             tb = traceback.format_exc()
             raise Exception(f"{tb}")
 
-    def send_activation_email(self, userAccount, request):
+    def send_activation_email(self, user_account, request):
         mail_subject = "Littlebuddies Email Activation"
-        user = User.objects.get(id=userAccount["user"]["id"])
+        user = User.objects.get(id=user_account["user"]["id"])
         message = render_to_string(
             "email_templates/email_account_activation.html",
             {
-                "userFirstName": userAccount["user"]["first_name"],
+                "userFirstName": user_account["user"]["first_name"],
                 "domain": f"http://{get_current_site(request).domain}",
                 "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
                 "activationToken": accountActivationTokenGenerator.make_token(user=user),
@@ -107,7 +107,7 @@ class GlobalViewFunctions():
         )
         plain_message = strip_tags(message)
         email = EmailMultiAlternatives(
-            mail_subject, plain_message, to=[userAccount["user"]["email"]]
+            mail_subject, plain_message, to=[user_account["user"]["email"]]
         )
         email.attach_alternative(message, "text/html")
         if settings.DEBUG:
@@ -116,9 +116,9 @@ class GlobalViewFunctions():
             else:
                 raise Exception("Failed to send activation email")
         
-    def send_password_reset_request_email(self, userAccount:UserAccount, request):
+    def send_password_reset_request_email(self, user_account:UserAccount, request):
         mail_subject = "Littlebuddies Password Reset"
-        user = userAccount.user
+        user = user_account.user
         context = {
             "userFirstName": user.first_name,
             "domain": f"{'https' if request.is_secure() else 'http'}://{get_current_site(request).domain}",

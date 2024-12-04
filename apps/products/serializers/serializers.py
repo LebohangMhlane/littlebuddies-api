@@ -34,7 +34,7 @@ class ProductSerializer(ModelSerializer):
     def create(self, validated_data, request):
         try:
             merchant = MerchantBusiness.objects.get(pk=validated_data["merchantPk"])
-            userAccount = request.user.useraccount
+            user_account = request.user.useraccount
             product = Product()
             product.merchant = merchant
             product.name = validated_data["name"]
@@ -44,7 +44,7 @@ class ProductSerializer(ModelSerializer):
             product.image = validated_data["image"]
             product.storeReference = validated_data["storeReference"]
             product.discountPercentage = validated_data["discountPercentage"]
-            product.createdBy = userAccount
+            product.createdBy = user_account
             product.save()
         except Exception as e:
             raise Exception("Failed to create a product")

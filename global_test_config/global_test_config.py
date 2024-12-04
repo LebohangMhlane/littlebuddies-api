@@ -62,7 +62,7 @@ class GlobalTestCaseConfig(TestCase):
             data=userInputData,
         )
         testUserAccount = UserAccount.objects.get(
-            user__username=response.data["userAccount"]["user"]["username"]
+            user__username=response.data["user_account"]["user"]["username"]
         )
         return testUserAccount
     
@@ -70,32 +70,32 @@ class GlobalTestCaseConfig(TestCase):
         userInputData = {
             "username": "customer",
             "password": "HelloWorld",
-            "firstName": "Customer",
-            "lastName": "IWantToOrder",
+            "first_name": "Customer",
+            "last_name": "IWantToOrder",
             "email": "customer@gmail.com",
             "address": "71 Rethman Street, New Germany, Durban",
-            "phoneNumber": "0631837747",
-            "isMerchant": False,
-            "deviceToken": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
-            "emailVerified": True,
+            "phone_number": "0631837747",
+            "is_merchant": False,
+            "device_token": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
+            "email_verified": True,
         }
         customer = User.objects.create(
             username=userInputData["username"],
             password=make_password(userInputData["password"]),
-            first_name=userInputData["firstName"],
-            last_name=userInputData["lastName"],
+            first_name=userInputData["first_name"],
+            last_name=userInputData["last_name"],
             email=userInputData["email"],
         )
-        testUserAccount = UserAccount.objects.create(
+        test_user_account = UserAccount.objects.create(
             user=customer,
             address=userInputData["address"],
-            phoneNumber=userInputData["phoneNumber"],
-            isMerchant=userInputData["isMerchant"],
-            deviceToken=userInputData["deviceToken"],
-            emailVerified=userInputData["emailVerified"],
+            phone_number=userInputData["phone_number"],
+            is_merchant=userInputData["is_merchant"],
+            device_token=userInputData["device_token"],
+            email_verified=userInputData["email_verified"],
         )
         token = Token.objects.create(user=customer)
-        return testUserAccount
+        return test_user_account
     
     def create_merchant_user_account(self, user_data={}):
         try:
@@ -143,11 +143,11 @@ class GlobalTestCaseConfig(TestCase):
             content_type=f"application/json",
             data=userInputData,
         )
-        testMerchantUserAccount = UserAccount.objects.get(user__email=userInputData["email"])
-        return testMerchantUserAccount
+        testmerchant_user_account = UserAccount.objects.get(user__email=userInputData["email"])
+        return testmerchant_user_account
     
     def create_normal_test_account_and_login(self):
-        userAccount = self.create_normal_test_account()
+        user_account = self.create_normal_test_account()
         loginUrl = reverse("login")
         response = self.client.post(
             path=loginUrl,
@@ -155,7 +155,7 @@ class GlobalTestCaseConfig(TestCase):
             data=self.loginPayload,
         )
         self.authToken = response.data["token"]
-        self.userAccount = userAccount
+        self.user_account = user_account
         return self.authToken
 
     def login_as_merchant(self):
@@ -243,15 +243,15 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return merchant
     
-    def make_normal_account_super_admin(self, userAccountPk:int):
-        userAccount = UserAccount.objects.get(pk=userAccountPk)
-        userAccount.user.is_superuser = True
-        userAccount.user.save()
-        userAccount.can_create_merchants = True
-        userAccount.save()
-        return userAccount
+    def make_normal_account_super_admin(self, user_accountPk:int):
+        user_account = UserAccount.objects.get(pk=user_accountPk)
+        user_account.user.is_superuser = True
+        user_account.user.save()
+        user_account.can_create_merchants = True
+        user_account.save()
+        return user_account
 
-    def create_product(self, merchant:MerchantBusiness, merchantUserAccount, name, price, discountPercent=0):
+    def create_product(self, merchant:MerchantBusiness, merchant_user_account, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
 
@@ -273,7 +273,7 @@ class GlobalTestCaseConfig(TestCase):
                 branchProduct.branch = branch
                 branchProduct.branchPrice = product.recommendedRetailPrice + price # store charging R100 more
                 branchProduct.storeReference = "3EERDE2"
-                branchProduct.createdBy = merchantUserAccount
+                branchProduct.createdBy = merchant_user_account
                 branchProduct.product = product
                 branchProduct.save()
 
