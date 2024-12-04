@@ -154,7 +154,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
     def test_search_excludes_inactive_or_out_of_stock(self):
         """Test that out of stock products are excluded"""
-        self.branch_product1.inStock = False
+        self.branch_product1.in_stock = False
         self.branch_product1.save()
 
         url = self.get_search_url('Dog Food', "1,2")

@@ -262,7 +262,7 @@ class GlobalTestCaseConfig(TestCase):
             except:
                 product = Product()
                 product.name = name
-                product.recommendedRetailPrice = 200
+                product.recommended_retail_price = 200
                 product.image = "image"
                 product.category = 1
                 product.description = ""
@@ -271,9 +271,9 @@ class GlobalTestCaseConfig(TestCase):
             for branch in branches:
                 branchProduct = BranchProduct()
                 branchProduct.branch = branch
-                branchProduct.branchPrice = product.recommendedRetailPrice + price # store charging R100 more
-                branchProduct.storeReference = "3EERDE2"
-                branchProduct.createdBy = merchant_user_account
+                branchProduct.branch_price = product.recommended_retail_price + price # store charging R100 more
+                branchProduct.store_reference = "3EERDE2"
+                branchProduct.created_by = merchant_user_account
                 branchProduct.product = product
                 branchProduct.save()
 

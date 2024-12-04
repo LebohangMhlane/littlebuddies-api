@@ -73,7 +73,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 if product.has_campaign:
                     product_data['campaign'] = {
                         'percentage_off': float(product.campaign_percentage or 0),
-                        'final_price': float(product.final_price or product.branchPrice)
+                        'final_price': float(product.final_price or product.branch_price)
                     }
                 else:
                     product_data['campaign'] = None

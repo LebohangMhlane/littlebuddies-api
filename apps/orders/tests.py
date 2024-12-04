@@ -482,7 +482,7 @@ class RepeatOrderViewTestCase(TestCase):
     
     def test_repeat_order_with_no_stock(self):
         
-        self.branch_product1.inStock = False
+        self.branch_product1.in_stock = False
         self.branch_product1.save()
         
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
