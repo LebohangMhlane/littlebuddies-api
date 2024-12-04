@@ -392,20 +392,20 @@ class RepeatOrderViewTestCase(TestCase):
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch, 
             product=self.product1, 
-            inStock=True,
-            isActive=True,
-            branchPrice=100,
+            in_stock=True,
+            is_active=True,
+            branch_price=100,
             storeReference='BP1',
-            createdBy=self.user_account
+            created_by=self.user_account
         )
         self.branch_product2 = BranchProduct.objects.create(
             branch=self.branch, 
             product=self.product2, 
-            inStock=False,
-            isActive=True,
-            branchPrice=50,
+            in_stock=False,
+            is_active=True,
+            branch_price=50,
             storeReference='BP2',
-            createdBy=self.user_account
+            created_by=self.user_account
         )
         
         self.order = Order.objects.create(

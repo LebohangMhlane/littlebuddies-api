@@ -155,13 +155,13 @@ class RepeatOrder(APIView, GlobalViewFunctions):
 
         for ordered_product in order.orderedProducts.all():
             branch_product = ordered_product.branchProduct
-            special_price = branch_product.branchPrice
+            special_price = branch_product.branch_price
 
-            if branch_product.inStock:
+            if branch_product.in_stock:
                 sale_campaign = active_sales.filter(branchProducts=branch_product).first()
                 if sale_campaign:
                     discount = sale_campaign.percentageOff
-                    special_price = branch_product.branchPrice * (1 - discount / 100)
+                    special_price = branch_product.branch_price * (1 - discount / 100)
 
                 product_details = {
                     "product_id": branch_product.product.id,
@@ -170,11 +170,11 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                     "current_price": special_price,
                 }
 
-                if branch_product.branchPrice != special_price:
+                if branch_product.branch_price != special_price:
                     price_changes.append({
                         "product_id": branch_product.product.id,
                         "name": branch_product.product.name,
-                        "old_price": branch_product.branchPrice,
+                        "old_price": branch_product.branch_price,
                         "new_price": special_price,
                     })
 

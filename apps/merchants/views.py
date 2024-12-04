@@ -127,7 +127,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 sale_campaign = sale_campaigns.filter(branchProducts=branch_product["id"]).first()
                 if sale_campaign:
                     discount = sale_campaign.percentageOff
-                    branch_product["branchPrice"] = branch_product["branchPrice"] * (1 - discount / 100)
+                    branch_product["branch_price"] = branch_product["branch_price"] * (1 - discount / 100)
 
     def _get_customer_address(self, coordinates, gmaps_client):
         try:
@@ -247,7 +247,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
     
     def deactivateMerchant(self, merchantId):
         merchant = MerchantBusiness.objects.get(pk=int(merchantId))
-        merchant.isActive = False
+        merchant.is_active = False
         merchant.save()
         
     def notifyAllOfDeactivation(self):

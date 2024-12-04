@@ -30,7 +30,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             # Prepare filters and current date
             current_date = datetime.now().date()
-            filters = Q(product__name__icontains=query, inStock=True, isActive=True)
+            filters = Q(product__name__icontains=query, in_stock=True, is_active=True)
             
             if store_ids:
                 filters &= Q(branch__merchant__id__in=store_ids)
@@ -58,9 +58,9 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 final_price=Case(
                     When(
                         has_campaign=True,
-                        then=F('branchPrice') - (F('branchPrice') * F('campaign_percentage') / 100)
+                        then=F('branch_price') - (F('branch_price') * F('campaign_percentage') / 100)
                     ),
-                    default=F('branchPrice'),
+                    default=F('branch_price'),
                     output_field=DecimalField(max_digits=10, decimal_places=2)
                 )
             )

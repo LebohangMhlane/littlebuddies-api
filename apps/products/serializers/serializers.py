@@ -40,11 +40,11 @@ class ProductSerializer(ModelSerializer):
             product.name = validated_data["name"]
             product.description = validated_data["description"]
             product.originalPrice = validated_data["originalPrice"]
-            product.inStock = bool(validated_data["inStock"])
+            product.in_stock = bool(validated_data["in_stock"])
             product.image = validated_data["image"]
             product.storeReference = validated_data["storeReference"]
             product.discountPercentage = validated_data["discountPercentage"]
-            product.createdBy = user_account
+            product.created_by = user_account
             product.save()
         except Exception as e:
             raise Exception("Failed to create a product")
@@ -56,7 +56,7 @@ class BranchProductSerializer(ModelSerializer):
 
         class Meta:
             model = BranchProduct
-            fields = ['id', 'branchPrice', 'merchant_name', 'merchant_logo', 'product', 'branch']
+            fields = ['id', 'branch_price', 'merchant_name', 'merchant_logo', 'product', 'branch']
             depth = 2
 
         def is_valid(self, *, raise_exception=False):

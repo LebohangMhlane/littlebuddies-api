@@ -35,8 +35,8 @@ class CheckoutForm():
             # productsExistCount = Product.objects.filter(
             #     id__in=self.products, 
             #     merchant__id=self.merchantId, 
-            #     isActive=True, 
-            #     inStock=True
+            #     is_active=True, 
+            #     in_stock=True
             # ).count()
             # if productsExistCount == len(self.products):
             #     return True
@@ -46,7 +46,7 @@ class CheckoutForm():
         def checkifPricesMatch():
             # TODO: disabling this for now. Company applied specials and discounts will come later.
             # products = Product.objects.filter(
-            #     id__in=self.products, merchant__id=self.merchantId, isActive=True
+            #     id__in=self.products, merchant__id=self.merchantId, is_active=True
             # )
             # totalAmountAfterDiscounts = 0
             # for product in products:

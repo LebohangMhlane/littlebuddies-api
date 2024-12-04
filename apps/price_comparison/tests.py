@@ -53,38 +53,38 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         # Create branch products
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch_1,
-            createdBy=self.merchant_business_1.user_account,
+            created_by=self.merchant_business_1.user_account,
             product=self.product_1,
-            branchPrice=50.00,
-            inStock=True,
-            isActive=True,
+            branch_price=50.00,
+            in_stock=True,
+            is_active=True,
         )
 
         self.branch_product2 = BranchProduct.objects.create(
             branch=self.branch_2,
             product=self.product_1,
-            createdBy=self.merchant_user_2,
-            branchPrice=75.00,
-            inStock=True,
-            isActive=True
+            created_by=self.merchant_user_2,
+            branch_price=75.00,
+            in_stock=True,
+            is_active=True
         )
 
         self.branch_product3 = BranchProduct.objects.create(
             branch=self.branch_1,
             product=self.product_2,
-            createdBy=self.merchant_user_1,
-            branchPrice=75.00,
-            inStock=True,
-            isActive=True
+            created_by=self.merchant_user_1,
+            branch_price=75.00,
+            in_stock=True,
+            is_active=True
         )
 
         self.branch_product4 = BranchProduct.objects.create(
             branch=self.branch_2,
             product=self.product_2,
-            createdBy=self.merchant_user_2,
-            branchPrice=75.00,
-            inStock=True,
-            isActive=True
+            created_by=self.merchant_user_2,
+            branch_price=75.00,
+            in_stock=True,
+            is_active=True
         )
 
         return super().setUp()
@@ -103,7 +103,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
-        self.assertEqual(response.data['products'][0]['branchPrice'], 50.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
         self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
@@ -113,7 +113,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
-        self.assertEqual(response.data['products'][0]['branchPrice'], 50.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
         self.assertEqual(response.data['products'][0]['branch']['id'], self.branch_1.id)
 
     def test_search_with_multiple_store_filter(self):
@@ -123,8 +123,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
-        self.assertEqual(response.data['products'][0]['branchPrice'], 50.00)
-        self.assertEqual(response.data['products'][1]['branchPrice'], 75.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
+        self.assertEqual(response.data['products'][1]['branch_price'], 75.00)
 
     def test_search_with_invalid_store_ids(self):
         """Test search with invalid store IDs format"""
@@ -206,6 +206,6 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
         self.assertLess(
-            response.data['products'][0]['branchPrice'],
-            response.data['products'][1]['branchPrice']
+            response.data['products'][0]['branch_price'],
+            response.data['products'][1]['branch_price']
         )

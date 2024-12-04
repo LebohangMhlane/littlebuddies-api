@@ -8,4 +8,4 @@ class BranchProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BranchProduct
-        fields = ['product_name', 'branch_name', 'branchPrice', 'storeReference', 'branch_id'] 
+        fields = ['product_name', 'branch_name', 'branch_price', 'storeReference', 'branch_id'] 

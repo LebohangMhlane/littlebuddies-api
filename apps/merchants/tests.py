@@ -172,7 +172,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.make_normal_account_super_admin(self.user_account.pk)
         testmerchant_user_account = self.create_merchant_user_account({})
         merchant = self.create_merchant_business(testmerchant_user_account)
-        self.assertEqual(merchant.isActive, True)
+        self.assertEqual(merchant.is_active, True)
         payload = {
             "merchantId": 1,
         }
@@ -185,14 +185,14 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data["success"])
         merchant = MerchantBusiness.objects.get(pk=payload["merchantId"])
-        self.assertEqual(merchant.isActive, False)
+        self.assertEqual(merchant.is_active, False)
 
     def test_deactivate_merchant_failure(self):
         testAccountToken = self.create_normal_test_account_and_login()
         _ = self.make_normal_account_super_admin(self.user_account.pk)
         testmerchant_user_account = self.create_merchant_user_account()
         merchant = self.create_merchant_business(testmerchant_user_account)
-        self.assertEqual(merchant.isActive, True)
+        self.assertEqual(merchant.is_active, True)
         payload = {
             "merchantId": 100, # id doesn't exist
         }
@@ -206,7 +206,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["message"], "Failed to deactivate merchant")
         self.assertFalse(response.data["success"])
         merchant = MerchantBusiness.objects.get(pk=1)
-        self.assertEqual(merchant.isActive, True)
+        self.assertEqual(merchant.is_active, True)
 
     def test_update_merchant(self):
         testAccountToken = self.create_normal_test_account_and_login()

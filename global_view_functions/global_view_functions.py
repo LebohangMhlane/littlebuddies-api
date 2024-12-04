@@ -79,9 +79,9 @@ class GlobalViewFunctions():
         logger.info("Getting updated stores near customer...")
         try:
             products = Product.objects.filter(
-                isActive=True,
+                is_active=True,
                 branch=branch,
-                inStock=True,
+                in_stock=True,
             )
             if products:
                 serializer = ProductSerializer(products, many=True)
