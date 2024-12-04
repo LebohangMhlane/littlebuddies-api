@@ -6,7 +6,7 @@ from apps.products.models import BranchProduct, Product
 
 def setDate():
     todaysDate = datetime.datetime.now()
-    todaysDate = todaysDate.strftime()
+    todaysDate = todaysDate.strftime("%Y-%m-%d %H:%M:%S")
     return todaysDate
 
 class Order(models.Model):

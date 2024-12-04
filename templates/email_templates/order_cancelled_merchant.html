@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Cancellation Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f4f4f4;
+            padding: 10px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .footer {
+            background-color: #f4f4f4;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Order Cancellation Notification</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ order.transaction.branch.merchant.name }} Team,</p>
+        
+        <p>This is to inform you that an order has been cancelled:</p>
+        
+        <h2>Order Information:</h2>
+        <table>
+            <tr>
+                <th>Order Reference</th>
+                <td>{{ order.transaction.reference }}</td>
+            </tr>
+            <tr>
+                <th>Customer Name</th>
+                <td>{{ order.transaction.customer.user.first_name }} {{ order.transaction.customer.user.last_name }}</td>
+            </tr>
+            <tr>
+                <th>Order Date</th>
+                <td>{{ order.created|date:"F d, Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Customer Email</th>
+                <td>{{ order.transaction.customer.user.email }}</td>
+            </tr>
+            <tr>
+                <th>Delivery Address</th>
+                <td>{{ order.address }}</td>
+            </tr>
+            <tr>
+                <th>Delivery Date</th>
+                <td>{{ order.deliveryDate }}</td>
+            </tr>
+        </table>
+
+        <h2>Ordered Products:</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ordered_product in order.orderedProducts.all %}
+                <tr>
+                    <td>{{ ordered_product.branchProduct.product.name }}</td>
+                    <td>{{ ordered_product.quantityOrdered }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p>Please take any necessary actions to process this cancellation in your system.</p>
+        
+        <p>Best regards,<br>LittleBuddies Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {% now "Y" %} {{ order.transaction.branch.merchant.name }}. All rights reserved.</p>
+    </div>
+</body>
+</html>
