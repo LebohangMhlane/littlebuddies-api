@@ -332,7 +332,6 @@ class CancelOrderTests(TestCase):
             "Order cannot be cancelled at this stage."
         )
 
-
 class RepeatOrderViewTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -425,7 +424,6 @@ class RepeatOrderViewTestCase(TestCase):
         
         self.order.orderedProducts.add(self.ordered_product1, self.ordered_product2)
 
-
     def test_repeat_order_success(self):
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
 
@@ -453,8 +451,6 @@ class RepeatOrderViewTestCase(TestCase):
             self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
 
             self.assertEqual(data['new_cost'], 'R 200.00')
-
-
             
     def test_repeat_order_not_found(self):
         
