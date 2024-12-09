@@ -119,7 +119,6 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
 
                     return user_account.data
 
-
     def sort_user_data(self, receivedPayload):
         userData = {
             "username": f"{receivedPayload['firstName']}{receivedPayload['lastName']}{receivedPayload['phoneNumber']}",

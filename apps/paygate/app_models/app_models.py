@@ -8,7 +8,7 @@ from apps.products.models import BranchProduct, Product
 class CheckoutForm():
     branchId = 0
     total_checkout_amount = "0.0"
-    branchProducts = []
+    branch_products = []
     productIds = []
     discountTotal = 0
     delivery = True
@@ -20,7 +20,7 @@ class CheckoutForm():
         payload = payload.copy()
         self.branchId = int(payload.get("branchId"))
         self.total_checkout_amount = payload["totalCheckoutAmount"]
-        self.branchProducts = self._setProducts(payload.get("products"))
+        self.branch_products = self._setProducts(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
         self.deliveryDate = payload.get("deliveryDate")
         self.address = payload.get("address")
@@ -63,23 +63,23 @@ class CheckoutForm():
         if verifyProductExistence() and checkifPricesMatch():
             return True
     
-    def _setProducts(self, branchProducts):
+    def _setProducts(self, branch_products):
         try:
-            orderedBranchProducts = []
+            orderedbranch_products = []
             # test cases require eval() conversion
             # running from mobile doesn't:
             try:
-                branchProducts = eval(branchProducts)
+                branch_products = eval(branch_products)
             except:
                 pass
-            for branchProduct in branchProducts:
+            for branchProduct in branch_products:
                 product = BranchProduct.objects.get(id=branchProduct["id"])
                 orderedProduct = OrderedProduct.objects.create(
                     branchProduct=product,
                     quantityOrdered=branchProduct["quantityOrdered"]
                 )
-                orderedBranchProducts.append(orderedProduct)
-            return orderedBranchProducts
+                orderedbranch_products.append(orderedProduct)
+            return orderedbranch_products
         except Exception as e:
             raise e
 
@@ -96,5 +96,5 @@ class CheckoutForm():
         return productIds
     
     def setProductCount(self):
-        for product in self.branchProducts:
+        for product in self.branch_products:
             self.productCount += int(product.quantityOrdered)

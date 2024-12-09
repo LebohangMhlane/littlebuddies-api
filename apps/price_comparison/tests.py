@@ -103,7 +103,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
-        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], "50.00")
         self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
@@ -113,7 +113,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
-        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], "50.00")
         self.assertEqual(response.data['products'][0]['branch']['id'], self.branch_1.id)
 
     def test_search_with_multiple_store_filter(self):
@@ -123,8 +123,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
-        self.assertEqual(response.data['products'][0]['branch_price'], 50.00)
-        self.assertEqual(response.data['products'][1]['branch_price'], 75.00)
+        self.assertEqual(response.data['products'][0]['branch_price'], "50.00")
+        self.assertEqual(response.data['products'][1]['branch_price'], "75.00")
 
     def test_search_with_invalid_store_ids(self):
         """Test search with invalid store IDs format"""
@@ -177,10 +177,10 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         # Create campaign with required branch field
         campaign = SaleCampaign.objects.create(
             branch=self.branch_1,
-            percentageOff=10,
-            campaignEnds=datetime.now().date() + timedelta(days=5)
+            percentage_off=10,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
         )
-        campaign.branchProducts.add(self.branch_product1)
+        campaign.branch_products.add(self.branch_product1)
         
         url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)
@@ -195,10 +195,10 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         # Create campaign with required branch field
         campaign = SaleCampaign.objects.create(
             branch=self.branch_2,
-            percentageOff=20,
-            campaignEnds=datetime.now().date() + timedelta(days=5)
+            percentage_off=20,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
         )
-        campaign.branchProducts.add(self.branch_product2)
+        campaign.branch_products.add(self.branch_product2)
         
         url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)

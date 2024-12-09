@@ -278,13 +278,13 @@ class GlobalTestCaseConfig(TestCase):
                 branchProduct.save()
 
                 if discountPercent > 0:
-                    saleCampaign = SaleCampaign()
-                    saleCampaign.branch = branch
-                    saleCampaign.campaignEnds = datetime.now() + timedelta(days=5)
-                    saleCampaign.percentageOff = discountPercent
-                    saleCampaign.save()
-                    saleCampaign.branchProducts.add(branchProduct)
-                    saleCampaign.save()
+                    sale_campaign = SaleCampaign()
+                    sale_campaign.branch = branch
+                    sale_campaign.campaign_ends = datetime.now() + timedelta(days=5)
+                    sale_campaign.percentage_off = discountPercent
+                    sale_campaign.save()
+                    sale_campaign.branch_products.add(branchProduct)
+                    sale_campaign.save()
 
         except Exception as e:
             pass

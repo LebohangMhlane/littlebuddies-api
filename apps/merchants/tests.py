@@ -31,7 +31,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(len(response.data["petstores"]), 1)
 
-
     def test_get_nearest_branch(self):
 
         _ = self.create_test_customer()

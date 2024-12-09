@@ -91,9 +91,9 @@ class Branch(models.Model):
 class SaleCampaign(models.Model):
 
     branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
-    percentageOff = models.PositiveIntegerField()
-    branchProducts = models.ManyToManyField("products.BranchProduct")
-    campaignEnds = models.DateField(default=datetime.now() + timedelta(days=5))
+    percentage_off = models.PositiveIntegerField()
+    branch_products = models.ManyToManyField("products.BranchProduct")
+    campaign_ends = models.DateField(default=datetime.now() + timedelta(days=5))
     
     def __str__(self) -> str:
         return f"{self.branch.merchant.name} - {self.branch.area} - sale campaign"

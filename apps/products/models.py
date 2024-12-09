@@ -26,7 +26,7 @@ class BranchProduct(models.Model):
     merchant_name = models.CharField(max_length=250, null=True, blank=True)
     merchant_logo = models.CharField(max_length=300, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    branch_price = models.FloatField(blank=False, null=True)
+    branch_price = models.DecimalField(blank=False, null=True, decimal_places=2, default=0.00, max_digits=6)
     store_reference = models.CharField(max_length=200, blank=False, default="")
     created_by = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
 

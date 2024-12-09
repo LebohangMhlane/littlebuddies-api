@@ -150,7 +150,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
 
         active_sales = SaleCampaign.objects.filter(
             branch=branch,
-            campaignEnds__gte=datetime.datetime.now()
+            campaign_ends__gte=datetime.datetime.now()
         )
 
         for ordered_product in order.orderedProducts.all():
@@ -158,9 +158,9 @@ class RepeatOrder(APIView, GlobalViewFunctions):
             special_price = branch_product.branch_price
 
             if branch_product.in_stock:
-                sale_campaign = active_sales.filter(branchProducts=branch_product).first()
+                sale_campaign = active_sales.filter(branch_products=branch_product).first()
                 if sale_campaign:
-                    discount = sale_campaign.percentageOff
+                    discount = sale_campaign.percentage_off
                     special_price = branch_product.branch_price * (1 - discount / 100)
 
                 product_details = {
@@ -178,7 +178,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                         "new_price": special_price,
                     })
 
-                new_cost += special_price * ordered_product.quantityOrdered
+                new_cost += float(special_price) * ordered_product.quantityOrdered
                 product_list.append(product_details)
             else:
                 out_of_stock.append({

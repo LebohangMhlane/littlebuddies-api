@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.products.models import BranchProduct
 
-class BranchProductSerializer(serializers.ModelSerializer):
+class branch_productserializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name')
     branch_name = serializers.CharField(source='branch.merchant.name')
     branch_id = serializers.IntegerField(source='branch.id', read_only=True)  

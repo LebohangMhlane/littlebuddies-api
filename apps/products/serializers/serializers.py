@@ -52,7 +52,7 @@ class ProductSerializer(ModelSerializer):
     
 
 
-class BranchProductSerializer(ModelSerializer):
+class branch_productserializer(ModelSerializer):
 
         class Meta:
             model = BranchProduct

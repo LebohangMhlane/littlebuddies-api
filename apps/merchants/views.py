@@ -24,7 +24,7 @@ from apps.merchants.serializers.merchant_serializer import BranchSerializer, Mer
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.products.models import BranchProduct
-from apps.products.serializers.serializers import BranchProductSerializer, ProductSerializer
+from apps.products.serializers.serializers import branch_productserializer, ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 import logging
 
@@ -37,17 +37,17 @@ class GetStoreRange(APIView, GlobalViewFunctions):
             coordinates = kwargs.get('coordinates') # TODO: find out whats going on here
             mb = MerchantBusiness.objects.all()
             sc = SaleCampaign.objects.filter(branch__merchant__in=mb)
-            saleCampaigns = []
+            sale_campaigns = []
             if sc: 
-                scs = SaleCampaignSerializer(sc, many=True) 
-                saleCampaigns = scs.data
+                scs = SaleCampaignSerializer(sc, many=True)
+                sale_campaigns = scs.data
             if mb: ms = MerchantSerializer(mb, many=True)
             else: raise Exception("No Pet stores were found")
             return Response({
                 "success": True,
                 "message": "Store range retrieved successfully",
                 "petstores": ms.data,
-                "saleCampaigns": saleCampaigns
+                "sale_campaigns": sale_campaigns
             }, status=200)
         except Exception as e:
             return Response({
@@ -98,12 +98,12 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             bs = BranchSerializer(branch, many=False)
 
             # get the products this branch has:
-            bps = BranchProductSerializer(BranchProduct.objects.filter(), many=True)
+            bps = branch_productserializer(BranchProduct.objects.filter(), many=True)
 
             # prepare sale campaigns:
             sale_campaigns = SaleCampaign.objects.filter(
                 branch=branch,
-                campaignEnds__gte=datetime.datetime.now()
+                campaign_ends__gte=datetime.datetime.now()
             )
             scs = SaleCampaignSerializer()
             if sale_campaigns: scs = SaleCampaignSerializer(sale_campaigns, many=True)
@@ -113,7 +113,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             branch_data = {
                 "branch": bs.data,
                 "products": bps.data,
-                "saleCampaigns": scs.data if sale_campaigns else [],
+                "sale_campaigns": scs.data if sale_campaigns else [],
             }
             return branch_data
         except Exception as e:
@@ -124,10 +124,10 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
         # adjust prices for each product if it is on sale:
         if sale_campaigns:
             for branch_product in branch_products:
-                sale_campaign = sale_campaigns.filter(branchProducts=branch_product["id"]).first()
+                sale_campaign = sale_campaigns.filter(branch_products=branch_product["id"]).first()
                 if sale_campaign:
-                    discount = sale_campaign.percentageOff
-                    branch_product["branch_price"] = branch_product["branch_price"] * (1 - discount / 100)
+                    discount = sale_campaign.percentage_off
+                    branch_product["branch_price"] = str(float(branch_product["branch_price"]) * (1 - discount / 100))
 
     def _get_customer_address(self, coordinates, gmaps_client):
         try:

@@ -6,7 +6,7 @@ from django.db.models import F, Case, When, DecimalField, Q, Exists, OuterRef, S
 
 from apps.products.models import BranchProduct
 from apps.merchants.models import SaleCampaign
-from apps.products.serializers.serializers import BranchProductSerializer
+from apps.products.serializers.serializers import branch_productserializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 class ProductSearchView(APIView, GlobalViewFunctions):
@@ -45,14 +45,14 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             # Query for active campaigns
             active_campaigns = SaleCampaign.objects.filter(
-                campaignEnds__gte=current_date,
-                branchProducts=OuterRef('pk')
+                campaign_ends__gte=current_date,
+                branch_products=OuterRef('pk')
             ).order_by('id') 
 
             products = products.annotate(
                 has_campaign=Exists(active_campaigns),
                 campaign_percentage=Subquery(
-                    active_campaigns.values('percentageOff')[:1],
+                    active_campaigns.values('percentage_off')[:1],
                     output_field=DecimalField(max_digits=10, decimal_places=2)
                 ),
                 final_price=Case(
@@ -65,7 +65,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 )
             )
 
-            serializer = BranchProductSerializer(products, many=True)
+            serializer = branch_productserializer(products, many=True)
             serialized_data = serializer.data
 
             # Add campaign details to serialized data

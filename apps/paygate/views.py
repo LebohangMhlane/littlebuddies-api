@@ -118,7 +118,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 discountTotal=checkout_form_payload.discountTotal,
                 dateCreated=datetime.datetime.now(),
             )
-            transaction.productsPurchased.set(checkout_form_payload.branchProducts)
+            transaction.productsPurchased.set(checkout_form_payload.branch_products)
             transaction.save()
             return transaction
         return Transaction.objects.filter(
@@ -127,7 +127,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             customer=request.user.useraccount,
             branch=branch,
             amount=str(checkout_form_payload.total_checkout_amount),
-            productsPurchased__id__in=checkout_form_payload.branchProducts,
+            productsPurchased__id__in=checkout_form_payload.branch_products,
             numberOfProducts=checkout_form_payload.productCount,
             discountTotal=checkout_form_payload.discountTotal,
             status=Transaction.PENDING,
