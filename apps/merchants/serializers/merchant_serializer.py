@@ -1,4 +1,3 @@
-
 import traceback
 
 from rest_framework import serializers
@@ -34,7 +33,7 @@ class MerchantSerializer(serializers.ModelSerializer):
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"Failed to create Merchant: {tb}")
-        
+
 
 class BranchSerializer(serializers.ModelSerializer):
 
@@ -57,7 +56,7 @@ class BranchSerializer(serializers.ModelSerializer):
         except Exception as e:
             tb = traceback.format_exc()
             raise Exception(f"Failed to create Branch: {tb}")
-        
+
 
 class SaleCampaignSerializer(serializers.ModelSerializer):
 
@@ -66,8 +65,16 @@ class SaleCampaignSerializer(serializers.ModelSerializer):
         fields = ['percentage_off', 'branch_products', 'campaign_ends', 'branch']
         depth = 2
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if "branch_products" in representation:
+            for branch_product in representation["branch_products"]:
+                new_discount_price = (float(branch_product["branch_price"]) * (1 - representation["percentage_off"] / 100))
+                branch_product["branch_price"] = str(f"{new_discount_price:.2f}")
+        return representation
+
     def is_valid(self, *, raise_exception=False):
         return True
-    
+
     def create(self, validated_data):
         return super().create(validated_data)

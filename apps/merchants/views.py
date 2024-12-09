@@ -127,7 +127,8 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 sale_campaign = sale_campaigns.filter(branch_products=branch_product["id"]).first()
                 if sale_campaign:
                     discount = sale_campaign.percentage_off
-                    branch_product["branch_price"] = str(float(branch_product["branch_price"]) * (1 - discount / 100))
+                    discounted_price = float(branch_product["branch_price"]) * (1 - discount / 100)
+                    branch_product["branch_price"] = str(f"{discounted_price:.2f}")
 
     def _get_customer_address(self, coordinates, gmaps_client):
         try:
