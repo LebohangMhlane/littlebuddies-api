@@ -92,7 +92,7 @@ class SaleCampaign(models.Model):
 
     branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
     percentage_off = models.PositiveIntegerField()
-    branch_products = models.ManyToManyField("products.BranchProduct")
+    branch_product = models.ForeignKey("products.BranchProduct", on_delete=models.CASCADE, null=True, blank=True)
     campaign_ends = models.DateField(default=datetime.now() + timedelta(days=5))
     
     def __str__(self) -> str:

@@ -32,9 +32,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branchId": str(merchant.pk),
+            "branch_id": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
@@ -54,9 +54,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
             content_type='application/x-www-form-urlencoded'
         )
         order = Order.objects.all().first()
-        products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id])
+        products = order.transaction.products_purchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branchId"]))
+        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branch_id"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
 
@@ -79,9 +79,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         branch = merchant.branch_set.all().first()
 
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
@@ -115,7 +115,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
         self.assertEqual(
             orderFromResponse["transaction"]["branch"]["id"], 
-            int(checkout_form_payload["branchId"]))
+            int(checkout_form_payload["branch_id"]))
         self.assertEqual(
             float(orderFromResponse["transaction"]["amount"]), 
             float(checkout_form_payload["totalCheckoutAmount"])
@@ -140,9 +140,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         branch = merchant.branch_set.all().first()
 
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
@@ -178,7 +178,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(order_from_response["transaction"]["id"], order.transaction.id)
         self.assertEqual(
             order_from_response["transaction"]["branch"]["id"], 
-            int(checkout_form_payload["branchId"]))
+            int(checkout_form_payload["branch_id"]))
         self.assertEqual(
             float(order_from_response["transaction"]["amount"]), 
             float(checkout_form_payload["totalCheckoutAmount"])
@@ -414,15 +414,15 @@ class RepeatOrderViewTestCase(TestCase):
         )
         
         self.ordered_product1 = OrderedProduct.objects.create(
-            branchProduct=self.branch_product1, 
-            quantityOrdered=2
+            branch_product=self.branch_product1, 
+            quantity_ordered=2
         )
         self.ordered_product2 = OrderedProduct.objects.create(
-            branchProduct=self.branch_product2, 
-            quantityOrdered=1
+            branch_product=self.branch_product2, 
+            quantity_ordered=1
         )
         
-        self.order.orderedProducts.add(self.ordered_product1, self.ordered_product2)
+        self.order.ordered_products.add(self.ordered_product1, self.ordered_product2)
 
     def test_repeat_order_success(self):
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})

@@ -36,17 +36,16 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
     def post(self, request, *args, **kwargs):
         try:
             checkout_form = CheckoutForm(payload=request.data)
-            branch = self.get_branch(checkout_form.branchId)
+            branch = self.get_branch(checkout_form.branch_id)
             if checkout_form.verify_purchase():
                 paygate_payload, reference = self.prepare_paygate_payload(checkout_form, branch, request)
                 paygate_response = self.send_initiate_payment_request_to_paygate(paygate_payload)
-                
+
                 if paygate_response.status_code == 200:
                     response_as_a_dict = self.convert_response_to_dict(paygate_response.text.split("&"))
                     data_integrity_secure, verified_payload = self.verify_payload_integrity(
                         response_as_a_dict, secret=branch.merchant.get_merchant_secret_key()
                     )
-                    
                     if data_integrity_secure:
                         transaction = self.create_a_transaction(request, checkout_form, branch, reference, verified_payload)
                         if transaction:
@@ -83,82 +82,88 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         reference = f"T{branch.id}{str(request.user.useraccount.phone_number)[-4:]}{request.user.pk}{number_of_branch_transactions}"
         return reference
 
-    def generateChecksum(self, paygate_data, merchantPaygateSecretKey=""):
+    def generateChecksum(self, paygate_data, merchant_paygate_secret_key=""):
         payload = "".join(str(value) for value in paygate_data.values())
-        if merchantPaygateSecretKey:
-            payload += merchantPaygateSecretKey
+        if merchant_paygate_secret_key:
+            payload += merchant_paygate_secret_key
         return hashlib.md5(payload.encode("utf-8")).hexdigest()
 
     def convert_response_to_dict(self, response_data):
         return dict(data_piece.split("=") for data_piece in response_data)
 
-    def send_initiate_payment_request_to_paygate(self, paygatePayload):
-        return requests.post(settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygatePayload)
+    def send_initiate_payment_request_to_paygate(self, paygate_payload):
+        return requests.post(settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygate_payload)
 
-    def create_a_transaction(self, request, checkout_form_payload: CheckoutForm, branch: Branch, reference, verifiedPayload):
-        if not Transaction.objects.filter(
-            payRequestId=verifiedPayload["PAY_REQUEST_ID"],
-            reference=reference,
-            customer=request.user.useraccount,
-            branch=branch,
-            amount=checkout_form_payload.total_checkout_amount,
-            productsPurchased__id__in=checkout_form_payload.productIds,
-            numberOfProducts=checkout_form_payload.productCount,
-            discountTotal=checkout_form_payload.discountTotal,
-            status=Transaction.PENDING,
-        ).exists():
-            transaction = Transaction.objects.create(
-                payRequestId=verifiedPayload["PAY_REQUEST_ID"],
-                reference=reference,
-                customer=request.user.useraccount,
-                branch=branch,
-                amount=checkout_form_payload.total_checkout_amount,
-                numberOfProducts=checkout_form_payload.productCount,
-                status=Transaction.PENDING,
-                discountTotal=checkout_form_payload.discountTotal,
-                dateCreated=datetime.datetime.now(),
-            )
-            transaction.productsPurchased.set(checkout_form_payload.branch_products)
-            transaction.save()
-            return transaction
-        return Transaction.objects.filter(
-            payRequestId=verifiedPayload["PAY_REQUEST_ID"],
-            reference=reference,
-            customer=request.user.useraccount,
-            branch=branch,
-            amount=str(checkout_form_payload.total_checkout_amount),
-            productsPurchased__id__in=checkout_form_payload.branch_products,
-            numberOfProducts=checkout_form_payload.productCount,
-            discountTotal=checkout_form_payload.discountTotal,
-            status=Transaction.PENDING,
+    from datetime import datetime
+
+    def create_transaction(
+        self,
+        request,
+        checkout_form_payload: CheckoutForm,
+        branch: Branch,
+        reference,
+        verified_payload,
+    ):
+        """
+        Creates a new transaction if one does not already exist with the same details.
+        Returns the existing or newly created transaction.
+        """
+        transaction_filters = {
+            "payRequestId": verified_payload["PAY_REQUEST_ID"],
+            "reference": reference,
+            "customer": request.user.useraccount,
+            "branch": branch,
+            "amount": checkout_form_payload.total_checkout_amount,
+            "numberOfProducts": checkout_form_payload.productCount,
+            "discountTotal": checkout_form_payload.discountTotal,
+            "status": Transaction.PENDING,
+        }
+
+        # Check if a matching transaction already exists
+        existing_transaction = Transaction.objects.filter(
+            **transaction_filters,
+            products_purchased__id__in=checkout_form_payload.productIds,
         ).first()
 
-    def create_an_order(self, transaction: Transaction, checkoutForm: CheckoutForm):
+        if existing_transaction:
+            return existing_transaction
+
+        # Create a new transaction
+        new_transaction = Transaction.objects.create(
+            **transaction_filters,
+            dateCreated=datetime.now(),
+        )
+        new_transaction.products_purchased.set(checkout_form_payload.branch_products)
+        new_transaction.save()
+
+        return new_transaction
+
+    def create_an_order(self, transaction: Transaction, checkout_form: CheckoutForm):
         try:
             order = Order.objects.create(
                 transaction=transaction,
                 status=Order.PAYMENT_PENDING,
-                delivery=checkoutForm.delivery,
-                deliveryDate=checkoutForm.deliveryDate,
-                address=checkoutForm.address,
+                delivery=checkout_form.delivery,
+                deliveryDate=checkout_form.deliveryDate,
+                address=checkout_form.address,
             )
-            order.orderedProducts.add(*transaction.productsPurchased.all())
+            order.ordered_products.add(*transaction.products_purchased.all())
             order.save()
-            for orderedProduct in transaction.productsPurchased.all():
-                orderedProduct.order = order
-                orderedProduct.save()
+            for ordered_product in transaction.products_purchased.all():
+                ordered_product.order = order
+                ordered_product.save()
             return order
         except Exception as e:
             raise Exception(f"Failed to create order: {e.args[0]}")
 
-    def return_success_response(self, verifiedPayload, transaction, order):
+    def return_success_response(self, verified_payload, transaction, order):
         orderSerializer = OrderSerializer(order, many=False)
         transactionSerializer = TransactionSerializer(transaction, many=False)
         return Response(
             {
                 "success": True,
                 "message": "Paygate response was successful",
-                "paygatePayload": verifiedPayload,
+                "paygate_payload": verified_payload,
                 "transaction": transactionSerializer.data,
                 "order": orderSerializer.data,
             },

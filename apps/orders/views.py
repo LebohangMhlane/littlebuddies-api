@@ -136,7 +136,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
     def get(self, request, order_id):
         try:
             order = Order.objects.prefetch_related(
-                "orderedProducts__branchProduct__product"
+                "ordered_products__branchProduct__product"
             ).get(id=order_id)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -153,8 +153,8 @@ class RepeatOrder(APIView, GlobalViewFunctions):
             campaign_ends__gte=datetime.datetime.now()
         )
 
-        for ordered_product in order.orderedProducts.all():
-            branch_product = ordered_product.branchProduct
+        for ordered_product in order.ordered_products.all():
+            branch_product = ordered_product.branch_product
             special_price = branch_product.branch_price
 
             if branch_product.in_stock:
@@ -166,7 +166,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                 product_details = {
                     "product_id": branch_product.product.id,
                     "name": branch_product.product.name,
-                    "quantity_ordered": ordered_product.quantityOrdered,
+                    "quantity_ordered": ordered_product.quantity_ordered,
                     "current_price": special_price,
                 }
 
@@ -178,7 +178,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                         "new_price": special_price,
                     })
 
-                new_cost += float(special_price) * ordered_product.quantityOrdered
+                new_cost += float(special_price) * ordered_product.quantity_ordered
                 product_list.append(product_details)
             else:
                 out_of_stock.append({

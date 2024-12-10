@@ -49,8 +49,8 @@ class GlobalViewFunctions():
         else:
             return (False, cleanedPayload)
 
-    def get_branch(self, branchId) -> Branch:
-        branch = Branch.objects.get(id=branchId)
+    def get_branch(self, branch_id) -> Branch:
+        branch = Branch.objects.get(id=branch_id)
         return branch
 
     def if_user_is_super_admin(self, request):

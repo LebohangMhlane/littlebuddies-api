@@ -242,9 +242,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         checkout_form_payload = {
-            "branchId": str(merchant.pk),
+            "branch_id": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "delivery": True,
             "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
@@ -290,9 +290,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(daysFromNow=1),

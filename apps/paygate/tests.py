@@ -25,9 +25,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "400.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
@@ -43,9 +43,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertIsNotNone(transaction)
         self.assertTrue(transaction.amount == checkout_form_payload["totalCheckoutAmount"])
         self.assertEqual(response.data["message"], "Paygate response was successful")
-        self.assertEqual(response.data["paygatePayload"]["PAYGATE_ID"], "10011072130")
-        self.assertEqual(response.data["transaction"]["productsPurchased"][0]["branchProduct"]["product"], 1)
-        self.assertEqual(response.data["transaction"]["productsPurchased"][1]["quantityOrdered"], 2)
+        self.assertEqual(response.data["paygate_payload"]["PAYGATE_ID"], "10011072130")
+        self.assertEqual(response.data["transaction"]["products_purchased"][0]["branch_product"]["product"], 1)
+        self.assertEqual(response.data["transaction"]["products_purchased"][1]["quantity_ordered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], testCustomer.address)
 
     
@@ -62,9 +62,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "400.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
@@ -105,9 +105,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkout_form_payload = {
-            "branchId": str(branch.pk),
+            "branch_id": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
         }
         initiate_payment_url = reverse("initiate_payment_view")
@@ -124,9 +124,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             content_type='application/x-www-form-urlencoded'
         )
         order = Order.objects.all().first()
-        products = order.transaction.productsPurchased.filter(id__in=[p1.id, p2.id]).all()
+        products = order.transaction.products_purchased.filter(id__in=[p1.id, p2.id]).all()
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branchId"]))
+        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branch_id"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.status, Transaction.COMPLETED)
         self.assertEqual(order.transaction.customer.id, customer.id)

@@ -269,13 +269,13 @@ class GlobalTestCaseConfig(TestCase):
                 product.save()
 
             for branch in branches:
-                branchProduct = BranchProduct()
-                branchProduct.branch = branch
-                branchProduct.branch_price = product.recommended_retail_price + price # store charging R100 more
-                branchProduct.store_reference = "3EERDE2"
-                branchProduct.created_by = merchant_user_account
-                branchProduct.product = product
-                branchProduct.save()
+                branch_product = BranchProduct()
+                branch_product.branch = branch
+                branch_product.branch_price = product.recommended_retail_price + price # store charging R100 more
+                branch_product.store_reference = "3EERDE2"
+                branch_product.created_by = merchant_user_account
+                branch_product.product = product
+                branch_product.save()
 
                 if discountPercent > 0:
                     sale_campaign = SaleCampaign()
@@ -283,12 +283,12 @@ class GlobalTestCaseConfig(TestCase):
                     sale_campaign.campaign_ends = datetime.now() + timedelta(days=5)
                     sale_campaign.percentage_off = discountPercent
                     sale_campaign.save()
-                    sale_campaign.branch_products.add(branchProduct)
+                    sale_campaign.branch_product.add(branch_product)
                     sale_campaign.save()
 
         except Exception as e:
             pass
-        return branchProduct
+        return branch_product
     
     def make_date(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)

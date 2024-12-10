@@ -22,7 +22,7 @@ class Transaction(models.Model):
     reference = models.CharField(max_length=255, blank=False, null=True)
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
-    productsPurchased = models.ManyToManyField("orders.OrderedProduct", blank=True)
+    products_purchased = models.ManyToManyField("orders.OrderedProduct", blank=True)
     numberOfProducts = models.PositiveIntegerField(default=0)
     amount = models.CharField(default="0.00", max_length=7, blank=False)
     discountTotal = models.PositiveIntegerField(default=0, blank=False)

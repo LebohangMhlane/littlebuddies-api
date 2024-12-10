@@ -1,6 +1,7 @@
 import datetime
 from django.db import models
 
+from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
 from apps.products.models import BranchProduct, Product
 
@@ -11,12 +12,12 @@ def setDate():
 
 class Order(models.Model):
 
-    PENDING_DELIVERY = "PENDING_DELIVERY"   
+    PENDING_DELIVERY = "PENDING_DELIVERY"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
     PAYMENT_PENDING = "PAYMENT_PENDING"
 
-    orderStatuses = {
+    order_statuses = {
         PENDING_DELIVERY: "PENDING_DELIVERY",
         DELIVERED: "DELIVERED",
         CANCELLED: "CANCELLED",
@@ -25,8 +26,8 @@ class Order(models.Model):
 
     # TODO: convert model to fit the one in the mobile app:
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
-    orderedProducts = models.ManyToManyField("orders.OrderedProduct", related_name="orderedProducts")
-    status = models.CharField(max_length=16, choices=orderStatuses, default=PAYMENT_PENDING)
+    ordered_products = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
+    status = models.CharField(max_length=16, choices=order_statuses, default=PAYMENT_PENDING)
     created = models.DateTimeField(auto_now_add=True)
     acknowledged = models.BooleanField(default=False)
     delivery = models.BooleanField(default=True)
@@ -39,8 +40,9 @@ class Order(models.Model):
 
 class OrderedProduct(models.Model):
 
-    branchProduct = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False, null=True)
-    quantityOrdered = models.PositiveIntegerField()
+    branch_product = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False, null=True)
+    sale_campaign = models.ForeignKey(SaleCampaign, on_delete=models.CASCADE, blank=True, null=True)
+    quantity_ordered = models.PositiveIntegerField()
 
     def __str__(self) -> str:
-        return f"{self.branchProduct.product.name} - {self.quantityOrdered}"
+        return f"{self.branch_product.product.name} - {self.quantity_ordered}"

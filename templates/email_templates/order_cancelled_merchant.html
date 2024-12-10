@@ -87,10 +87,10 @@
                 </tr>
             </thead>
             <tbody>
-                {% for ordered_product in order.orderedProducts.all %}
+                {% for ordered_product in order.ordered_products.all %}
                 <tr>
-                    <td>{{ ordered_product.branchProduct.product.name }}</td>
-                    <td>{{ ordered_product.quantityOrdered }}</td>
+                    <td>{{ ordered_product.branch_product.product.name }}</td>
+                    <td>{{ ordered_product.quantity_ordered }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
