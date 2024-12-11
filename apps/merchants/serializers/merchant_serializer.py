@@ -62,13 +62,14 @@ class SaleCampaignSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = SaleCampaign
-        fields = ['percentage_off', 'branch_products', 'campaign_ends', 'branch']
+        fields = ['percentage_off', 'branch_product', 'campaign_ends', 'branch']
         depth = 2
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if "branch_products" in representation:
-            for branch_product in representation["branch_products"]:
+        if "branch_product" in representation:
+            branch_product = representation["branch_product"]
+            if branch_product is not None:
                 new_discount_price = (float(branch_product["branch_price"]) * (1 - representation["percentage_off"] / 100))
                 branch_product["branch_price"] = str(f"{new_discount_price:.2f}")
         return representation

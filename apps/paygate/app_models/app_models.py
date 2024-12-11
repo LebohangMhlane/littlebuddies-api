@@ -65,6 +65,13 @@ class CheckoutForm():
 
     def _set_ordered_products(self, branch_products):
         try:
+
+            def set_sale_campaign_to_ordered_product():
+                # set the sale campaign if there is one:
+                if sale_campaign: 
+                    ordered_product.sale_campaign = sale_campaign
+                    ordered_product.save()
+
             products_ordered = []
 
             # test cases require eval() conversion, running from mobile doesn't:
@@ -74,6 +81,9 @@ class CheckoutForm():
                 pass
 
             for branch_product in branch_products:
+
+                quantity_ordered = branch_product["quantityOrdered"]
+
                 # get the product:
                 branch_product = BranchProduct.objects.get(id=branch_product["id"])
 
@@ -85,11 +95,10 @@ class CheckoutForm():
                 # create the ordered product:
                 ordered_product = OrderedProduct()
                 ordered_product.branch_product = branch_product
-                ordered_product.quantity_ordered = branch_product["quantity_ordered"]
+                ordered_product.quantity_ordered = quantity_ordered
                 ordered_product.save()
 
-                # set the sale campaign if there is one:
-                if sale_campaign: ordered_product.sale_campaign = sale_campaign
+                set_sale_campaign_to_ordered_product()
 
                 # add the ordered product to the list:
                 products_ordered.append(ordered_product)

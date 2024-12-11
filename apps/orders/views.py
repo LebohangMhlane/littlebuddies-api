@@ -31,6 +31,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
                 orders = self.get_orders_as_customer(request)
             orders = OrderSerializer(orders, many=True)
             orders = orders.data
+            orders = self.modify_orders_that_had_specials(orders)
             return Response({
                 "success": True,
                 "message": "Orders retrieved successfully",
@@ -59,6 +60,19 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
             transaction__status=Transaction.COMPLETED).order_by("created")
         if orders:
             return orders
+
+    def modify_orders_that_had_specials(self, orders):
+        for order in orders:
+            for ordered_product in order["ordered_products"]:
+                if ordered_product["sale_campaign"]:
+                    self._adjust_prices_based_on_sale_campaigns(
+                        ordered_product["sale_campaign"], ordered_product)
+        return orders
+
+    def _adjust_prices_based_on_sale_campaigns(self, sale_campaign, ordered_product):
+        discount = sale_campaign["percentage_off"]
+        discounted_price = float(ordered_product["branch_product"]["branch_price"]) * (1 - discount / 100)
+        ordered_product["branch_product"]["branch_price"] = str(f"{discounted_price:.2f}")
 
 class CancelOrder(APIView, GlobalViewFunctions):
     permission_classes = [permissions.IsAuthenticated]
@@ -158,7 +172,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
             special_price = branch_product.branch_price
 
             if branch_product.in_stock:
-                sale_campaign = active_sales.filter(branch_products=branch_product).first()
+                sale_campaign = active_sales.filter(branch_product=branch_product).first()
                 if sale_campaign:
                     discount = sale_campaign.percentage_off
                     special_price = branch_product.branch_price * (1 - discount / 100)

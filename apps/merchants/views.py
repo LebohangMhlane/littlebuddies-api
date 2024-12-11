@@ -124,7 +124,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
         # adjust prices for each product if it is on sale:
         if sale_campaigns:
             for branch_product in branch_products:
-                sale_campaign = sale_campaigns.filter(branch_products=branch_product["id"]).first()
+                sale_campaign = sale_campaigns.filter(branch_product=branch_product["id"]).first()
                 if sale_campaign:
                     discount = sale_campaign.percentage_off
                     discounted_price = float(branch_product["branch_price"]) * (1 - discount / 100)

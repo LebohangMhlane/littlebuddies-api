@@ -37,6 +37,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         try:
             checkout_form = CheckoutForm(payload=request.data)
             branch = self.get_branch(checkout_form.branch_id)
+
             if checkout_form.verify_purchase():
                 paygate_payload, reference = self.prepare_paygate_payload(checkout_form, branch, request)
                 paygate_response = self.send_initiate_payment_request_to_paygate(paygate_payload)
@@ -46,8 +47,10 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                     data_integrity_secure, verified_payload = self.verify_payload_integrity(
                         response_as_a_dict, secret=branch.merchant.get_merchant_secret_key()
                     )
+
                     if data_integrity_secure:
-                        transaction = self.create_a_transaction(request, checkout_form, branch, reference, verified_payload)
+                        transaction = self.create_transaction(request, checkout_form, branch, reference, verified_payload)
+
                         if transaction:
                             order = self.create_an_order(transaction, checkout_form)
                             return self.return_success_response(verified_payload, transaction, order)
@@ -74,7 +77,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             "COUNTRY": "ZAF",
             "EMAIL": branch.merchant.user_account.user.email,
         }
-        paygate_payload["CHECKSUM"] = self.generateChecksum(paygate_payload, branch.merchant.get_merchant_secret_key())
+        paygate_payload["CHECKSUM"] = self.generate_checksum(paygate_payload, branch.merchant.get_merchant_secret_key())
         return paygate_payload, reference
 
     def create_a_reference(self, branch: Branch, request):
@@ -82,7 +85,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         reference = f"T{branch.id}{str(request.user.useraccount.phone_number)[-4:]}{request.user.pk}{number_of_branch_transactions}"
         return reference
 
-    def generateChecksum(self, paygate_data, merchant_paygate_secret_key=""):
+    def generate_checksum(self, paygate_data, merchant_paygate_secret_key=""):
         payload = "".join(str(value) for value in paygate_data.values())
         if merchant_paygate_secret_key:
             payload += merchant_paygate_secret_key
@@ -131,7 +134,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
         # Create a new transaction
         new_transaction = Transaction.objects.create(
             **transaction_filters,
-            dateCreated=datetime.now(),
         )
         new_transaction.products_purchased.set(checkout_form_payload.branch_products)
         new_transaction.save()
