@@ -175,7 +175,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                 sale_campaign = active_sales.filter(branch_product=branch_product).first()
                 if sale_campaign:
                     discount = sale_campaign.percentage_off
-                    special_price = branch_product.branch_price * (1 - discount / 100)
+                    special_price = float(branch_product.branch_price) * (1 - discount / 100)
 
                 product_details = {
                     "product_id": branch_product.product.id,

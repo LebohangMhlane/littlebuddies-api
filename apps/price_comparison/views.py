@@ -12,6 +12,8 @@ from global_view_functions.global_view_functions import GlobalViewFunctions
 class ProductSearchView(APIView, GlobalViewFunctions):
     permission_classes = []
 
+    # TODO: SaleCampaign now only contains one product per sale campaign
+
     def get(self, request, **kwargs):
         try:
             # Extract query parameters
@@ -46,7 +48,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
             # Query for active campaigns
             active_campaigns = SaleCampaign.objects.filter(
                 campaign_ends__gte=current_date,
-                branch_products=OuterRef('pk')
+                branch_product=OuterRef('pk')
             ).order_by('id') 
 
             products = products.annotate(
