@@ -201,6 +201,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
                 })
 
         response_data = {
+            "success": True,
             "order_id": order.id,
             "branch": {
                 "id": branch.id,
