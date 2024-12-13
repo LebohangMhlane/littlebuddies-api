@@ -180,7 +180,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
             percentage_off=10,
             campaign_ends=datetime.now().date() + timedelta(days=5)
         )
-        campaign.branch_product.add(self.branch_product1)
+        campaign.branch_product = self.branch_product1
         
         url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)

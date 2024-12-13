@@ -306,9 +306,9 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
             if self.if_user_is_merchant(request):
                 orderPk = kwargs["orderPk"]
                 order = Order.objects.filter(pk=orderPk).first()
-                notificationSent = self.sendNotificationOfOrderAcknowledgement(order)
+                notificationSent = self.send_notification_of_acknowledgement(order)
                 if not notificationSent:
-                    self.sendAcknowledgementEmail(order)
+                    self.send_acknowledgement_email(order)
                 order.acknowledged = True
                 order.save()
             else: raise Exception("You're not permitted to use this feature")
@@ -317,18 +317,18 @@ class AcknowledgeOrderView(APIView, GlobalViewFunctions):
                 "orderAcknowledged": True,
             }, status=200)
         except Exception as e:
-            self.sendAcknowledgementEmail(order)
+            self.send_acknowledgement_email(order)
             return Response({
                 "sucess": False,
                 "message": "Failed to acknowledge order",
                 "error": str(e)
             }, status=500)
         
-    def sendNotificationOfOrderAcknowledgement(self, order):
+    def send_notification_of_acknowledgement(self, order):
         notificationSent = FirebaseInstance().sendOrderAcknowledgementNotification(order)
         return notificationSent
     
-    def sendAcknowledgementEmail(self, order:Order):
+    def send_acknowledgement_email(self, order:Order):
         pass
 
 

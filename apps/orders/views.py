@@ -150,7 +150,7 @@ class RepeatOrder(APIView, GlobalViewFunctions):
     def get(self, request, order_id):
         try:
             order = Order.objects.prefetch_related(
-                "ordered_products__branchProduct__product"
+                "ordered_products__branch_product__product"
             ).get(id=order_id)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
