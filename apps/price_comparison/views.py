@@ -14,6 +14,17 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
     # TODO: SaleCampaign now only contains one product per sale campaign
 
+    '''
+    base on query 1 or more products get returned.
+
+    get the sale campaign per product if there is one (if the prodcut is on sale) 1st change.
+
+    previously 1 SaleCampaign object could have more than one product now 1 product can only have one sale campaign
+
+    fix BranchProduct does not have "has_campaign"
+
+    '''
+
     def get(self, request, **kwargs):
         try:
             # Extract query parameters
