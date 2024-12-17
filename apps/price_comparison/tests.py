@@ -173,32 +173,29 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data['error'], 'No product matching this criteria was found.')
 
     def test_search_with_campaign(self):
-        """Test search results with active campaign"""
-        # Create campaign with required branch field
+        
         campaign = SaleCampaign.objects.create(
             branch=self.branch_1,
+            branch_product=self.branch_product1,  # Directly set the branch_product
             percentage_off=10,
             campaign_ends=datetime.now().date() + timedelta(days=5)
         )
-        campaign.branch_product = self.branch_product1
-        
+
         url = self.get_search_url('Dog Food', "1")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
         self.assertIn('campaign', response.data['products'][0])
         self.assertAlmostEqual(response.data['products'][0]['campaign']['final_price'], 45.00)
 
     def test_products_ordered_by_final_price(self):
-        """Test that products are ordered by final price including campaigns"""
-        # Create campaign with required branch field
         campaign = SaleCampaign.objects.create(
-            branch=self.branch_2,
-            percentage_off=20,
-            campaign_ends=datetime.now().date() + timedelta(days=5)
-        )
-        campaign.branch_product.add(self.branch_product2)
+                branch=self.branch_2,
+                branch_product=self.branch_product2, 
+                percentage_off=20,
+                campaign_ends=datetime.now().date() + timedelta(days=5)
+            )
         
         url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)

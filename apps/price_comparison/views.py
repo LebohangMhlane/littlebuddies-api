@@ -12,43 +12,25 @@ from global_view_functions.global_view_functions import GlobalViewFunctions
 class ProductSearchView(APIView, GlobalViewFunctions):
     permission_classes = []
 
-    # TODO: SaleCampaign now only contains one product per sale campaign
-
-    '''
-    base on query 1 or more products get returned.
-
-    get the sale campaign per product if there is one (if the prodcut is on sale) 1st change.
-
-    previously 1 SaleCampaign object could have more than one product now 1 product can only have one sale campaign
-
-    fix BranchProduct does not have "has_campaign"
-
-    '''
-
     def get(self, request, **kwargs):
         try:
-            # Extract query parameters
             query = kwargs.get("query", "").strip()
-            store_ids = kwargs.get("store_ids", "").split(",")
+            store_ids = kwargs.get("store_ids", "").split(",") if kwargs.get("store_ids") else []
             
-            # Validate and parse store_ids
             try:
-                if not isinstance(store_ids, list):
-                    raise ValueError("Store IDs should be a list.")
-            except (SyntaxError, ValueError) as ex:
-                raise Exception("Invalid store IDs format. Ensure it's a list.")
+                store_ids = [sid.strip() for sid in store_ids if sid.strip()]
+            except Exception:
+                raise Exception("Invalid store IDs format.")
 
             if not query:
                 raise Exception("A search query was not specified.")
 
-            # Prepare filters and current date
             current_date = datetime.now().date()
             filters = Q(product__name__icontains=query, in_stock=True, is_active=True)
             
             if store_ids:
                 filters &= Q(branch__merchant__id__in=store_ids)
 
-            # Query branch products
             products = BranchProduct.objects.select_related(
                 'product', 'branch', 'branch__merchant'
             ).filter(filters)
@@ -56,18 +38,20 @@ class ProductSearchView(APIView, GlobalViewFunctions):
             if not products.exists():
                 raise Exception("No product matching this criteria was found.")
 
-            # Query for active campaigns
+            # Note: Now each product can only have one active sale campaign
             active_campaigns = SaleCampaign.objects.filter(
                 campaign_ends__gte=current_date,
                 branch_product=OuterRef('pk')
-            ).order_by('id') 
+            ).order_by('id')
 
             products = products.annotate(
                 has_campaign=Exists(active_campaigns),
+                
                 campaign_percentage=Subquery(
                     active_campaigns.values('percentage_off')[:1],
                     output_field=DecimalField(max_digits=10, decimal_places=2)
                 ),
+                
                 final_price=Case(
                     When(
                         has_campaign=True,
@@ -81,7 +65,6 @@ class ProductSearchView(APIView, GlobalViewFunctions):
             serializer = branch_productserializer(products, many=True)
             serialized_data = serializer.data
 
-            # Add campaign details to serialized data
             for product_data, product in zip(serialized_data, products):
                 if product.has_campaign:
                     product_data['campaign'] = {
