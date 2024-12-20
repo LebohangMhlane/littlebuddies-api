@@ -206,3 +206,152 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
             response.data['products'][0]['branch_price'],
             response.data['products'][1]['branch_price']
         )
+
+    def test_products_ordered_by_final_price(self):
+        campaign1 = SaleCampaign.objects.create(
+            branch=self.branch_2,
+            branch_product=self.branch_product2,  
+            percentage_off=20,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+
+        campaign2 = SaleCampaign.objects.create(
+            branch=self.branch_1,
+            branch_product=self.branch_product1,  
+            percentage_off=5,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+        
+        url = self.get_search_url('Dog Food', "1,2")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 2)
+
+        first_product = response.data['products'][0]
+        second_product = response.data['products'][1]
+
+        first_expected_price = 47.50 
+        second_expected_price = 60.00  
+
+        self.assertEqual(float(first_product['campaign']['final_price']), first_expected_price)
+        self.assertEqual(float(second_product['campaign']['final_price']), second_expected_price)
+        
+        self.assertLess(
+            float(first_product['campaign']['final_price']),
+            float(second_product['campaign']['final_price'])
+        )
+
+    def test_mixed_regular_and_campaign_price_ordering(self):
+        
+        campaign = SaleCampaign.objects.create(
+            branch=self.branch_2,
+            branch_product=self.branch_product2,  
+            percentage_off=50,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+        
+        url = self.get_search_url('Dog Food', "1,2")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 2)
+
+        first_product = response.data['products'][0]
+        second_product = response.data['products'][1]
+
+        self.assertTrue('campaign' in first_product)
+        self.assertEqual(float(first_product['campaign']['final_price']), 38.00)
+
+        self.assertIsNone(second_product.get('campaign'))
+        self.assertEqual(float(second_product['branch_price']), 50.00)
+
+        self.assertLess(
+            float(first_product['campaign']['final_price']),
+            float(second_product['branch_price'])
+        )
+
+    def test_products_ordered_by_final_price(self):
+        
+        campaign1 = SaleCampaign.objects.create(
+            branch=self.branch_2,
+            branch_product=self.branch_product2, 
+            percentage_off=20,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+
+        campaign2 = SaleCampaign.objects.create(
+            branch=self.branch_1,
+            branch_product=self.branch_product1,  
+            percentage_off=5,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+        
+        url = self.get_search_url('Dog Food', "1,2")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 2)
+
+        first_product = response.data['products'][0]
+        second_product = response.data['products'][1]
+
+        first_expected_price = 48.00 
+        second_expected_price = 60.00  
+
+        self.assertEqual(float(first_product['campaign']['final_price']), first_expected_price)
+        self.assertEqual(float(second_product['campaign']['final_price']), second_expected_price)
+        
+        self.assertLess(
+            float(first_product['campaign']['final_price']),
+            float(second_product['campaign']['final_price'])
+        )
+        
+    def test_same_final_price_ordering(self):
+        
+        campaign = SaleCampaign.objects.create(
+            branch=self.branch_2,
+            branch_product=self.branch_product2,
+            percentage_off=33.33,
+            campaign_ends=datetime.now().date() + timedelta(days=5)
+        )
+        
+        url = self.get_search_url('Dog Food', "1,2")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['products']), 2)
+
+        first_product = response.data['products'][0]
+        second_product = response.data['products'][1]
+
+        first_price = (
+            float(first_product['campaign']['final_price']) 
+            if first_product.get('campaign') 
+            else float(first_product['branch_price'])
+        )
+        
+        second_price = (
+            float(second_product['campaign']['final_price']) 
+            if second_product.get('campaign') 
+            else float(second_product['branch_price'])
+        )
+
+        self.assertTrue(
+            (first_product.get('campaign') is None and second_product.get('campaign') is not None) or
+            (first_product.get('campaign') is not None and second_product.get('campaign') is None)
+        )
+        
+        regular_price = 50.00
+        campaign_price = 51.00
+
+        self.assertTrue(
+            (abs(first_price - regular_price) < 0.01 and abs(second_price - campaign_price) < 0.01) or
+            (abs(first_price - campaign_price) < 0.01 and abs(second_price - regular_price) < 0.01)
+        )
+
+        self.assertEqual(
+            min(first_price, second_price),
+            regular_price,
+            "Regular priced product (50.00) should appear first"
+        )

@@ -60,7 +60,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                     default=F('branch_price'),
                     output_field=DecimalField(max_digits=10, decimal_places=2)
                 )
-            )
+            ).order_by('final_price')
 
             serializer = branch_productserializer(products, many=True)
             serialized_data = serializer.data
