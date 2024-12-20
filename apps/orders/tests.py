@@ -5,9 +5,10 @@ from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.core.mail import send_mail
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from apps.orders.models import Order, OrderedProduct
+from apps.orders.models import Order, OrderedProduct, record_cancellation
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount
@@ -257,6 +258,12 @@ class CancelOrderTests(TestCase):
             status=Order.DELIVERED,
             acknowledged=True
         )
+        
+        self.pending_order = Order.objects.create(
+                transaction=self.customer_transaction,
+                status=Order.PENDING_DELIVERY,
+                acknowledged=True
+            )
 
         self.cancel_order_url = reverse('cancel-order')
 
@@ -331,6 +338,23 @@ class CancelOrderTests(TestCase):
             response.data.get('message'), 
             "Order cannot be cancelled at this stage."
         )
+
+    def test_record_cancellation_creation(self):
+        """Test basic cancellation record creation"""
+        cancelled_order = record_cancellation(
+            order=self.pending_order,
+            user=self.customer_account,
+            reason='CUSTOMER_REQUEST',
+            notes='Test cancellation',
+            refund_amount=Decimal('100.00')
+        )
+
+        self.assertEqual(cancelled_order.order, self.pending_order)
+        self.assertEqual(cancelled_order.cancelled_by, self.customer_account)
+        self.assertEqual(cancelled_order.reason, 'CUSTOMER_REQUEST')
+        self.assertEqual(cancelled_order.additional_notes, 'Test cancellation')
+        self.assertEqual(cancelled_order.refund_amount, Decimal('100.00'))
+        self.assertTrue(cancelled_order.refund_initiated)
 
 class RepeatOrderViewTestCase(TestCase):
     def setUp(self):
