@@ -11,7 +11,7 @@ import datetime
 from django.db import transaction
 import logging
 
-from apps.orders.models import Order
+from apps.orders.models import Order, record_cancellation
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.transactions.models import Transaction
 from apps.merchants.models import SaleCampaign
@@ -103,6 +103,15 @@ class CancelOrder(APIView, GlobalViewFunctions):
             order.status = Order.CANCELLED
             order.acknowledged = False
             order.save()
+            
+            # we can improve by creating an excel file as well
+            record_cancellation(
+                order=order,
+                user=request.user,
+                reason='CUSTOMER_REQUEST',
+                notes=request.data.get('cancellation_notes', ''),
+                refund_amount=order.total_amount if request.data.get('initiate_refund') else None
+            )
 
             try:
                 # Notify customer

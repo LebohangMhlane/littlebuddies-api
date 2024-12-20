@@ -1,9 +1,11 @@
 import datetime
 from django.db import models
+from django.utils import timezone
 
 from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
 from apps.products.models import BranchProduct, Product
+from apps.accounts.models import UserAccount
 
 def setDate():
     todaysDate = datetime.datetime.now()
@@ -46,3 +48,42 @@ class OrderedProduct(models.Model):
 
     def __str__(self) -> str:
         return f"{self.branch_product.product.name} - {self.quantity_ordered}"
+    
+
+class CancelledOrder(models.Model):
+    CANCELLATION_REASONS = [
+        ('CUSTOMER_REQUEST', 'Customer Requested'),
+        ('OUT_OF_STOCK', 'Items Out of Stock'),
+        ('DELIVERY_ISSUES', 'Delivery Issues'),
+        ('PAYMENT_FAILED', 'Payment Failed'),
+        ('OTHER', 'Other'),
+    ]
+
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='cancellations')
+    cancelled_by = models.ForeignKey(UserAccount, on_delete=models.SET_NULL, null=True)
+    cancelled_at = models.DateTimeField(default=timezone.now)
+    reason = models.CharField(max_length=50, choices=CANCELLATION_REASONS)
+    additional_notes = models.TextField(blank=True)
+    refund_initiated = models.BooleanField(default=False)
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-cancelled_at']
+        
+    def __str__(self):
+        return f"Order #{self.order.id} cancelled on {self.cancelled_at}"
+    
+    @property
+    def cancellation_duration(self):
+        return self.cancelled_at - self.order.created_at
+
+def record_cancellation(order, user, reason='CUSTOMER_REQUEST', notes='', refund_amount=None):
+    cancellation = CancelledOrder.objects.create(
+        order=order,
+        cancelled_by=user,
+        reason=reason,
+        additional_notes=notes,
+        refund_amount=refund_amount,
+        refund_initiated=bool(refund_amount)
+    )
+    return cancellation
