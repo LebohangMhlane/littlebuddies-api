@@ -182,7 +182,7 @@ class DataRequestTestCase(GlobalTestCaseConfig, TestCase):
 class UpdateAddressViewTests(TestCase):
     def setUp(self):
         create_account_url = reverse("create_account_view")
-        
+
         self.userInputData = {
             "username": "EnzoLunga0813492640",
             "password": "King@2249",
@@ -201,11 +201,11 @@ class UpdateAddressViewTests(TestCase):
             data=self.userInputData,
             format='json'
         )
-        
+
         user_id = response.data['user_account']['user']['id']
         self.user = User.objects.get(id=user_id)
         self.user_account = UserAccount.objects.get(id=response.data['user_account']['id'])
-        
+
         self.token, _ = Token.objects.get_or_create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
 
@@ -213,18 +213,17 @@ class UpdateAddressViewTests(TestCase):
 
     def test_update_address_successful(self):
         payload = {"address": "123 New Address, City"}
-        
+
         response = self.client.patch(
             self.update_address_url,
             data=payload,
             format='json'
         )
-        
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Address updated successfully")
-        
+
         self.user_account.refresh_from_db()
         self.assertEqual(self.user_account.address, payload["address"])
 
@@ -236,9 +235,9 @@ class UpdateAddressViewTests(TestCase):
             data=payload,
             format='json'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_update_address_invalid_data(self):
         """Test address update with invalid data."""
         payload = {"address": ""}  # Invalid as address is required
@@ -247,7 +246,7 @@ class UpdateAddressViewTests(TestCase):
             data=payload,
             format='json'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data["success"])
         self.assertEqual(response.data["message"], "Invalid data provided")
@@ -260,19 +259,33 @@ class UpdateAddressViewTests(TestCase):
             data=payload,
             format='json'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data["success"])
 
     def test_user_account_not_found(self):
         self.user_account.delete()
-        
+
         payload = {"address": "123 New Address"}
         response = self.client.patch(
             self.update_address_url,
             data=payload,
             format='json'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertFalse(response.data["success"])
+
+    def test_search_for_address(self):
+
+        def send_search_request():
+            response = self.client.get(search_for_address_url)
+            return response
+
+        search_for_address_url = reverse(
+            "update-address", kwargs={"query": "71 Rethman Stree"}
+        )
+
+        response = send_search_request()
+
+        pass

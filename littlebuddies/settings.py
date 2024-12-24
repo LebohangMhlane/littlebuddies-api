@@ -52,7 +52,9 @@ FIREBASE_APP = FirebaseApp()
 PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
 
 # server stuff
-DEVELOPEMENT_URL = "6a7d-41-10-119-223.ngrok-free.app" # using ngrok server during development
+DEVELOPEMENT_URL = (
+    "7792-41-10-117-216.ngrok-free.app"  # using ngrok server during development
+)
 
 APP_URL = "54.160.249.30"
 
@@ -61,7 +63,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.105", "localhost", APP_URL, DEVELOPEMENT_URL, '127.0.0.1']
+ALLOWED_HOSTS = ["10.0.0.103", "localhost", APP_URL, DEVELOPEMENT_URL, '127.0.0.1']
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

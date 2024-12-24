@@ -1,9 +1,13 @@
+from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+import googlemaps
+import googlemaps.directions
+import googlemaps.maps
 from rest_framework import status, permissions
 
 from rest_framework.views import APIView
@@ -448,11 +452,45 @@ class DataRequestView(APIView, GlobalViewFunctions):
 
 class UpdateAddressView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
+    def get(self, request, *args, **kwargs):
+
+        def get_the_address_search_query():
+            return kwargs["query"]
+
+        def search_for_address_in_gmaps(query):
+            gmaps_client = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
+            address_results = googlemaps.places.find_place(
+                client=gmaps_client,
+                input=query,
+                input_type="textquery",
+                fields=["formatted_address"],
+            )   
+            return address_results["candidates"]
+
+        def success_response(address_results):
+            return Response(
+                {
+                    "success": True,
+                    "message": "addresses returned successfully",
+                    "addresses": address_results,
+                }
+            )
+
+        try:
+            query = get_the_address_search_query(),
+            address_results = search_for_address_in_gmaps(query)
+            return success_response(address_results)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": e.args[0],
+            })
+
     def patch(self, request, *args, **kwargs):
         try:
             user_account = UserAccount.objects.get(user=request.user)
-            
+
             if 'address' not in request.data:
                 return Response({
                     "success": False,
@@ -465,7 +503,7 @@ class UpdateAddressView(APIView):
                 data=request.data,
                 partial=True
             )
-            
+
             if serializer.is_valid():
                 serializer.save()
                 return Response({

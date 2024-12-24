@@ -19,16 +19,51 @@ from django.urls import path
 from apps.accounts import views
 
 urlpatterns = [
-    path('login/', views.LoginView.as_view(), name="login"),
-    path('create-account/', views.RegistrationView.as_view(), name="create_account_view"),
-    path('activate-account/<uidb64>/<activationToken>/', views.ActivateAccountView.as_view(), name="activate_account_view"),
-    path('check-account-activation/', views.CheckAccountActivation.as_view(), name="check_account_activation_view"),
-    path('resend-activation-email/', views.ResendActivationEmail.as_view(), name="resend_activation_email"),
-    path('update-account/', views.UpdateAccountView.as_view(), name="update_account_view"),
-    path('deactivate-account/', views.DeactivateAccountView.as_view(), name="deactivate_account_view"),
-    path('password-reset-request/<str:email>', views.RequestPasswordReset.as_view(), name="password_reset_request_view"),
-    path('password-reset/<uidb64>/<resetToken>/', views.RequestSubmitPasswordResetForm.as_view(), name="password_reset_view"),
-    path('get-save-account-settings/', views.AccountSettingsView.as_view(), name="account_settings_view"),
-    path('request-data-copy/', views.DataRequestView.as_view(), name="request_data_copy"),
-    path('update-address/', views.UpdateAddressView.as_view(), name='update-address'),
+    path("login/", views.LoginView.as_view(), name="login"),
+    path(
+        "create-account/", views.RegistrationView.as_view(), name="create_account_view"
+    ),
+    path(
+        "activate-account/<uidb64>/<activationToken>/",
+        views.ActivateAccountView.as_view(),
+        name="activate_account_view",
+    ),
+    path(
+        "check-account-activation/",
+        views.CheckAccountActivation.as_view(),
+        name="check_account_activation_view",
+    ),
+    path(
+        "resend-activation-email/",
+        views.ResendActivationEmail.as_view(),
+        name="resend_activation_email",
+    ),
+    path(
+        "update-account/", views.UpdateAccountView.as_view(), name="update_account_view"
+    ),
+    path(
+        "deactivate-account/",
+        views.DeactivateAccountView.as_view(),
+        name="deactivate_account_view",
+    ),
+    path(
+        "password-reset-request/<str:email>",
+        views.RequestPasswordReset.as_view(),
+        name="password_reset_request_view",
+    ),
+    path(
+        "password-reset/<uidb64>/<resetToken>/",
+        views.RequestSubmitPasswordResetForm.as_view(),
+        name="password_reset_view",
+    ),
+    path(
+        "get-save-account-settings/",
+        views.AccountSettingsView.as_view(),
+        name="account_settings_view",
+    ),
+    path(
+        "request-data-copy/", views.DataRequestView.as_view(), name="request_data_copy"
+    ),
+    path("update-address/", views.UpdateAddressView.as_view(), name="update-address"),
+    path("update-address/<str:query>/", views.UpdateAddressView.as_view(), name="update-address"),
 ]
