@@ -56,6 +56,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     def get_orders_as_customer(self, request):
         user_account = request.user.useraccount
         orders = Order.objects.filter(
+            status__in=[Order.PENDING_DELIVERY, Order.DELIVERED],
             transaction__customer__id=user_account.pk, 
             transaction__status=Transaction.COMPLETED).order_by("created")
         if orders:
