@@ -25,7 +25,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branch_id": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "400.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
@@ -48,7 +48,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["transaction"]["products_purchased"][1]["quantity_ordered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], testCustomer.address)
 
-    
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
     def test_check_transaction_status(self, mocked_response):
 
@@ -62,13 +61,13 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkout_form_payload = {
-            "branch_id": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "400.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 downthe street Bergville"
+            "address": "71 downthe street Bergville",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         response = self.client.post(
@@ -89,7 +88,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.data["message"], f"Transaction {reference} status retrieved successfully")
         self.assertEqual(response.data["transactionStatus"], transaction.COMPLETED)
-    
 
     # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
@@ -105,7 +103,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.first()
         checkout_form_payload = {
-            "branch_id": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
@@ -126,9 +124,9 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         order = Order.objects.all().first()
         products = order.transaction.products_purchased.filter(id__in=[p1.id, p2.id]).all()
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branch_id"]))
+        self.assertEqual(
+            order.transaction.branch.id, int(checkout_form_payload["branchId"])
+        )
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.status, Transaction.COMPLETED)
         self.assertEqual(order.transaction.customer.id, customer.id)
-
-

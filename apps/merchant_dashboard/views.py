@@ -20,7 +20,7 @@ class ManageBranchView(GlobalViewFunctions, View):
 
             # determine user permission and get the branch:
             branch = self.determine_permission_and_return_branch(
-                user_account, kwargs["branch_id"]
+                user_account, kwargs["branchId"]
             )
 
             '''These may require pagination'''

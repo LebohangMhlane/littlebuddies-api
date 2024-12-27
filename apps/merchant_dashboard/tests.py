@@ -28,7 +28,7 @@ class MerchantDashboardTestCase(GlobalTestCaseConfig):
         token = self.login_as_merchant()
 
         # set the url:
-        url = reverse("manage_branch_dashboard", kwargs={"branch_id": 1})
+        url = reverse("manage_branch_dashboard", kwargs={"branchId": 1})
 
         # make a get request to get the orders:
         response = self.client.get(

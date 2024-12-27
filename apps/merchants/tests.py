@@ -290,7 +290,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branchd": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",

@@ -18,7 +18,7 @@ class CheckoutForm():
 
     def __init__(self, payload):
         payload = payload.copy()
-        self.branch_id = int(payload.get("branchId"))
+        self.branch_id = int(payload.get("branchId")[0])
         self.total_checkout_amount = payload["totalCheckoutAmount"]
         self.branch_products = self._set_ordered_products(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
@@ -82,7 +82,7 @@ class CheckoutForm():
 
             for branch_product in branch_products:
 
-                quantity_ordered = branch_product["quantityOrdered"]
+                quantity_ordered = branch_product["quantity_ordered"]
 
                 # get the product:
                 branch_product = BranchProduct.objects.get(id=branch_product["id"])

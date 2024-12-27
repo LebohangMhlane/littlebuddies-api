@@ -77,10 +77,10 @@ class CancelledOrder(models.Model):
     def cancellation_duration(self):
         return self.cancelled_at - self.order.created_at
 
-def record_cancellation(order, user, reason='CUSTOMER_REQUEST', notes='', refund_amount=None):
+def record_cancellation(order, user_account, reason='CUSTOMER_REQUEST', notes='', refund_amount=None):
     cancellation = CancelledOrder.objects.create(
         order=order,
-        cancelled_by=user,
+        cancelled_by=user_account,
         reason=reason,
         additional_notes=notes,
         refund_amount=refund_amount,

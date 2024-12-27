@@ -78,7 +78,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        order_id = request.data.get("order_id")
+        order_id = kwargs.get("order_id")
         if not order_id:
             return Response(
                 {"success": False, "message": "Order ID is required!"},
@@ -107,7 +107,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
             # we can improve by creating an excel file as well
             record_cancellation(
                 order=order,
-                user=request.user,
+                user_account=request.user.useraccount,
                 reason='CUSTOMER_REQUEST',
                 notes=request.data.get('cancellation_notes', ''),
                 refund_amount=order.total_amount if request.data.get('initiate_refund') else None

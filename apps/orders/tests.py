@@ -33,7 +33,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
         branch = merchant.branch_set.all().first()
         checkout_form_payload = {
-            "branch_id": str(merchant.pk),
+            "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
@@ -57,10 +57,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         order = Order.objects.all().first()
         products = order.transaction.products_purchased.filter(id__in=[p1.id, p2.id])
         self.assertEqual(products[0].id, p1.id)
-        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branch_id"]))
+        self.assertEqual(order.transaction.branch.id, int(checkout_form_payload["branchId"]))
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.customer.id, customer.id)
-
 
     @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
@@ -80,7 +79,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         branch = merchant.branch_set.all().first()
 
         checkout_form_payload = {
-            "branch_id": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
@@ -115,13 +114,13 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(orderFromResponse["transaction"]["id"], order.transaction.id)
         self.assertEqual(
-            orderFromResponse["transaction"]["branch"]["id"], 
-            int(checkout_form_payload["branch_id"]))
+            orderFromResponse["transaction"]["branch"]["id"],
+            int(checkout_form_payload["branchId"]),
+        )
         self.assertEqual(
             float(orderFromResponse["transaction"]["amount"]), 
             float(checkout_form_payload["totalCheckoutAmount"])
         )
-
 
     @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
@@ -141,13 +140,13 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         branch = merchant.branch_set.all().first()
 
         checkout_form_payload = {
-            "branch_id": str(branch.pk),
+            "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
             "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 down the street Bergville"
+            "address": "71 down the street Bergville",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         initiate_payment_response = self.client.post(
@@ -178,8 +177,9 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(order_from_response["transaction"]["id"], order.transaction.id)
         self.assertEqual(
-            order_from_response["transaction"]["branch"]["id"], 
-            int(checkout_form_payload["branch_id"]))
+            order_from_response["transaction"]["branch"]["id"],
+            int(checkout_form_payload["branchId"]),
+        )
         self.assertEqual(
             float(order_from_response["transaction"]["amount"]), 
             float(checkout_form_payload["totalCheckoutAmount"])
@@ -258,14 +258,16 @@ class CancelOrderTests(TestCase):
             status=Order.DELIVERED,
             acknowledged=True
         )
-        
+
         self.pending_order = Order.objects.create(
                 transaction=self.customer_transaction,
                 status=Order.PENDING_DELIVERY,
                 acknowledged=True
             )
 
-        self.cancel_order_url = reverse('cancel-order')
+        self.cancel_order_url = reverse(
+            "cancel-order", kwargs={"order_id": self.pending_order.id}
+        )
 
     def _authenticate_customer(self, user=None):
         user = user or self.customer_user
@@ -275,7 +277,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()  
 
         payload = {"order_id": self.pending_order.id}
-        response = self.client.post(self.cancel_order_url, data=payload)
+        response = self.client.post(self.cancel_order_url)
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["success"], True)
@@ -289,7 +291,7 @@ class CancelOrderTests(TestCase):
 
     def test_cancel_order_different_customer(self):
         self._authenticate_customer(user=self.another_customer_user)
-        
+
         payload = {"order_id": self.pending_order.id}
         response = self.client.post(self.cancel_order_url, data=payload)
 
@@ -297,9 +299,12 @@ class CancelOrderTests(TestCase):
 
     def test_cancel_order_missing_order_id(self):
         self._authenticate_customer()
-        
-        payload = {}
-        response = self.client.post(self.cancel_order_url, data=payload)
+
+        self.cancel_order_url = reverse(
+            "cancel-order", kwargs={"order_id": 0}
+        )
+
+        response = self.client.post(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -307,17 +312,21 @@ class CancelOrderTests(TestCase):
 
     def test_cancel_order_invalid_order_id(self):
         self._authenticate_customer()
-        
-        payload = {"order_id": 99999}  
-        response = self.client.post(self.cancel_order_url, data=payload)
+
+        self.cancel_order_url = reverse(
+            "cancel-order", kwargs={"order_id": 99999}
+        )
+        response = self.client.post(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_cancel_already_cancelled_order(self):
         self._authenticate_customer()
-        
-        payload = {"order_id": self.cancelled_order.id}
-        response = self.client.post(self.cancel_order_url, data=payload)
+
+        self.cancel_order_url = reverse(
+            "cancel-order", kwargs={"order_id": self.cancelled_order.pk}
+        )
+        response = self.client.post(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -328,9 +337,11 @@ class CancelOrderTests(TestCase):
 
     def test_cancel_delivered_order(self):
         self._authenticate_customer()
-        
-        payload = {"order_id": self.delivered_order.id}
-        response = self.client.post(self.cancel_order_url, data=payload)
+
+        self.cancel_order_url = reverse(
+            "cancel-order", kwargs={"order_id": self.delivered_order.pk}
+        )
+        response = self.client.post(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -343,7 +354,7 @@ class CancelOrderTests(TestCase):
         """Test basic cancellation record creation"""
         cancelled_order = record_cancellation(
             order=self.pending_order,
-            user=self.customer_account,
+            user_account=self.customer_account,
             reason='CUSTOMER_REQUEST',
             notes='Test cancellation',
             refund_amount=Decimal('100.00')
