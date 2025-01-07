@@ -53,7 +53,7 @@ PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.tr
 
 # server stuff
 DEVELOPEMENT_URL = (
-    "7792-41-10-117-216.ngrok-free.app"  # using ngrok server during development
+    "5f88-41-10-124-117.ngrok-free.app"  # using ngrok server during development
 )
 
 APP_URL = "54.160.249.30"

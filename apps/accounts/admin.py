@@ -1,17 +1,14 @@
-from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
 from apps.accounts.models import AccountSetting, UserAccount
+import custom_admin_site
 
 
 class UserAccountAdmin(ModelAdmin):
 
     def _check_permissions(self, user):
         user_account = user
-        if user_account.is_superuser:
-            return True
-        else:
-            return False
+        return user_account.is_superuser
 
     def get_queryset(self, request):
         user = request.user
@@ -22,6 +19,6 @@ class UserAccountAdmin(ModelAdmin):
             raise PermissionError("You do not have permission to access this page")
 
 
-admin.site.register(UserAccount, UserAccountAdmin)
+custom_admin_site.custom_admin_site.register(UserAccount, UserAccountAdmin)
 
-admin.site.register(AccountSetting)
+custom_admin_site.custom_admin_site.register(AccountSetting)

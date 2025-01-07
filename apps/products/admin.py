@@ -1,7 +1,7 @@
-from django.contrib import admin
 
 from apps.products.models import BranchProduct, Product
+import custom_admin_site
 
 
-admin.site.register(Product)
-admin.site.register(BranchProduct)
+custom_admin_site.custom_admin_site.register(Product)
+custom_admin_site.custom_admin_site.register(BranchProduct)

@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
+import custom_admin_site
 
-# Register your models here.
 
-admin.site.register(MerchantBusiness)
-admin.site.register(Branch)
-admin.site.register(SaleCampaign)
+custom_admin_site.custom_admin_site.register(MerchantBusiness)
+custom_admin_site.custom_admin_site.register(Branch)
+custom_admin_site.custom_admin_site.register(SaleCampaign)

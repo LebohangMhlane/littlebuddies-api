@@ -14,7 +14,6 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from  django.conf.urls.static import static 
@@ -24,21 +23,46 @@ from apps.paygate.views import (PaymentSuccessView,
                                 PaymentCancelledView,
                                 PaymentNotificationView, 
                                 )
+import custom_admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('initiate_payment/', PaymentInitializationView.as_view(), name="initiate_payment_view"),
-    path('payment_successful/', PaymentSuccessView.as_view(), name="payment_successful_view"),
-    path('payment_cancelled/', PaymentCancelledView.as_view(), name="payment_cancelled_view"),
-    path('payment_notification/', PaymentNotificationView.as_view(), name="payment_notification_view"),
+    path("admin/", custom_admin_site.custom_admin_site.urls),
+    path(
+        "initiate_payment/",
+        PaymentInitializationView.as_view(),
+        name="initiate_payment_view",
+    ),
+    path(
+        "payment_successful/",
+        PaymentSuccessView.as_view(),
+        name="payment_successful_view",
+    ),
+    path(
+        "payment_cancelled/",
+        PaymentCancelledView.as_view(),
+        name="payment_cancelled_view",
+    ),
+    path(
+        "payment_notification/",
+        PaymentNotificationView.as_view(),
+        name="payment_notification_view",
+    ),
     path("accounts/", include("apps.accounts.urls"), name="account_urls"),
     path("merchants/", include("apps.merchants.urls"), name="merchant_urls"),
-    path('products/', include("apps.products.urls"), name="product_urls"),
-    path('orders/', include("apps.orders.urls"), name="order_urls"),
-    path('transactions/', include("apps.transactions.urls"), name="transaction_urls"),
-    path('price_comparison/', include("apps.price_comparison.urls"), name="price_comparison_urls"),
-    path('discounts/', include("apps.discounts.urls"), name="discount"),
-    path('merchant_dashboard/', include("apps.merchant_dashboard.urls"), name="merchant_dashboard"),
+    path("products/", include("apps.products.urls"), name="product_urls"),
+    path("orders/", include("apps.orders.urls"), name="order_urls"),
+    path("transactions/", include("apps.transactions.urls"), name="transaction_urls"),
+    path(
+        "price_comparison/",
+        include("apps.price_comparison.urls"),
+        name="price_comparison_urls",
+    ),
+    path("discounts/", include("apps.discounts.urls"), name="discount"),
+    path(
+        "merchant_dashboard/",
+        include("apps.merchant_dashboard.urls"),
+        name="merchant_dashboard",
+    ),
 ]
 
 if settings.DEBUG:

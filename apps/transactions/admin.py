@@ -1,8 +1,5 @@
-from django.contrib import admin
 
 from apps.transactions.models import Transaction
+import custom_admin_site
 
-# Register your models here.
-
-admin.site.register(Transaction)
-
+custom_admin_site.custom_admin_site.register(Transaction)

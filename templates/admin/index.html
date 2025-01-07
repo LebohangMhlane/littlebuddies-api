@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+    <div id="content-main">
+        <div class="app-list">
+            {% block app_list %}
+            {% endblock %}
+        </div>
+    </div>
+    <!-- Remove or hide the Recent Actions section -->
+    {# Do not include the original recent actions section here #}
+{% endblock %}
