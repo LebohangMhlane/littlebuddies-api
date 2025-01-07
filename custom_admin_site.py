@@ -13,8 +13,7 @@ class CustomAdminSite(AdminSite):
         return request.user.is_superuser
 
     def user_is_merchant(self, request):
-        # return request.user.useraccount.is_merchant
-        return True
+        return request.user.useraccount.is_merchant
 
     def hide_models_from_merchants(self, filtered_app_list):
         for app in filtered_app_list:
@@ -38,7 +37,7 @@ class CustomAdminSite(AdminSite):
             filtered_app_list = self.hide_apps_from_merchants(app_list)
             filtered_app_and_models_list = self.hide_models_from_merchants(filtered_app_list)
             return filtered_app_and_models_list
-        if self.user_is_superuser():
+        if self.user_is_superuser(request):
             return app_list
         raise Exception("You are not authorized to access this site.")
 
