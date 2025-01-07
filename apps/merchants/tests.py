@@ -1,11 +1,14 @@
 from unittest.mock import patch
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from rest_framework.reverse import reverse
+from django.contrib.admin.sites import AdminSite
 
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.merchants.models import MerchantBusiness
+from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
+from apps.merchants.admin import MerchantBusinessAdmin, BranchAdmin, SaleCampaignAdmin
 
 
 class MerchantTests(GlobalTestCaseConfig, TestCase):
@@ -333,5 +336,174 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(order_from_response["transaction"]["status"], Transaction.COMPLETED)
         
 
+class AdminFilterTests(GlobalTestCaseConfig, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = RequestFactory()
+        
+        self.normal_user_token = self.create_normal_test_account_and_login()
+        
+        self.site = AdminSite()
+        self.merchant_admin = MerchantBusinessAdmin(MerchantBusiness, self.site)
+        self.branch_admin = BranchAdmin(Branch, self.site)
+        self.campaign_admin = SaleCampaignAdmin(SaleCampaign, self.site)
 
+        self.merchant_user_account1 = self.create_merchant_user_account({
+            "username": "Merchant1",
+            "password": "HelloWorld",  
+            "firstName": "Test",
+            "lastName": "Merchant1",
+            "email": "mikemyers@gmail.com",  
+            "address": "24 Test Street",
+            "phoneNumber": "0631234567",
+            "isMerchant": True,
+            "deviceToken": "test_token_1"
+        })
+        
+        self.merchant1 = self.create_merchant_business(
+            self.merchant_user_account1,
+            merchant_data={
+                "name": "Test Store 1",
+                "email": "store1@test.com",
+                "address": "Shop No, 55 Test Rd, Test Area, Test City, 3610",
+                "paygateReference": "pgtest_123456789",
+                "paygateId": "TEST1",
+                "paygateSecret": "secret1",
+                "branchAreas": ["Test Area"],
+                "hasSpecials": False,
+            }
+        )
 
+        self.merchant_user_account2 = self.create_merchant_user_account({
+            "username": "Merchant2",
+            "password": "HelloWorld",  
+            "firstName": "Test",
+            "lastName": "Merchant2",
+            "email": "merchant2@test.com",
+            "address": "25 Test Street",
+            "phoneNumber": "0637654321",
+            "isMerchant": True,
+            "deviceToken": "test_token_2"
+        })
+        
+        self.merchant2 = self.create_merchant_business(
+            self.merchant_user_account2,
+            merchant_data={
+                "name": "Test Store 2",
+                "email": "store2@test.com",
+                "address": "Shop No, 56 Test Rd, Test Area, Test City, 3610",
+                "paygateReference": "pgtest_987654321",
+                "paygateId": "TEST2",
+                "paygateSecret": "secret2",
+                "branchAreas": ["Test Area"],
+                "hasSpecials": False,
+            }
+        )
+
+        self.branch2 = Branch.objects.create(
+            address="Branch 2",
+            area="Test Area 2",
+            merchant=self.merchant2
+        )
+
+        self.campaign1 = SaleCampaign.objects.create(
+            branch=self.merchant1.branch_set.first(),
+            percentage_off=10
+        )
+        self.campaign2 = SaleCampaign.objects.create(
+            branch=self.branch2,
+            percentage_off=20
+        )
+
+    def test_merchant_admin_superuser_access(self):
+        """Test superuser can see all merchants in admin"""
+        self.make_normal_account_super_admin(self.user_account.pk)  
+        request = self.factory.get('/')
+        request.user = self.user_account.user
+        
+        queryset = self.merchant_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 2)
+        self.assertIn(self.merchant1, queryset)
+        self.assertIn(self.merchant2, queryset)
+
+    def test_merchant_admin_merchant_access(self):
+        """Test merchant can only see their own business in admin"""
+        merchant_token = self.login_as_merchant()  
+        request = self.factory.get('/')
+        request.user = self.merchant_user_account1.user
+        
+        queryset = self.merchant_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first(), self.merchant1)
+
+    def test_branch_admin_superuser_access(self):
+        """Test superuser can see all branches in admin"""
+        self.make_normal_account_super_admin(self.user_account.pk) 
+        request = self.factory.get('/')
+        request.user = self.user_account.user
+        
+        queryset = self.branch_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 3)  
+
+    def test_branch_admin_merchant_access(self):
+        """Test merchant can only see their own branches in admin"""
+        merchant_token = self.login_as_merchant()  
+        request = self.factory.get('/')
+        request.user = self.merchant_user_account1.user
+        
+        queryset = self.branch_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().merchant, self.merchant1)
+
+    def test_campaign_admin_superuser_access(self):
+        """Test superuser can see all campaigns in admin"""
+        self.make_normal_account_super_admin(self.user_account.pk)  
+        request = self.factory.get('/')
+        request.user = self.user_account.user
+        
+        queryset = self.campaign_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 2)
+        self.assertIn(self.campaign1, queryset)
+        self.assertIn(self.campaign2, queryset)
+
+    def test_campaign_admin_merchant_access(self):
+        """Test merchant can only see their own campaigns in admin"""
+        merchant_token = self.login_as_merchant()  
+        request = self.factory.get('/')
+        request.user = self.merchant_user_account1.user
+        
+        queryset = self.campaign_admin.get_queryset(request)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first(), self.campaign1)
+
+    def test_campaign_admin_foreign_key_filtering(self):
+        """Test campaign foreign key fields are properly filtered for merchant"""
+        merchant_token = self.login_as_merchant()  
+        request = self.factory.get('/')
+        request.user = self.merchant_user_account1.user
+        
+        branch_field = self.campaign_admin.formfield_for_foreignkey(
+            SaleCampaign._meta.get_field('branch'),
+            request
+        )
+        self.assertEqual(branch_field.queryset.count(), 1)
+        self.assertEqual(
+            branch_field.queryset.first().merchant,
+            self.merchant1
+        )
+
+    def test_unauthorized_admin_access(self):
+        """Test unauthorized user cannot access admin pages"""
+        self.create_test_customer()
+        token = self.login_as_customer()
+        
+        response = self.client.post(
+            reverse('create_merchant_view'),
+            data={
+                "name": "Test Store",
+                "email": "test@test.com",
+                "address": "Test Address",
+            },
+            HTTP_AUTHORIZATION=f"Token {token}"
+        )
+        self.assertEqual(response.status_code, 401)
