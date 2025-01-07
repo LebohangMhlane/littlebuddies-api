@@ -48,7 +48,6 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
         user_account = request.user.useraccount
         orders = Order.objects.filter(
             transaction__branch__merchant__user_account__pk=user_account.pk, 
-            transaction__status=Transaction.COMPLETED
         )
         if orders:
             return orders
