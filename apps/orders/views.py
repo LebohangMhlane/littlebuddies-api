@@ -206,7 +206,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
             }
         )
 
-    def get_order_being_repeated(self, order_id):
+    def get_order(self, order_id):
         order = Order.objects.prefetch_related(
             "ordered_products__branch_product__product"
         ).get(id=order_id)
@@ -262,7 +262,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         try:
-            order = self.get_order_being_repeated(order_id=kwargs.get("order_id"))
+            order = self.get_order(order_id=kwargs.get("order_id"))
             self.check_for_items_out_of_stock(order)
             self.check_for_price_changes(order)
             self.calculate_the_new_total_price()
