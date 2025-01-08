@@ -180,7 +180,16 @@ class CancelOrder(APIView, GlobalViewFunctions):
 
 class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
+    '''
+    this endpoint only checks for changes within the orders products such as
+    price changes and availability in terms of stock or if they are still active
+    '''
+
     permission_classes = []
+
+    order = None
+
+    ordered_products = None
 
     order_changes = {
         "price_changes": {},
@@ -212,15 +221,14 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
         ).get(id=order_id)
         return order
 
-    def check_for_price_changes(self, order: Order):
+    def check_for_price_changes(self):
 
-        branch = order.transaction.branch
+        branch = self.order.transaction.branch
         sale_campaigns = SaleCampaign.objects.filter(branch=branch, active=True)
-        ordered_products = order.ordered_products.filter(branch_product__in_stock=True)
 
         # we need to check if the branch updated their prices recently:
-        branch_products = branch.branchproduct_set.filter(in_stock=True)
-        for product in ordered_products:
+        branch_products = branch.branchproduct_set.filter(in_stock=True, is_active=True)
+        for product in self.ordered_products:
             for branch_product in branch_products:
                 if product.branch_product == branch_product:
                     price_on_order = product.order_price
@@ -233,7 +241,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
         # now we check for price changes based on if the product is on sale:
         if sale_campaigns:
-            for product in ordered_products:
+            for product in self.ordered_products:
                 for sale_campaign in sale_campaigns:
                     if sale_campaign.branch_product == product.branch_product:
                         price_on_order = product.order_price
@@ -246,9 +254,8 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                             ] = sale_campaign_price
                         break
 
-    def check_for_items_out_of_stock(self, order):
-        ordered_products = order.ordered_products.all()
-        for ordered_product in ordered_products:
+    def check_for_items_out_of_stock(self):
+        for ordered_product in self.ordered_products:
             if not ordered_product.branch_product.in_stock:
                 self.order_changes["out_of_stock"][ordered_product.id] = {
                     "name": ordered_product.branch_product.product.name,
@@ -257,14 +264,22 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
     def calculate_the_new_total_price(self):
         new_order_total = 0.00
         for order_id, price_changes in self.order_changes["price_changes"].items():
-            new_order_total += float(price_changes["new_price"])
+            new_order_total += (
+                float(price_changes["new_price"])
+                if not "sale_campaign_price" in price_changes
+                else float(price_changes["sale_campaign_price"])
+            )
+        self.order_changes["old_total"] = float(self.order.transaction.amount)
         self.order_changes["new_total"] = new_order_total
 
     def get(self, request, *args, **kwargs):
         try:
-            order = self.get_order(order_id=kwargs.get("order_id"))
-            self.check_for_items_out_of_stock(order)
-            self.check_for_price_changes(order)
+            self.order = self.get_order(order_id=kwargs.get("order_id"))
+            self.ordered_products = self.order.ordered_products.filter(
+                branch_product__in_stock=True, branch_product__is_active=True
+            )
+            self.check_for_items_out_of_stock()
+            self.check_for_price_changes()
             self.calculate_the_new_total_price()
             return self.return_successful_response()
         except Exception as e:

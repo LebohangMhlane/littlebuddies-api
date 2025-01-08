@@ -413,7 +413,8 @@ class RepeatOrderViewTestCase(TestCase):
         self.transaction = Transaction.objects.create(
             customer=self.user_account,
             branch=self.branch, 
-            reference='TEST123'
+            reference='TEST123',
+            amount=100.0
         )
 
         self.product1 = Product.objects.create(
@@ -566,6 +567,19 @@ class RepeatOrderViewTestCase(TestCase):
     def test_check_for_order_changes_branch_price_changes(self):
 
         SaleCampaign.objects.all().delete()
+
+        self.branch_product1.branch_price = 300.00
+        self.branch_product1.save()
+
+        order = self.order
+        check_for_order_url = reverse(
+            "check-for-order-changes", kwargs={"order_id": order.pk}
+        )
+        response = self.client.get(check_for_order_url)
+
+        pass
+
+    def test_check_for_order_changes_inactive_products(self):
 
         self.branch_product1.branch_price = 300.00
         self.branch_product1.save()
