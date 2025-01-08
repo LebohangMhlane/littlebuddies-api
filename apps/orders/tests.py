@@ -12,7 +12,7 @@ from apps.orders.models import Order, OrderedProduct, record_cancellation
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount
-from apps.merchants.models import MerchantBusiness, Branch
+from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
 from apps.products.models import Product, BranchProduct
 
 User = get_user_model()
@@ -369,21 +369,29 @@ class CancelOrderTests(TestCase):
 
 class RepeatOrderViewTestCase(TestCase):
     def setUp(self):
+
+        def create_a_sale_campaign(branch_product, branch):
+            sale_campaign = SaleCampaign()
+            sale_campaign.branch_product = branch_product
+            sale_campaign.branch = branch
+            sale_campaign.percentage_off = 50
+            sale_campaign.save()
+
         self.client = APIClient()
-        
+
         self.user = User.objects.create_user(
             username='testuser', 
             email='testuser@example.com',
             password='testpassword'
         )
-        
+
         self.user_account = UserAccount.objects.create(
             user=self.user, 
             phone_number=1234567890,
             is_merchant=True,
             device_token='test_device_token'
         )
-        
+
         self.merchant = MerchantBusiness.objects.create(
             user_account=self.user_account,
             name='Test Merchant',
@@ -395,7 +403,6 @@ class RepeatOrderViewTestCase(TestCase):
             paygate_secret='test_secret'
         )
 
-        
         self.branch = Branch.objects.create(
             merchant=self.merchant,
             address='123 Test St',
@@ -403,13 +410,12 @@ class RepeatOrderViewTestCase(TestCase):
             is_active=True    
         )
 
-        
         self.transaction = Transaction.objects.create(
             customer=self.user_account,
             branch=self.branch, 
             reference='TEST123'
         )
-        
+
         self.product1 = Product.objects.create(
             name='Product 1', 
             description='Test Product 1',
@@ -422,7 +428,7 @@ class RepeatOrderViewTestCase(TestCase):
             recommended_retail_price=60,
             image='product2_image_url'
         )
-        
+
         self.branch_product1 = BranchProduct.objects.create(
             branch=self.branch, 
             product=self.product1, 
@@ -441,13 +447,15 @@ class RepeatOrderViewTestCase(TestCase):
             store_reference='BP2',
             created_by=self.user_account
         )
-        
+
+        create_a_sale_campaign(branch_product=self.branch_product1, branch=self.branch)
+
         self.order = Order.objects.create(
             transaction=self.transaction, 
             status=Order.PAYMENT_PENDING,
             delivery=True
         )
-        
+
         self.ordered_product1 = OrderedProduct.objects.create(
             branch_product=self.branch_product1, 
             quantity_ordered=2
@@ -456,7 +464,7 @@ class RepeatOrderViewTestCase(TestCase):
             branch_product=self.branch_product2, 
             quantity_ordered=1
         )
-        
+
         self.order.ordered_products.add(self.ordered_product1, self.ordered_product2)
 
     def test_repeat_order_success(self):
@@ -466,7 +474,7 @@ class RepeatOrderViewTestCase(TestCase):
             self.client.force_authenticate(user=self.user)
 
             response = self.client.get(url)
-            
+
             mock_send_mail.assert_called_once()
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -486,21 +494,21 @@ class RepeatOrderViewTestCase(TestCase):
             self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
 
             self.assertEqual(data['new_cost'], 'R 200.00')
-            
+
     def test_repeat_order_not_found(self):
-        
+
         non_existent_order_id = 9999 
         url = reverse('repeat-order', kwargs={'order_id': non_existent_order_id})
-        
+
         self.client.force_authenticate(user=self.user)
-        
+
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data.get('error'), 'Order not found')
-    
+
     def test_email_sending_failure(self):
-        
+
         with patch('apps.orders.views.send_mail', side_effect=Exception("Email sending failed")):
             url = reverse('repeat-order', kwargs={'order_id': self.order.id})
 
@@ -510,23 +518,46 @@ class RepeatOrderViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertIn("Failed to send email", response.data['error'])
-    
+
     def test_repeat_order_with_no_stock(self):
-        
+
         self.branch_product1.in_stock = False
         self.branch_product1.save()
-        
+
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
-        
+
         self.client.force_authenticate(user=self.user)
-        
+
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         data = response.data
         self.assertEqual(len(data['product_list']), 0)
-        
+
         self.assertEqual(len(data['out_of_stock']), 2)
-        
+
         self.assertEqual(data['new_cost'], 'R 0.00')
+
+    def test_check_for_order_changes_with_sale_campaign(self):
+
+        order = self.order
+        check_for_order_url = reverse(
+            "check-for-order-changes", kwargs={"order_id": order.pk}
+        )
+        response = self.client.get(check_for_order_url)
+
+        pass
+
+    def test_check_for_order_changes_no_sale_campaign(self):
+
+        SaleCampaign.objects.all().delete()
+
+        order = self.order
+        check_for_order_url = reverse(
+            "check-for-order-changes", kwargs={"order_id": order.pk}
+        )
+        response = self.client.get(check_for_order_url)
+
+        pass
+

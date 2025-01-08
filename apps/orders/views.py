@@ -1,4 +1,3 @@
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
@@ -152,7 +151,83 @@ class CancelOrder(APIView, GlobalViewFunctions):
             },
             status=status.HTTP_200_OK,
         )
-    
+
+class checkForOrderChangesView(APIView, GlobalViewFunctions):
+
+    order_price_changes = {}
+
+    permission_classes = []
+
+    def return_successful_response(self):
+        return Response(
+            {
+                "success": True,
+                "message": "Order changes checked successfully!",
+                "order_changes": {},
+            }
+        )
+
+    def return_failed_response(self, error_message=""):
+        return Response(
+            {
+                "success": False,
+                "message": f"Failed to check Order: {error_message}",
+                "order_changes": {},
+            }
+        )
+
+    def get_order_being_repeated(self, order_id):
+        order = Order.objects.get(id=order_id)
+        return order
+
+    def check_for_price_changes(self, order: Order):
+
+        branch = order.transaction.branch
+        sale_campaigns = SaleCampaign.objects.filter(branch=branch, active=True)
+        ordered_products = order.ordered_products.all()
+
+        # we check for price changes based on if the product is on sale:
+        if sale_campaigns:
+            for product in ordered_products:
+                for sale_campaign in sale_campaigns:
+                    if sale_campaign.branch_product == product.branch_product:
+                        price_on_order = product.branch_product.branch_price
+                        sale_campaign_price = sale_campaign.calculate_sale_campaign_price()
+                        if price_on_order != sale_campaign_price:
+                            self.order_price_changes[product.id] = {
+                                "old_price": sale_campaign.branch_product.branch_price,
+                                "new_price": sale_campaign_price,
+                            }
+                        break
+        else:
+        # in the event that the products are not on sale, we still need to check if the branch
+        # updated their prices recently:
+            branch_products = branch.branchproduct_set.all()
+            for product in ordered_products:
+                for branch_product in branch_products:
+                    if product.branch_product == branch_product:
+                        price_on_order = product.branch_product.branch_price
+                        if price_on_order != branch_product.branch_price:
+                            self.order_price_changes[product.id] = {
+                                "old_price": branch_product.branch_price,
+                                "new_price": price_on_order,
+                            }
+                        break
+
+    def check_for_items_out_of_stock(order):
+        pass
+
+    def calculate_the_new_total_price(order):
+        pass
+
+    def get(self, request, *args, **kwargs):
+        try:
+            repeated_order = self.get_order_being_repeated(order_id=kwargs.get('order_id'))
+            self.check_for_price_changes(repeated_order)
+            return self.return_successful_response()
+        except Exception as e:
+            return self.return_failed_response(error_message=e.args[0])
+
 class RepeatOrder(APIView, GlobalViewFunctions):
     permission_classes = [permissions.IsAuthenticated]
 

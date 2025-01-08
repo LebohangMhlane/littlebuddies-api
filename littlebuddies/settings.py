@@ -53,17 +53,17 @@ PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.tr
 
 # server stuff
 DEVELOPEMENT_URL = (
-    "5f88-41-10-124-117.ngrok-free.app"  # using ngrok server during development
+    "https://8306-41-10-124-117.ngrok-free.app"  # using ngrok server during development
 )
 
 APP_URL = "54.160.249.30"
 
 if DEBUG:
-    SERVER_URL = f"http://{DEVELOPEMENT_URL}"
+    SERVER_URL = DEVELOPEMENT_URL
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.103", "localhost", APP_URL, DEVELOPEMENT_URL, '127.0.0.1']
+ALLOWED_HOSTS = ["10.0.0.103", "localhost", APP_URL, DEVELOPEMENT_URL.split('/')[-1], '127.0.0.1']
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

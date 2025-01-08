@@ -1,9 +1,14 @@
 from django.urls import path
 
-from apps.orders.views import GetAllOrdersView, CancelOrder, RepeatOrder
+from apps.orders.views import GetAllOrdersView, CancelOrder, RepeatOrder, checkForOrderChangesView
 
 urlpatterns = [
     path("get-all-orders/", GetAllOrdersView.as_view(), name="get_all_orders_view"),
     path("cancel-order/<int:order_id>/", CancelOrder.as_view(), name="cancel-order"),
     path("repeat-order/<int:order_id>/", RepeatOrder.as_view(), name="repeat-order"),
+    path(
+        "check_for_order_changes/<int:order_id>/",
+        checkForOrderChangesView.as_view(),
+        name="check-for-order-changes",
+    ),
 ]
