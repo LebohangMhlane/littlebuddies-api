@@ -89,6 +89,7 @@ class CheckoutForm():
 
                 # check if this product is on sale:
                 sale_campaign = SaleCampaign.objects.filter(
+                    branch=branch_product.branch_product.branch,
                     branch_product=branch_product
                 ).first()
 
@@ -96,6 +97,7 @@ class CheckoutForm():
                 ordered_product = OrderedProduct()
                 ordered_product.branch_product = branch_product
                 ordered_product.quantity_ordered = quantity_ordered
+                ordered_product.order_price = branch_product.branch_price
                 ordered_product.save()
 
                 set_sale_campaign_to_ordered_product()
