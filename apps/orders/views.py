@@ -181,7 +181,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
 class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
     '''
-    this endpoint only checks for changes within the orders products such as
+    This endpoint only checks for changes within the orders products such as
     price changes and availability in terms of stock or if they are still active (still being sold)
     '''
 
