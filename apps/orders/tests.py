@@ -414,7 +414,7 @@ class RepeatOrderViewTestCase(TestCase):
             customer=self.user_account,
             branch=self.branch, 
             reference='TEST123',
-            amount=100.0
+            amount=500.0
         )
 
         self.product1 = Product.objects.create(
@@ -424,10 +424,16 @@ class RepeatOrderViewTestCase(TestCase):
             image='product1_image_url'
         )
         self.product2 = Product.objects.create(
-            name='Product 2', 
+            name='Product 2',
             description='Test Product 2',
             recommended_retail_price=60,
             image='product2_image_url'
+        )
+        self.product3 = Product.objects.create(
+            name='Product 3', 
+            description='Test Product 3',
+            recommended_retail_price=400,
+            image='product3_image_url'
         )
 
         self.branch_product1 = BranchProduct.objects.create(
@@ -448,11 +454,20 @@ class RepeatOrderViewTestCase(TestCase):
             store_reference='BP2',
             created_by=self.user_account
         )
+        self.branch_product3 = BranchProduct.objects.create(
+            branch=self.branch, 
+            product=self.product3,
+            in_stock=True,
+            is_active=False,
+            branch_price=350,
+            store_reference='BP3',
+            created_by=self.user_account
+        )
 
         create_a_sale_campaign(branch_product=self.branch_product1, branch=self.branch)
 
         self.order = Order.objects.create(
-            transaction=self.transaction, 
+            transaction=self.transaction,
             status=Order.PAYMENT_PENDING,
             delivery=True
         )
@@ -467,8 +482,15 @@ class RepeatOrderViewTestCase(TestCase):
             quantity_ordered=1,
             order_price=self.branch_product2.branch_price,
         )
+        self.ordered_product3 = OrderedProduct.objects.create(
+            branch_product=self.branch_product3,
+            quantity_ordered=1,
+            order_price=self.branch_product3.branch_price,
+        )
 
-        self.order.ordered_products.add(self.ordered_product1, self.ordered_product2)
+        self.order.ordered_products.add(
+            self.ordered_product1, self.ordered_product2, self.ordered_product3
+        )
 
     def test_repeat_order_success(self):
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
@@ -583,6 +605,22 @@ class RepeatOrderViewTestCase(TestCase):
 
         self.branch_product1.branch_price = 300.00
         self.branch_product1.save()
+
+        order = self.order
+        check_for_order_url = reverse(
+            "check-for-order-changes", kwargs={"order_id": order.pk}
+        )
+        response = self.client.get(check_for_order_url)
+
+        pass
+
+    def test_check_for_order_changes_full_order(self):
+
+        self.branch_product2.in_stock = True
+        self.branch_product2.save()
+
+        self.branch_product3.is_active = True
+        self.branch_product3.save()
 
         order = self.order
         check_for_order_url = reverse(

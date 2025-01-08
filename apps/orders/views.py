@@ -182,7 +182,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
     '''
     this endpoint only checks for changes within the orders products such as
-    price changes and availability in terms of stock or if they are still active
+    price changes and availability in terms of stock or if they are still active (still being sold)
     '''
 
     permission_classes = []
@@ -194,6 +194,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
     order_changes = {
         "price_changes": {},
         "out_of_stock": {},
+        "no_longer_sold": {},
         "new_total": {},
     }
 
@@ -212,7 +213,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                 "success": False,
                 "message": f"Failed to check Order: {error_message}",
                 "order_changes": {},
-            }
+            }, status=500
         )
 
     def get_order(self, order_id):
@@ -228,20 +229,20 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
         # we need to check if the branch updated their prices recently:
         branch_products = branch.branchproduct_set.filter(in_stock=True, is_active=True)
-        for product in self.ordered_products:
+        for product in self.ordered_products.filter(branch_product__is_active=True):
             for branch_product in branch_products:
                 if product.branch_product == branch_product:
                     price_on_order = product.order_price
                     if price_on_order != branch_product.branch_price:
                         self.order_changes["price_changes"][product.id] = {
-                            "old_price": price_on_order,
-                            "new_price": branch_product.branch_price,
+                            "previous_order_price": price_on_order,
+                            "new_order_price": branch_product.branch_price,
                         }
                     break
 
         # now we check for price changes based on if the product is on sale:
         if sale_campaigns:
-            for product in self.ordered_products:
+            for product in self.ordered_products.filter(branch_product__is_active=True):
                 for sale_campaign in sale_campaigns:
                     if sale_campaign.branch_product == product.branch_product:
                         price_on_order = product.order_price
@@ -249,6 +250,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                             sale_campaign.calculate_sale_campaign_price()
                         )
                         if price_on_order != sale_campaign_price:
+                            # TODO: capture instance in which product id is not available:
                             self.order_changes["price_changes"][product.id][
                                 "sale_campaign_price"
                             ] = sale_campaign_price
@@ -260,12 +262,16 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                 self.order_changes["out_of_stock"][ordered_product.id] = {
                     "name": ordered_product.branch_product.product.name,
                 }
+            if not ordered_product.branch_product.is_active:
+                self.order_changes["no_longer_sold"][ordered_product.id] = {
+                    "name": ordered_product.branch_product.product.name,
+                }
 
     def calculate_the_new_total_price(self):
         new_order_total = 0.00
         for order_id, price_changes in self.order_changes["price_changes"].items():
             new_order_total += (
-                float(price_changes["new_price"])
+                float(price_changes["new_order_price"])
                 if not "sale_campaign_price" in price_changes
                 else float(price_changes["sale_campaign_price"])
             )
@@ -275,9 +281,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
     def get(self, request, *args, **kwargs):
         try:
             self.order = self.get_order(order_id=kwargs.get("order_id"))
-            self.ordered_products = self.order.ordered_products.filter(
-                branch_product__in_stock=True, branch_product__is_active=True
-            )
+            self.ordered_products = self.order.ordered_products.all()
             self.check_for_items_out_of_stock()
             self.check_for_price_changes()
             self.calculate_the_new_total_price()
