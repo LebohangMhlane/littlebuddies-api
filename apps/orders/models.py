@@ -45,10 +45,13 @@ class OrderedProduct(models.Model):
     branch_product = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False, null=True)
     sale_campaign = models.ForeignKey(SaleCampaign, on_delete=models.CASCADE, blank=True, null=True)
     quantity_ordered = models.PositiveIntegerField()
+    order_price = models.DecimalField(
+        null=True, blank=False, decimal_places=2, max_digits=10, default=0.00
+    )
 
     def __str__(self) -> str:
         return f"{self.branch_product.product.name} - {self.quantity_ordered}"
-    
+
 
 class CancelledOrder(models.Model):
     CANCELLATION_REASONS = [
