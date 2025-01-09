@@ -2,6 +2,10 @@ from django.test import TestCase
 from rest_framework.reverse import reverse
 from apps.merchants.models import Branch
 from global_test_config.global_test_config import GlobalTestCaseConfig
+from django.contrib.admin.sites import AdminSite
+
+from apps.products.admin import ProductAdmin, BranchProductAdmin
+from apps.products.models import Product, BranchProduct
 from apps.products.models import BranchProduct, Product
 
 

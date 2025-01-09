@@ -1,7 +1,45 @@
+import custom_admin_site
+from django.contrib import admin
+from django.db.models import Q
 
 from apps.products.models import BranchProduct, Product
-import custom_admin_site
+from apps.merchants.models import Branch
 
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'recommended_retail_price')
+    search_fields = ('name', 'description')
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(branchproduct__branch__merchant__users=request.user).distinct()
 
-custom_admin_site.custom_admin_site.register(Product)
-custom_admin_site.custom_admin_site.register(BranchProduct)
+class BranchProductAdmin(admin.ModelAdmin):
+    list_display = ('product', 'branch', 'merchant_name', 'branch_price', 'in_stock', 'is_active')
+    list_filter = ('in_stock', 'is_active', 'branch')
+    search_fields = ('product__name', 'merchant_name', 'store_reference')
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(branch__merchant__users=request.user)
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not request.user.is_superuser:
+            if db_field.name == "branch":
+                kwargs["queryset"] = Branch.objects.filter(merchant__users=request.user)
+            elif db_field.name == "product":
+                kwargs["queryset"] = Product.objects.filter(
+                    branchproduct__branch__merchant__users=request.user
+                ).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+admin.site.register(Product, ProductAdmin)
+admin.site.register(BranchProduct, BranchProductAdmin)
