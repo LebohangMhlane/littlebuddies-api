@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from datetime import datetime, timedelta
 
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 from apps.merchants.models import SaleCampaign
 
 from django.urls import reverse
@@ -43,8 +43,8 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.client = APIClient()
 
         # Create products
-        self.product_1 = Product.objects.create(name="Dog Food")
-        self.product_2 = Product.objects.create(name="My Cat Eats")
+        self.product_1 = GlobalProduct.objects.create(name="Dog Food")
+        self.product_2 = GlobalProduct.objects.create(name="My Cat Eats")
 
         # Store branch IDs
         self.branch_1 = self.merchant_business_1.branch_set.first()

@@ -13,7 +13,7 @@ from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPa
 from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
-from apps.products.models import Product, BranchProduct
+from apps.products.models import GlobalProduct, BranchProduct
 
 User = get_user_model()
 
@@ -266,7 +266,7 @@ class CancelOrderTests(TestCase):
             )
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.pending_order.id}
+            "cancel_order", kwargs={"order_id": self.pending_order.id}
         )
 
     def _authenticate_customer(self, user=None):
@@ -301,7 +301,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": 0}
+            "cancel_order", kwargs={"order_id": 0}
         )
 
         response = self.client.post(self.cancel_order_url)
@@ -314,7 +314,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": 99999}
+            "cancel_order", kwargs={"order_id": 99999}
         )
         response = self.client.post(self.cancel_order_url)
 
@@ -324,7 +324,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.cancelled_order.pk}
+            "cancel_order", kwargs={"order_id": self.cancelled_order.pk}
         )
         response = self.client.post(self.cancel_order_url)
 
@@ -339,7 +339,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.delivered_order.pk}
+            "cancel_order", kwargs={"order_id": self.delivered_order.pk}
         )
         response = self.client.post(self.cancel_order_url)
 
@@ -417,19 +417,19 @@ class RepeatOrderViewTestCase(TestCase):
             amount=500.0
         )
 
-        self.product1 = Product.objects.create(
+        self.product1 = GlobalProduct.objects.create(
             name='Product 1', 
             description='Test Product 1',
             recommended_retail_price=120,
             image='product1_image_url'
         )
-        self.product2 = Product.objects.create(
+        self.product2 = GlobalProduct.objects.create(
             name='Product 2',
             description='Test Product 2',
             recommended_retail_price=60,
             image='product2_image_url'
         )
-        self.product3 = Product.objects.create(
+        self.product3 = GlobalProduct.objects.create(
             name='Product 3', 
             description='Test Product 3',
             recommended_retail_price=400,
@@ -508,17 +508,17 @@ class RepeatOrderViewTestCase(TestCase):
             self.assertEqual(data['order_id'], self.order.id)
             self.assertEqual(data['branch']['id'], self.branch.id)
 
-            self.assertEqual(len(data['product_list']), 1)  
+            self.assertEqual(len(data['product_list']), 2)  
             in_stock_product = data['product_list'][0]
             self.assertEqual(in_stock_product['product_id'], self.product1.id)
             self.assertEqual(in_stock_product['quantity_ordered'], 2)
-            self.assertEqual(in_stock_product['current_price'], 100)
+            self.assertEqual(in_stock_product['current_price'], 50.0)
 
             self.assertEqual(len(data['out_of_stock']), 1)
             out_of_stock_product = data['out_of_stock'][0]
             self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
 
-            self.assertEqual(data['new_cost'], 'R 200.00')
+            self.assertEqual(data['new_cost'], 'R 450.00')
 
     def test_repeat_order_not_found(self):
 
@@ -549,6 +549,9 @@ class RepeatOrderViewTestCase(TestCase):
         self.branch_product1.in_stock = False
         self.branch_product1.save()
 
+        self.branch_product3.in_stock = False
+        self.branch_product3.save()
+
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
 
         self.client.force_authenticate(user=self.user)
@@ -560,7 +563,7 @@ class RepeatOrderViewTestCase(TestCase):
         data = response.data
         self.assertEqual(len(data['product_list']), 0)
 
-        self.assertEqual(len(data['out_of_stock']), 2)
+        self.assertEqual(len(data['out_of_stock']), 3)
 
         self.assertEqual(data['new_cost'], 'R 0.00')
 

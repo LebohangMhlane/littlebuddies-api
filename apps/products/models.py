@@ -6,7 +6,7 @@ from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch
 
 
-class Product(models.Model):
+class GlobalProduct(models.Model):
 
     name = models.CharField(max_length=200, blank=False, default="")
     description = models.TextField(max_length=2000, blank=False, default="")
@@ -26,7 +26,7 @@ class BranchProduct(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     merchant_name = models.CharField(max_length=250, null=True, blank=True)
     merchant_logo = models.CharField(max_length=300, null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(GlobalProduct, on_delete=models.CASCADE)
     branch_price = models.DecimalField(blank=False, null=True, decimal_places=2, default=0.00, max_digits=6)
     store_reference = models.CharField(max_length=200, blank=False, default="")
     created_by = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)

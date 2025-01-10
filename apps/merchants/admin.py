@@ -2,13 +2,19 @@ from django.contrib import admin
 
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
 from apps.products.models import BranchProduct
-import custom_admin_site
+from custom_admin_site import custom_admin_site
 
 
 from django.contrib import admin
-from django.db.models import Q
 
 class MerchantBusinessAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "email",
+        "address",
+        "is_active",
+    )
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -16,6 +22,12 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         return qs.filter(user_account__user=request.user)
 
 class BranchAdmin(admin.ModelAdmin):
+    list_display = (
+        "merchant",
+        "address",
+        "is_active",
+    )
+        
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -23,6 +35,13 @@ class BranchAdmin(admin.ModelAdmin):
         return qs.filter(merchant__user_account__user=request.user)
 
 class SaleCampaignAdmin(admin.ModelAdmin):
+    list_display = (
+        "branch_product",
+        "percentage_off",
+        "active",
+        "campaign_ends",
+    )
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -41,6 +60,6 @@ class SaleCampaignAdmin(admin.ModelAdmin):
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-admin.site.register(MerchantBusiness, MerchantBusinessAdmin)
-admin.site.register(Branch, BranchAdmin)
-admin.site.register(SaleCampaign, SaleCampaignAdmin)
+custom_admin_site.register(MerchantBusiness, MerchantBusinessAdmin)
+custom_admin_site.register(Branch, BranchAdmin)
+custom_admin_site.register(SaleCampaign, SaleCampaignAdmin)

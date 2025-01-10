@@ -1,7 +1,7 @@
 from django.conf import settings
 from apps.merchants.models import SaleCampaign
 from apps.orders.models import OrderedProduct
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 
 # what the mobile app sends to the server to initiate payment after checkout:
 
@@ -18,7 +18,7 @@ class CheckoutForm():
 
     def __init__(self, payload):
         payload = payload.copy()
-        self.branch_id = int(payload.get("branchId")[0])
+        self.branch_id = int(payload.get("branchId"))
         self.total_checkout_amount = payload["totalCheckoutAmount"]
         self.branch_products = self._set_ordered_products(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
@@ -82,14 +82,14 @@ class CheckoutForm():
 
             for branch_product in branch_products:
 
-                quantity_ordered = branch_product["quantity_ordered"]
+                quantity_ordered = branch_product["quantityOrdered"]
 
                 # get the product:
                 branch_product = BranchProduct.objects.get(id=branch_product["id"])
 
                 # check if this product is on sale:
                 sale_campaign = SaleCampaign.objects.filter(
-                    branch=branch_product.branch_product.branch,
+                    branch=branch_product.branch,
                     branch_product=branch_product
                 ).first()
 

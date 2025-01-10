@@ -7,9 +7,15 @@ from django.test.client import RequestFactory
 from django.contrib.auth.models import User
 
 from apps.products.admin import ProductAdmin, BranchProductAdmin
+<<<<<<< HEAD
 from apps.products.models import Product, BranchProduct
 from apps.products.models import BranchProduct, Product
 from apps.accounts.models import UserAccount
+=======
+from apps.products.models import GlobalProduct, BranchProduct
+from apps.products.models import BranchProduct, GlobalProduct
+
+>>>>>>> b9edab9af820f0e70626f341e8f84c8cfa111f40
 
 class ProductTests(GlobalTestCaseConfig, TestCase):
 
@@ -35,7 +41,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(createProductPayload["name"], response.data["product"]["name"])
-        product = Product.objects.filter(name=createProductPayload["name"]).first()
+        product = GlobalProduct.objects.filter(name=createProductPayload["name"]).first()
         self.assertTrue(product != None)
         self.assertEqual(response.data["product"]["id"], product.pk)
 
@@ -62,7 +68,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(createProductPayload["name"], response.data["product"]["name"])
-        product = Product.objects.filter(name=createProductPayload["name"]).first()
+        product = GlobalProduct.objects.filter(name=createProductPayload["name"]).first()
         self.assertTrue(product != None)
         self.assertEqual(response.data["product"]["id"], product.pk)
 
@@ -88,7 +94,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {self.authToken}"
         )
         self.assertEqual(response.status_code, 500)
-        product = Product.objects.filter(name=createProductPayload["name"]).first()
+        product = GlobalProduct.objects.filter(name=createProductPayload["name"]).first()
         self.assertTrue(product == None)
 
     def test_create_product_as_customer_failure(self):
@@ -112,7 +118,7 @@ class ProductTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {self.authToken}"
         )
         self.assertEqual(response.status_code, 500)
-        product = Product.objects.filter(name=createProductPayload["name"]).first()
+        product = GlobalProduct.objects.filter(name=createProductPayload["name"]).first()
         self.assertTrue(product == None)
 
     def test_delete_product_as_superadmin(self):

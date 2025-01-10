@@ -1,8 +1,8 @@
-import json
 import datetime
 import hashlib
 import requests
 
+from django.db import transaction as atomic_transaction
 from django.http import HttpResponse
 from django.conf import settings
 from django.shortcuts import render
@@ -49,13 +49,14 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                     )
 
                     if data_integrity_secure:
-                        transaction = self.create_transaction(request, checkout_form, branch, reference, verified_payload)
+                        with atomic_transaction.atomic():
+                            transaction = self.create_transaction(request, checkout_form, branch, reference, verified_payload)
 
-                        if transaction:
-                            order = self.create_an_order(transaction, checkout_form)
-                            return self.return_success_response(verified_payload, transaction, order)
-                        else:
-                            raise Exception("Transaction creation failed")
+                            if transaction:
+                                order = self.create_an_order(transaction, checkout_form)
+                                return self.return_success_response(verified_payload, transaction, order)
+                            else:
+                                raise Exception("Transaction creation failed")
                     else:
                         raise Exception("Data integrity not secure")
                 else:

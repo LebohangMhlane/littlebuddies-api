@@ -17,7 +17,7 @@ from apps.accounts.models import UserAccount
 from apps.accounts.tokens import accountActivationTokenGenerator
 
 from apps.merchants.models import Branch, MerchantBusiness
-from apps.products.models import Product
+from apps.products.models import GlobalProduct
 from apps.products.serializers.serializers import ProductSerializer
 
 import logging
@@ -37,17 +37,17 @@ class GlobalViewFunctions():
     ]
 
     def verify_payload_integrity(self, payload:dict, secret="secret"):
-        cleanedPayload = payload.copy()
-        checksum_to_compare = cleanedPayload["CHECKSUM"]
-        del cleanedPayload["CHECKSUM"]
-        values_as_string = "".join(list(cleanedPayload.values()))
+        paygate_payload = payload.copy()
+        checksum_to_compare = paygate_payload["CHECKSUM"]
+        del paygate_payload["CHECKSUM"]
+        values_as_string = "".join(list(paygate_payload.values()))
         values_as_string += secret
         checksum = hashlib.md5(values_as_string.encode('utf-8')).hexdigest()
-        cleanedPayload["CHECKSUM"] = checksum_to_compare
+        paygate_payload["CHECKSUM"] = checksum_to_compare
         if checksum_to_compare == checksum:
-            return (True, cleanedPayload)   
+            return (True, paygate_payload)   
         else:
-            return (False, cleanedPayload)
+            return (False, paygate_payload)
 
     def get_branch(self, branch_id) -> Branch:
         branch = Branch.objects.get(id=branch_id)
@@ -78,7 +78,7 @@ class GlobalViewFunctions():
     def get_products(self, branch):
         logger.info("Getting updated stores near customer...")
         try:
-            products = Product.objects.filter(
+            products = GlobalProduct.objects.filter(
                 is_active=True,
                 branch=branch,
                 in_stock=True,
