@@ -89,7 +89,7 @@ class CheckoutForm():
 
                 # check if this product is on sale:
                 sale_campaign = SaleCampaign.objects.filter(
-                    branch=branch_product.branch_product.branch,
+                    branch=branch_product.branch,
                     branch_product=branch_product
                 ).first()
 

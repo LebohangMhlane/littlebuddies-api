@@ -508,17 +508,17 @@ class RepeatOrderViewTestCase(TestCase):
             self.assertEqual(data['order_id'], self.order.id)
             self.assertEqual(data['branch']['id'], self.branch.id)
 
-            self.assertEqual(len(data['product_list']), 1)  
+            self.assertEqual(len(data['product_list']), 2)  
             in_stock_product = data['product_list'][0]
             self.assertEqual(in_stock_product['product_id'], self.product1.id)
             self.assertEqual(in_stock_product['quantity_ordered'], 2)
-            self.assertEqual(in_stock_product['current_price'], 100)
+            self.assertEqual(in_stock_product['current_price'], 50.0)
 
             self.assertEqual(len(data['out_of_stock']), 1)
             out_of_stock_product = data['out_of_stock'][0]
             self.assertEqual(out_of_stock_product['product_id'], self.product2.id)
 
-            self.assertEqual(data['new_cost'], 'R 200.00')
+            self.assertEqual(data['new_cost'], 'R 450.00')
 
     def test_repeat_order_not_found(self):
 
@@ -549,6 +549,9 @@ class RepeatOrderViewTestCase(TestCase):
         self.branch_product1.in_stock = False
         self.branch_product1.save()
 
+        self.branch_product3.in_stock = False
+        self.branch_product3.save()
+
         url = reverse('repeat-order', kwargs={'order_id': self.order.id})
 
         self.client.force_authenticate(user=self.user)
@@ -560,7 +563,7 @@ class RepeatOrderViewTestCase(TestCase):
         data = response.data
         self.assertEqual(len(data['product_list']), 0)
 
-        self.assertEqual(len(data['out_of_stock']), 2)
+        self.assertEqual(len(data['out_of_stock']), 3)
 
         self.assertEqual(data['new_cost'], 'R 0.00')
 
