@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
 from apps.products.models import BranchProduct
-import custom_admin_site
+from custom_admin_site import custom_admin_site
 
 
 from django.contrib import admin
@@ -41,6 +41,6 @@ class SaleCampaignAdmin(admin.ModelAdmin):
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-admin.site.register(MerchantBusiness, MerchantBusinessAdmin)
-admin.site.register(Branch, BranchAdmin)
-admin.site.register(SaleCampaign, SaleCampaignAdmin)
+custom_admin_site.register(MerchantBusiness, MerchantBusinessAdmin)
+custom_admin_site.register(Branch, BranchAdmin)
+custom_admin_site.register(SaleCampaign, SaleCampaignAdmin)

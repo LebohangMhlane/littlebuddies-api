@@ -266,7 +266,7 @@ class CancelOrderTests(TestCase):
             )
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.pending_order.id}
+            "cancel_order", kwargs={"order_id": self.pending_order.id}
         )
 
     def _authenticate_customer(self, user=None):
@@ -301,7 +301,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": 0}
+            "cancel_order", kwargs={"order_id": 0}
         )
 
         response = self.client.post(self.cancel_order_url)
@@ -314,7 +314,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": 99999}
+            "cancel_order", kwargs={"order_id": 99999}
         )
         response = self.client.post(self.cancel_order_url)
 
@@ -324,7 +324,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.cancelled_order.pk}
+            "cancel_order", kwargs={"order_id": self.cancelled_order.pk}
         )
         response = self.client.post(self.cancel_order_url)
 
@@ -339,7 +339,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()
 
         self.cancel_order_url = reverse(
-            "cancel-order", kwargs={"order_id": self.delivered_order.pk}
+            "cancel_order", kwargs={"order_id": self.delivered_order.pk}
         )
         response = self.client.post(self.cancel_order_url)
 
