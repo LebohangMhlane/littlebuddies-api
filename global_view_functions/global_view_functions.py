@@ -37,17 +37,17 @@ class GlobalViewFunctions():
     ]
 
     def verify_payload_integrity(self, payload:dict, secret="secret"):
-        cleanedPayload = payload.copy()
-        checksum_to_compare = cleanedPayload["CHECKSUM"]
-        del cleanedPayload["CHECKSUM"]
-        values_as_string = "".join(list(cleanedPayload.values()))
+        paygate_payload = payload.copy()
+        checksum_to_compare = paygate_payload["CHECKSUM"]
+        del paygate_payload["CHECKSUM"]
+        values_as_string = "".join(list(paygate_payload.values()))
         values_as_string += secret
         checksum = hashlib.md5(values_as_string.encode('utf-8')).hexdigest()
-        cleanedPayload["CHECKSUM"] = checksum_to_compare
+        paygate_payload["CHECKSUM"] = checksum_to_compare
         if checksum_to_compare == checksum:
-            return (True, cleanedPayload)   
+            return (True, paygate_payload)   
         else:
-            return (False, cleanedPayload)
+            return (False, paygate_payload)
 
     def get_branch(self, branch_id) -> Branch:
         branch = Branch.objects.get(id=branch_id)
