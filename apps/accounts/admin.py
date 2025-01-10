@@ -1,5 +1,6 @@
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import AccountSetting, UserAccount
 from custom_admin_site import custom_admin_site
@@ -33,3 +34,5 @@ custom_admin_site.register(User)
 custom_admin_site.register(UserAccount, UserAccountAdmin)
 
 custom_admin_site.register(AccountSetting)
+
+custom_admin_site.register(Token)

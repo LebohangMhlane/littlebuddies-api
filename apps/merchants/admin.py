@@ -6,7 +6,6 @@ from custom_admin_site import custom_admin_site
 
 
 from django.contrib import admin
-from django.db.models import Q
 
 class MerchantBusinessAdmin(admin.ModelAdmin):
     list_display = (
@@ -36,6 +35,13 @@ class BranchAdmin(admin.ModelAdmin):
         return qs.filter(merchant__user_account__user=request.user)
 
 class SaleCampaignAdmin(admin.ModelAdmin):
+    list_display = (
+        "branch_product",
+        "percentage_off",
+        "active",
+        "campaign_ends",
+    )
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
