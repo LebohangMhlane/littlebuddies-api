@@ -9,6 +9,13 @@ from django.contrib import admin
 from django.db.models import Q
 
 class MerchantBusinessAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "email",
+        "address",
+        "is_active",
+    )
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -16,6 +23,12 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         return qs.filter(user_account__user=request.user)
 
 class BranchAdmin(admin.ModelAdmin):
+    list_display = (
+        "merchant",
+        "address",
+        "is_active",
+    )
+        
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:

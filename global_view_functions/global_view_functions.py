@@ -17,7 +17,7 @@ from apps.accounts.models import UserAccount
 from apps.accounts.tokens import accountActivationTokenGenerator
 
 from apps.merchants.models import Branch, MerchantBusiness
-from apps.products.models import Product
+from apps.products.models import GlobalProduct
 from apps.products.serializers.serializers import ProductSerializer
 
 import logging
@@ -78,7 +78,7 @@ class GlobalViewFunctions():
     def get_products(self, branch):
         logger.info("Getting updated stores near customer...")
         try:
-            products = Product.objects.filter(
+            products = GlobalProduct.objects.filter(
                 is_active=True,
                 branch=branch,
                 in_stock=True,

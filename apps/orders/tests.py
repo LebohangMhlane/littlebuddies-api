@@ -13,7 +13,7 @@ from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPa
 from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
-from apps.products.models import Product, BranchProduct
+from apps.products.models import GlobalProduct, BranchProduct
 
 User = get_user_model()
 
@@ -417,19 +417,19 @@ class RepeatOrderViewTestCase(TestCase):
             amount=500.0
         )
 
-        self.product1 = Product.objects.create(
+        self.product1 = GlobalProduct.objects.create(
             name='Product 1', 
             description='Test Product 1',
             recommended_retail_price=120,
             image='product1_image_url'
         )
-        self.product2 = Product.objects.create(
+        self.product2 = GlobalProduct.objects.create(
             name='Product 2',
             description='Test Product 2',
             recommended_retail_price=60,
             image='product2_image_url'
         )
-        self.product3 = Product.objects.create(
+        self.product3 = GlobalProduct.objects.create(
             name='Product 3', 
             description='Test Product 3',
             recommended_retail_price=400,

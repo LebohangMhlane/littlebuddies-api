@@ -1,7 +1,7 @@
 from django.conf import settings
 from apps.merchants.models import SaleCampaign
 from apps.orders.models import OrderedProduct
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 
 # what the mobile app sends to the server to initiate payment after checkout:
 

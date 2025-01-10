@@ -24,7 +24,6 @@ class MerchantBusiness(models.Model):
     name = models.CharField(max_length=255, blank=False)
     email = models.EmailField(max_length=255, blank=False)
     address = models.CharField(max_length=1000, blank=False)
-    branch_address = models.TextField(default="[]")
     is_active = models.BooleanField(default=True)
     paygate_reference = models.CharField(max_length=1000, blank=False, default="")
     paygate_id = models.CharField(max_length=20, blank=False, unique=True)

@@ -5,12 +5,12 @@ from rest_framework.serializers import ModelSerializer
 from apps.accounts.models import UserAccount
 from apps.merchants.models import MerchantBusiness
 from apps.merchants.serializers.merchant_serializer import BranchSerializer
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 
 class ProductSerializer(ModelSerializer):
 
     class Meta:
-        model = Product
+        model = GlobalProduct
         fields = "__all__"
         depth = 2
 
@@ -35,7 +35,7 @@ class ProductSerializer(ModelSerializer):
         try:
             merchant = MerchantBusiness.objects.get(pk=validated_data["merchantPk"])
             user_account = request.user.useraccount
-            product = Product()
+            product = GlobalProduct()
             product.merchant = merchant
             product.name = validated_data["name"]
             product.description = validated_data["description"]

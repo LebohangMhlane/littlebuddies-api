@@ -10,7 +10,7 @@ from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 
 
 # test functions shared by all tests
@@ -256,11 +256,11 @@ class GlobalTestCaseConfig(TestCase):
             branches = Branch.objects.filter(merchant=merchant)
 
             try:
-                product = Product.objects.get(
+                product = GlobalProduct.objects.get(
                     name=name,
                 )
             except:
-                product = Product()
+                product = GlobalProduct()
                 product.name = name
                 product.recommended_retail_price = 200
                 product.image = "image"

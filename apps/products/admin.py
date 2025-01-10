@@ -1,7 +1,7 @@
 from custom_admin_site import custom_admin_site
 from django.contrib import admin
 
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 from apps.merchants.models import Branch
 
 class ProductAdmin(admin.ModelAdmin):
@@ -30,15 +30,15 @@ class BranchProductAdmin(admin.ModelAdmin):
             if db_field.name == "branch":
                 kwargs["queryset"] = Branch.objects.filter(merchant__users=request.user)
             elif db_field.name == "product":
-                kwargs["queryset"] = Product.objects.filter(
+                kwargs["queryset"] = GlobalProduct.objects.filter(
                     branchproduct__branch__merchant__users=request.user
                 ).distinct()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not change:  
-            obj.created_by = request.user
+            obj.created_by = request.user.useraccount
         super().save_model(request, obj, form, change)
 
-custom_admin_site.register(Product, ProductAdmin)
+custom_admin_site.register(GlobalProduct, ProductAdmin)
 custom_admin_site.register(BranchProduct, BranchProductAdmin)

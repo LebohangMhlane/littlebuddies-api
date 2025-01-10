@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
-from apps.products.models import BranchProduct, Product
+from apps.products.models import BranchProduct, GlobalProduct
 from apps.accounts.models import UserAccount
 
 def setDate():

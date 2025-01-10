@@ -1,5 +1,7 @@
 from django.contrib.admin import AdminSite
 
+from apps.accounts.models import UserAccount
+
 
 class CustomAdminSite(AdminSite):
 
@@ -10,10 +12,12 @@ class CustomAdminSite(AdminSite):
         return []
 
     def user_is_superuser(self, request):
-        return request.user.is_superuser
+        if not request.user.is_anonymous:
+            return request.user.is_superuser
 
     def user_is_merchant(self, request):
-        return request.user.useraccount.is_merchant
+        if not request.user.is_anonymous:
+            return request.user.useraccount.is_merchant
 
     def hide_models_from_merchants(self, filtered_app_list):
         for app in filtered_app_list:
@@ -31,14 +35,23 @@ class CustomAdminSite(AdminSite):
         ]
         return filtered_app_list
 
+    def create_account_for_superuser(self, request):
+        user_is_superuser = request.user.is_superuser
+        if user_is_superuser and not UserAccount.objects.filter(user=request.user).exists():
+            UserAccount.objects.create(user=request.user, device_token="fakedevicetoken")
+
     def get_app_list(self, request):
+        self.create_account_for_superuser(request)
         app_list = super().get_app_list(request)
-        if self.user_is_merchant(request):
-            filtered_app_list = self.hide_apps_from_merchants(app_list)
-            filtered_app_and_models_list = self.hide_models_from_merchants(filtered_app_list)
-            return filtered_app_and_models_list
-        if self.user_is_superuser(request):
+        if not request.path.startswith('/admin/login/'):
+            if self.user_is_merchant(request):
+                filtered_app_list = self.hide_apps_from_merchants(app_list)
+                filtered_app_and_models_list = self.hide_models_from_merchants(filtered_app_list)
+                return filtered_app_and_models_list
+            if self.user_is_superuser(request):
+                return app_list
+            raise Exception("You are not authorized to access this site.")
+        else:
             return app_list
-        raise Exception("You are not authorized to access this site.")
 
 custom_admin_site = CustomAdminSite(name="Littlebuddies Admin")
