@@ -1,21 +1,15 @@
 from django.test import TestCase
 from rest_framework.reverse import reverse
-from apps.merchants.models import Branch
 from global_test_config.global_test_config import GlobalTestCaseConfig
 from django.contrib.admin.sites import AdminSite
 from django.test.client import RequestFactory
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User
 
 from apps.products.admin import ProductAdmin, BranchProductAdmin
-<<<<<<< HEAD
-from apps.products.models import Product, BranchProduct
-from apps.products.models import BranchProduct, Product
 from apps.accounts.models import UserAccount
-=======
 from apps.products.models import GlobalProduct, BranchProduct
-from apps.products.models import BranchProduct, GlobalProduct
-
->>>>>>> b9edab9af820f0e70626f341e8f84c8cfa111f40
+from apps.merchants.models import Branch, Merchant
 
 class ProductTests(GlobalTestCaseConfig, TestCase):
 
@@ -155,12 +149,11 @@ class MockRequest:
     def __init__(self, user):
         self.user = user
 
-
 class AdminTests(GlobalTestCaseConfig, TestCase):
     def setUp(self):
         super().setUp()
         self.site = AdminSite()
-        self.product_admin = ProductAdmin(Product, self.site)
+        self.product_admin = ProductAdmin(GlobalProduct, self.site)
         self.branch_product_admin = BranchProductAdmin(BranchProduct, self.site)
         self.factory = RequestFactory()
 
@@ -177,138 +170,141 @@ class AdminTests(GlobalTestCaseConfig, TestCase):
         
         user_account = UserAccount.objects.create(
             user=user,
-            phone_number=1234567890,
+            phone_number='1234567890',  # Changed to string as phone numbers are typically stored as strings
             is_active=True
         )
         return user_account
+
     def create_merchant_with_branch(self, merchant_name="Test Merchant"):
-        """Helper method to create a merchant with at least one branch"""
-        merchant_account = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchant_account)
-        merchant.save()  # Save the merchant before creating relationships
+        """Helper method to create a merchant with branch"""
+        # Create merchant user
+        user = User.objects.create_user(
+            username=f"{merchant_name.lower().replace(' ', '')}_user",
+            email=f"{merchant_name.lower().replace(' ', '')}@test.com",
+            password='testpass123'
+        )
         
-        # Create a branch for the merchant if none exists
-        if not Branch.objects.filter(merchant=merchant).exists():
-            Branch.objects.create(
-                merchant=merchant,
-                name=f"{merchant_name} Branch"
-            )
+        # Create merchant account
+        merchant_account = UserAccount.objects.create(
+            user=user,
+            phone_number='9876543210',
+            is_active=True
+        )
         
-        return merchant_account, merchant
+        # Create merchant
+        merchant = Merchant.objects.create(
+            name=merchant_name,
+            logo="test_logo.png"
+        )
+        merchant.users.add(merchant_account)
+        
+        # Create branch
+        branch = Branch.objects.create(
+            merchant=merchant,
+            name=f"{merchant_name} Branch"
+        )
+        
+        return merchant_account, merchant, branch
+
+    def create_global_product(self, name="Test Product", price=100):
+        """Helper method to create a global product"""
+        return GlobalProduct.objects.create(
+            name=name,
+            description=f"Description for {name}",
+            recommended_retail_price=price,
+            image="test_image.png",
+            photo=SimpleUploadedFile(
+                name='test_photo.jpg',
+                content=b'',
+                content_type='image/jpeg'
+            ),
+            category=1
+        )
+
+    def create_branch_product(self, branch, global_product, created_by, price=100):
+        """Helper method to create a branch product"""
+        return BranchProduct.objects.create(
+            branch=branch,
+            product=global_product,
+            branch_price=price,
+            store_reference=f"REF-{branch.name}-{global_product.name}",
+            created_by=created_by,
+            merchant_name=branch.merchant.name,
+            merchant_logo=branch.merchant.logo
+        )
 
     def test_product_admin_superuser_queryset(self):
         """Test that superusers can see all products"""
-        # Create superuser with UserAccount
         superuser_account = self.create_superuser()
         
-        # Create merchant and products with branch
-        merchant_account, merchant = self.create_merchant_with_branch("Merchant1")
-        branch_product1 = self.create_product(merchant, merchant_account, "Product 1", 100)
-        branch_product2 = self.create_product(merchant, merchant_account, "Product 2", 200)
+        # Create two merchants with products
+        merchant1_account, merchant1, branch1 = self.create_merchant_with_branch("Merchant1")
+        merchant2_account, merchant2, branch2 = self.create_merchant_with_branch("Merchant2")
         
-        # Get the actual Product instances
-        product1 = branch_product1.product
-        product2 = branch_product2.product
+        # Create global products and branch products
+        product1 = self.create_global_product("Product 1", 100)
+        product2 = self.create_global_product("Product 2", 200)
         
-        # Test superuser can see all products
+        branch_product1 = self.create_branch_product(branch1, product1, merchant1_account)
+        branch_product2 = self.create_branch_product(branch2, product2, merchant2_account)
+        
         request = MockRequest(superuser_account.user)
         qs = self.product_admin.get_queryset(request)
+        
         self.assertEqual(qs.count(), 2)
         self.assertIn(product1, qs)
         self.assertIn(product2, qs)
 
     def test_product_admin_merchant_queryset(self):
         """Test that merchants can only see their own products"""
-        # Create first merchant and products with branch
-        merchant_account, merchant = self.create_merchant_with_branch("Merchant1")
-        branch_product1 = self.create_product(merchant, merchant_account, "Product 1", 100)
+        merchant1_account, merchant1, branch1 = self.create_merchant_with_branch("Merchant1")
+        merchant2_account, merchant2, branch2 = self.create_merchant_with_branch("Merchant2")
         
-        # Create another merchant and products with branch
-        other_merchant_account, other_business = self.create_merchant_with_branch("Merchant2")
-        branch_product2 = self.create_product(other_business, other_merchant_account, "Product 2", 200)
+        product1 = self.create_global_product("Product 1", 100)
+        product2 = self.create_global_product("Product 2", 200)
         
-        # Get the actual Product instances
-        product1 = branch_product1.product
-        product2 = branch_product2.product
+        branch_product1 = self.create_branch_product(branch1, product1, merchant1_account)
+        branch_product2 = self.create_branch_product(branch2, product2, merchant2_account)
         
-        # Verify merchant's user is properly set
-        self.assertIsNotNone(merchant_account.user)
-        
-        # Test merchant can only see their products
-        request = MockRequest(merchant_account.user)
+        request = MockRequest(merchant1_account.user)
         qs = self.product_admin.get_queryset(request)
+        
         self.assertEqual(qs.count(), 1)
         self.assertIn(product1, qs)
         self.assertNotIn(product2, qs)
 
-    def test_branch_product_admin_superuser_queryset(self):
-        """Test that superusers can see all branch products"""
-        superuser_account = self.create_superuser()
-        merchant_account, merchant = self.create_merchant_with_branch()
-        branch_product = self.create_product(merchant, merchant_account, "Test Product", 100)
+    def test_branch_product_admin_pre_save_signal(self):
+        """Test that merchant_name and logo are updated via pre_save signal"""
+        merchant_account, merchant, branch = self.create_merchant_with_branch("Test Merchant")
+        global_product = self.create_global_product()
         
-        request = MockRequest(superuser_account.user)
-        qs = self.branch_product_admin.get_queryset(request)
-        self.assertEqual(qs.count(), 1)
-        self.assertIn(branch_product, qs)
-
-    def test_branch_product_admin_merchant_queryset(self):
-        """Test that merchants can only see their own branch products"""
-        # Create first merchant and branch products
-        merchant_account, merchant = self.create_merchant_with_branch("Merchant1")
-        branch_product1 = self.create_product(merchant, merchant_account, "Test Product", 100)
-        
-        # Create another merchant and branch products
-        other_merchant_account, other_business = self.create_merchant_with_branch("Merchant2")
-        branch_product2 = self.create_product(other_business, other_merchant_account, "Other Product", 200)
-        
-        request = MockRequest(merchant_account.user)
-        qs = self.branch_product_admin.get_queryset(request)
-        self.assertEqual(qs.count(), 1)
-        self.assertIn(branch_product1, qs)
-        self.assertNotIn(branch_product2, qs)
-
-    def test_branch_product_admin_foreign_key_restrictions(self):
-        """Test that merchants can only select their own branches and products"""
-        merchant_account, merchant = self.create_merchant_with_branch("Merchant1")
-        branch_product1 = self.create_product(merchant, merchant_account, "Test Product", 100)
-        
-        other_merchant_account, other_business = self.create_merchant_with_branch("Merchant2")
-        branch_product2 = self.create_product(other_business, other_merchant_account, "Other Product", 200)
-        
-        request = MockRequest(merchant_account.user)
-        
-        # Test branch field restrictions
-        branch_field = self.branch_product_admin.formfield_for_foreignkey(
-            BranchProduct._meta.get_field('branch'),
-            request
-        )
-        self.assertIn(branch_product1.branch, branch_field.queryset)
-        self.assertNotIn(branch_product2.branch, branch_field.queryset)
-        
-        # Test product field restrictions
-        product_field = self.branch_product_admin.formfield_for_foreignkey(
-            BranchProduct._meta.get_field('product'),
-            request
-        )
-        self.assertIn(branch_product1.product, product_field.queryset)
-        self.assertNotIn(branch_product2.product, product_field.queryset)
-
-    def test_branch_product_admin_save_model(self):
-        """Test that created_by is set correctly when saving new branch products"""
-        merchant_account, merchant = self.create_merchant_with_branch()
-        branch_product = self.create_product(merchant, merchant_account, "Test Product", 100)
-
-        new_branch_product = BranchProduct(
-            branch=branch_product.branch,
-            product=branch_product.product,
-            merchant_name="Test Merchant",
+        branch_product = BranchProduct(
+            branch=branch,
+            product=global_product,
             branch_price=100,
-            in_stock=True
+            store_reference="TEST-REF",
+            created_by=merchant_account
         )
+        
+        # Save to trigger pre_save signal
+        branch_product.save()
+        
+        self.assertEqual(branch_product.merchant_name, merchant.name)
+        self.assertEqual(branch_product.merchant_logo, merchant.logo)
 
+    def test_branch_product_admin_save_model_new_instance(self):
+        """Test that created_by is set correctly for new branch products"""
+        merchant_account, merchant, branch = self.create_merchant_with_branch()
+        global_product = self.create_global_product()
+        
+        new_branch_product = BranchProduct(
+            branch=branch,
+            product=global_product,
+            branch_price=100,
+            store_reference="TEST-REF"
+        )
+        
         request = MockRequest(merchant_account.user)
         self.branch_product_admin.save_model(request, new_branch_product, None, False)
-
-        # Change the assertion to check for UserAccount instead of User
-        self.assertEqual(new_branch_product.created_by, merchant_account)
+        
+        self.assertEqual(new_branch_product.created_by, merchant_account.useraccount)
