@@ -11,7 +11,11 @@ class ProductAdmin(admin.ModelAdmin):
     
     def display_photo(self, obj):
         if obj.photo:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.photo.url)
+            return format_html(
+                '<a href="{}" target="_blank"><img src="{}" width="50" height="50" style="object-fit: cover;" /></a>',
+                obj.photo.url, 
+                obj.photo.url   
+            )
         return "No photo"
     display_photo.short_description = 'Photo'
     
@@ -20,12 +24,10 @@ class ProductAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         try:
-            # Filter based on the merchant associated with the logged-in user
             user_account = request.user.useraccount
             return qs.filter(branchproduct__branch__merchant__user_account=user_account).distinct()
         except UserAccount.DoesNotExist:
             return qs.none()
-
 
 class BranchProductAdmin(admin.ModelAdmin):
     list_display = ('product', 'branch', 'merchant_name', 'branch_price', 'in_stock', 'is_active')
@@ -37,7 +39,6 @@ class BranchProductAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         try:
-            # Filter by merchant associated with the user's account
             user_account = request.user.useraccount
             return qs.filter(branch__merchant__user_account=user_account)
         except UserAccount.DoesNotExist:
