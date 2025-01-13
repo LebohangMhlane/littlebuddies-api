@@ -12,6 +12,7 @@ class GlobalProduct(models.Model):
     description = models.TextField(max_length=2000, blank=False, default="")
     recommended_retail_price = models.PositiveIntegerField(blank=False, default=0)
     image = models.CharField(max_length=800, blank=False, default="")
+    photo = models.ImageField(upload_to='photos/%Y/%m/&d', default="")
     category = models.PositiveSmallIntegerField(default=1)
 
     def __str__(self) -> str:
