@@ -98,7 +98,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             bs = BranchSerializer(branch, many=False)
 
             # get the products this branch has:
-            bps = branch_productserializer(BranchProduct.objects.filter(), many=True)
+            bps = branch_productserializer(BranchProduct.objects.filter(branch=branch), many=True)
 
             # prepare sale campaigns:
             sale_campaigns = SaleCampaign.objects.filter(

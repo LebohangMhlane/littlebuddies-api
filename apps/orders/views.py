@@ -10,6 +10,7 @@ import datetime
 from django.db import transaction
 import logging
 
+from apps.merchants.serializers.merchant_serializer import BranchSerializer
 from apps.orders.models import Order, record_cancellation
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.transactions.models import Transaction
@@ -84,7 +85,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
 class CancelOrder(APIView, GlobalViewFunctions):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         order_id = kwargs.get("order_id")
         if not order_id:
             return Response(
@@ -192,6 +193,8 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
     ordered_products = None
 
     order_changes = {
+        "branch": None,
+        "order_id": 0,
         "price_changes": {},
         "out_of_stock": {},
         "no_longer_sold": {},
@@ -223,7 +226,6 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
         return order
 
     def check_for_price_changes(self):
-
         branch = self.order.transaction.branch
         sale_campaigns = SaleCampaign.objects.filter(branch=branch, active=True)
 
@@ -250,8 +252,10 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                             sale_campaign.calculate_sale_campaign_price()
                         )
                         if price_on_order != sale_campaign_price:
-                            # TODO: capture instance in which product id is not available:
-                            self.order_changes["price_changes"][product.id][
+                            product_id = product.id
+                            if product_id not in self.order_changes["price_changes"]:
+                                self.order_changes["price_changes"][product_id] = {}
+                            self.order_changes["price_changes"][product_id][
                                 "sale_campaign_price"
                             ] = sale_campaign_price
                         break
@@ -280,7 +284,11 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
     def get(self, request, *args, **kwargs):
         try:
+            self.order_changes['order_id'] = kwargs.get("order_id")
             self.order = self.get_order(order_id=kwargs.get("order_id"))
+            self.order_changes["branch"] = BranchSerializer(
+                self.order.transaction.branch, many=False
+            ).data
             self.ordered_products = self.order.ordered_products.all()
             self.check_for_items_out_of_stock()
             self.check_for_price_changes()

@@ -475,17 +475,14 @@ class RepeatOrderViewTestCase(TestCase):
         self.ordered_product1 = OrderedProduct.objects.create(
             branch_product=self.branch_product1,
             quantity_ordered=2,
-            order_price=self.branch_product1.branch_price,
         )
         self.ordered_product2 = OrderedProduct.objects.create(
             branch_product=self.branch_product2,
             quantity_ordered=1,
-            order_price=self.branch_product2.branch_price,
         )
         self.ordered_product3 = OrderedProduct.objects.create(
             branch_product=self.branch_product3,
             quantity_ordered=1,
-            order_price=self.branch_product3.branch_price,
         )
 
         self.order.ordered_products.add(
