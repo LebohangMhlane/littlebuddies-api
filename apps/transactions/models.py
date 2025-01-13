@@ -19,7 +19,7 @@ class Transaction(models.Model):
     CUSTOMER_CANCELLED = "CUSTOMER_CANCELLED"
 
     payRequestId = models.CharField(max_length=36, blank=False, null=True)
-    reference = models.CharField(max_length=255, blank=False, null=True)
+    reference = models.CharField(max_length=191, blank=False, null=True)
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
     products_purchased = models.ManyToManyField("orders.OrderedProduct", blank=True)

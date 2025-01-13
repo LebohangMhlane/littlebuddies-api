@@ -34,7 +34,7 @@ class Order(models.Model):
     acknowledged = models.BooleanField(default=False)
     delivery = models.BooleanField(default=True)
     deliveryDate = models.CharField(max_length=100, blank=False, null=True, default=setDate)
-    address = models.CharField(max_length=200, blank=False, null=True)
+    address = models.CharField(max_length=191, blank=False, null=True)
 
     def __str__(self) -> str:
         return f"{self.transaction.customer.user.first_name}{self.transaction.customer.user.last_name} from {self.transaction.branch.merchant.name} - {self.transaction.reference}"
