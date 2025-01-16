@@ -27,12 +27,13 @@ class Order(models.Model):
     }
 
     # TODO: convert model to fit the one in the mobile app:
-    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True)
     ordered_products = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
     status = models.CharField(max_length=16, choices=order_statuses, default=PAYMENT_PENDING)
     created = models.DateTimeField(auto_now_add=True)
     acknowledged = models.BooleanField(default=False)
     delivery = models.BooleanField(default=True)
+    delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
     deliveryDate = models.CharField(max_length=100, blank=False, null=True, default=setDate)
     address = models.CharField(max_length=191, blank=False, null=True)
 
@@ -61,7 +62,7 @@ class CancelledOrder(models.Model):
         ('OTHER', 'Other'),
     ]
 
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='cancellations')
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='cancellations', null=True)
     cancelled_by = models.ForeignKey(UserAccount, on_delete=models.SET_NULL, null=True)
     cancelled_at = models.DateTimeField(default=timezone.now)
     reason = models.CharField(max_length=50, choices=CANCELLATION_REASONS)

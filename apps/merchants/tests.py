@@ -281,7 +281,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "delivery": True,
             "deliveryDate": self.make_date(1),
             "address": "71 downthe street Bergville"
@@ -329,7 +329,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': %s, 'quantity_ordered': 1}, {'id': %s, 'quantity_ordered': 2}]" % (p1.pk, p2.pk),
+            "products": "[{'id': %s, 'quantityOrdered': 1}, {'id': %s, 'quantityOrdered': 2}]"
+            % (p1.pk, p2.pk),
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(daysFromNow=1),

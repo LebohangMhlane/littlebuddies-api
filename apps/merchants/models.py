@@ -29,6 +29,7 @@ class MerchantBusiness(models.Model):
     paygate_id = models.CharField(max_length=20, blank=False, unique=True)
     paygate_secret = models.CharField(max_length=32, blank=False, null=True)
     fernet_token = models.CharField(max_length=120, blank=True, unique=True)
+    delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.user_account.user.username}"

@@ -235,11 +235,10 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
             for branch_product in branch_products:
                 if product.branch_product == branch_product:
                     price_on_order = product.order_price
-                    if price_on_order != branch_product.branch_price:
-                        self.order_changes["price_changes"][product.id] = {
-                            "previous_order_price": price_on_order,
-                            "new_order_price": branch_product.branch_price,
-                        }
+                    self.order_changes["price_changes"][product.id] = {
+                        "previous_order_price": price_on_order,
+                        "new_order_price": branch_product.branch_price,
+                    }
                     break
 
         # now we check for price changes based on if the product is on sale:

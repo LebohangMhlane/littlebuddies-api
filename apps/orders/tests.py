@@ -35,11 +35,11 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 downthe street Bergville"
+            "address": "71 downthe street Bergville",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
@@ -81,11 +81,11 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 downthe street Bergville"
+            "address": "71 downthe street Bergville",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         initiate_payment_response = self.client.post(
@@ -142,7 +142,7 @@ class OrderTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
+            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(1),
