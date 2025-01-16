@@ -51,14 +51,6 @@ class OrderedProduct(models.Model):
 
     def __str__(self) -> str:
         return f"{self.branch_product.product.name} - {self.quantity_ordered}"
-    
-    def save(self, force_insert = ..., force_update = ..., using = ..., update_fields = ...):
-        if self.sale_campaign:
-            self.order_price = self.sale_campaign.calculate_sale_campaign_price()
-        else:
-            self.order_price = self.branch_product.branch_price
-        return super().save(force_insert, force_update, using, update_fields)
-
 
 class CancelledOrder(models.Model):
     CANCELLATION_REASONS = [

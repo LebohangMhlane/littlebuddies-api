@@ -174,7 +174,7 @@ class CheckAccountActivation(APIView, GlobalViewFunctions, SerializerFunctions):
 
     def get(self, request, **kwargs):
         user_account = request.user.useraccount
-        if user_account.emailVerified:
+        if user_account.email_verified:
             return Response({"message": "Account activated.", "accountActivated": True})
         else:
             return Response(

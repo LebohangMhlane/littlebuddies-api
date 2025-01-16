@@ -67,10 +67,11 @@ class CheckoutForm():
         try:
 
             def set_sale_campaign_to_ordered_product():
-                # set the sale campaign if there is one:
-                if sale_campaign: 
+                if sale_campaign:
+                    ordered_product.order_price = (
+                        sale_campaign.calculate_sale_campaign_price()
+                    )
                     ordered_product.sale_campaign = sale_campaign
-                    ordered_product.save()
 
             products_ordered = []
 
@@ -98,9 +99,8 @@ class CheckoutForm():
                 ordered_product.branch_product = branch_product
                 ordered_product.quantity_ordered = quantity_ordered
                 ordered_product.order_price = branch_product.branch_price
-                ordered_product.save()
-
                 set_sale_campaign_to_ordered_product()
+                ordered_product.save()
 
                 # add the ordered product to the list:
                 products_ordered.append(ordered_product)

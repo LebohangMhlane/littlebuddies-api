@@ -12,6 +12,8 @@ from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class AccountsTests(GlobalTestCaseConfig, TestCase):
 
+    # TODO: report accurate error when email or phone number is not unique
+
     def test_create_account(self):
         create_account_url = reverse("create_account_view")
         userInputData = {
