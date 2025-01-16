@@ -208,7 +208,7 @@ class CancelOrderTests(TestCase):
         )
         self.another_customer_account = UserAccount.objects.create(
             user=self.another_customer_user,
-            phone_number=9876543210,
+            phone_number=1276543210,
             device_token='test_device_token_2',
             is_merchant=True 
         )
@@ -220,7 +220,7 @@ class CancelOrderTests(TestCase):
         )
         self.merchant_account = UserAccount.objects.create(
             user=self.merchant_user,
-            phone_number=5555555555,
+            phone_number=1255555555,
             device_token='merchant_device_token',
             is_merchant=True 
         )
@@ -277,7 +277,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer()  
 
         payload = {"order_id": self.pending_order.id}
-        response = self.client.post(self.cancel_order_url)
+        response = self.client.get(self.cancel_order_url)
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["success"], True)
@@ -293,7 +293,7 @@ class CancelOrderTests(TestCase):
         self._authenticate_customer(user=self.another_customer_user)
 
         payload = {"order_id": self.pending_order.id}
-        response = self.client.post(self.cancel_order_url, data=payload)
+        response = self.client.get(self.cancel_order_url, data=payload)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -304,7 +304,7 @@ class CancelOrderTests(TestCase):
             "cancel_order", kwargs={"order_id": 0}
         )
 
-        response = self.client.post(self.cancel_order_url)
+        response = self.client.get(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -316,7 +316,7 @@ class CancelOrderTests(TestCase):
         self.cancel_order_url = reverse(
             "cancel_order", kwargs={"order_id": 99999}
         )
-        response = self.client.post(self.cancel_order_url)
+        response = self.client.get(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -326,7 +326,7 @@ class CancelOrderTests(TestCase):
         self.cancel_order_url = reverse(
             "cancel_order", kwargs={"order_id": self.cancelled_order.pk}
         )
-        response = self.client.post(self.cancel_order_url)
+        response = self.client.get(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -341,7 +341,7 @@ class CancelOrderTests(TestCase):
         self.cancel_order_url = reverse(
             "cancel_order", kwargs={"order_id": self.delivered_order.pk}
         )
-        response = self.client.post(self.cancel_order_url)
+        response = self.client.get(self.cancel_order_url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data.get('success', False))
@@ -490,7 +490,7 @@ class RepeatOrderViewTestCase(TestCase):
         )
 
     def test_repeat_order_success(self):
-        url = reverse('repeat-order', kwargs={'order_id': self.order.id})
+        url = reverse("repeat_order", kwargs={"order_id": self.order.id})
 
         with patch('apps.orders.views.send_mail') as mock_send_mail:
             self.client.force_authenticate(user=self.user)
@@ -520,7 +520,7 @@ class RepeatOrderViewTestCase(TestCase):
     def test_repeat_order_not_found(self):
 
         non_existent_order_id = 9999 
-        url = reverse('repeat-order', kwargs={'order_id': non_existent_order_id})
+        url = reverse("repeat_order", kwargs={"order_id": non_existent_order_id})
 
         self.client.force_authenticate(user=self.user)
 
@@ -532,7 +532,7 @@ class RepeatOrderViewTestCase(TestCase):
     def test_email_sending_failure(self):
 
         with patch('apps.orders.views.send_mail', side_effect=Exception("Email sending failed")):
-            url = reverse('repeat-order', kwargs={'order_id': self.order.id})
+            url = reverse("repeat_order", kwargs={"order_id": self.order.id})
 
             self.client.force_authenticate(user=self.user)
 
@@ -549,7 +549,7 @@ class RepeatOrderViewTestCase(TestCase):
         self.branch_product3.in_stock = False
         self.branch_product3.save()
 
-        url = reverse('repeat-order', kwargs={'order_id': self.order.id})
+        url = reverse("repeat_order", kwargs={"order_id": self.order.id})
 
         self.client.force_authenticate(user=self.user)
 
@@ -568,7 +568,7 @@ class RepeatOrderViewTestCase(TestCase):
 
         order = self.order
         check_for_order_url = reverse(
-            "check-for-order-changes", kwargs={"order_id": order.pk}
+            "check_for_order_changes", kwargs={"order_id": order.pk}
         )
         response = self.client.get(check_for_order_url)
 
@@ -580,7 +580,7 @@ class RepeatOrderViewTestCase(TestCase):
 
         order = self.order
         check_for_order_url = reverse(
-            "check-for-order-changes", kwargs={"order_id": order.pk}
+            "check_for_order_changes", kwargs={"order_id": order.pk}
         )
         response = self.client.get(check_for_order_url)
 
@@ -595,7 +595,7 @@ class RepeatOrderViewTestCase(TestCase):
 
         order = self.order
         check_for_order_url = reverse(
-            "check-for-order-changes", kwargs={"order_id": order.pk}
+            "check_for_order_changes", kwargs={"order_id": order.pk}
         )
         response = self.client.get(check_for_order_url)
 
@@ -608,7 +608,7 @@ class RepeatOrderViewTestCase(TestCase):
 
         order = self.order
         check_for_order_url = reverse(
-            "check-for-order-changes", kwargs={"order_id": order.pk}
+            "check_for_order_changes", kwargs={"order_id": order.pk}
         )
         response = self.client.get(check_for_order_url)
 
@@ -624,7 +624,7 @@ class RepeatOrderViewTestCase(TestCase):
 
         order = self.order
         check_for_order_url = reverse(
-            "check-for-order-changes", kwargs={"order_id": order.pk}
+            "check_for_order_changes", kwargs={"order_id": order.pk}
         )
         response = self.client.get(check_for_order_url)
 

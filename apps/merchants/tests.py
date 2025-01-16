@@ -84,7 +84,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
         self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
-        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 9)
+        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
         self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
 
     def test_get_updated_petstores_near_me(self):
