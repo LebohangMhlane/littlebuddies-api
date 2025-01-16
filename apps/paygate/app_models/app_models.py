@@ -83,7 +83,7 @@ class CheckoutForm():
 
             for branch_product in branch_products:
 
-                quantity_ordered = branch_product["quantityOrdered"]
+                quantity_ordered = branch_product["quantity_ordered"]
 
                 # get the product:
                 branch_product = BranchProduct.objects.get(id=branch_product["id"])

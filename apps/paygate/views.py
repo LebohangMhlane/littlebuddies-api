@@ -192,14 +192,14 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            updatedTransaction = self.verifyAndUpdateTransactionStatus(request.data)
-            self.update_and_send_notification(updatedTransaction)
+            updated_transaction = self.verifyAndUpdateTransactionStatus(request.data)
+            self.update_and_send_notification(updated_transaction)
         except Exception as e:
             pass
         return HttpResponse("OK")
 
-    def verifyAndUpdateTransactionStatus(self, receivedPayload):
-        def setTransactionStatus(transactionStatus, transaction: Transaction):
+    def verifyAndUpdateTransactionStatus(self, receieved_payload):
+        def set_transaction_status(transactionStatus, transaction: Transaction):
             if transactionStatus == 0:
                 transaction.status = Transaction.NOT_DONE
             elif transactionStatus == 1:
@@ -217,14 +217,14 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             return transaction
 
         try:
-            payRequestId = receivedPayload["PAY_REQUEST_ID"]
-            transaction = Transaction.objects.filter(payRequestId=payRequestId).first()
-            dataIntegritySecure, validatedPayload = self.verify_payload_integrity(
-                receivedPayload,
+            pay_request_id = receieved_payload["PAY_REQUEST_ID"]
+            transaction = Transaction.objects.filter(payRequestId=pay_request_id).first()
+            data_integrity_secure, validated_payload = self.verify_payload_integrity(
+                receieved_payload,
                 secret=transaction.branch.merchant.get_merchant_secret_key(),
             )  # TODO: investigate checksum check failure in this step:
-            transactionStatus = int(validatedPayload["TRANSACTION_STATUS"])
-            transaction = setTransactionStatus(transactionStatus, transaction)
+            transaction_status = int(validated_payload["TRANSACTION_STATUS"])
+            transaction = set_transaction_status(transaction_status, transaction)
             transaction.save()
             return transaction
         except Exception as e:

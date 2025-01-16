@@ -1,7 +1,9 @@
 from unittest.mock import patch
-from django.test import TestCase, RequestFactory
+from django.db import connection, transaction
+from django.test import TestCase, RequestFactory, TransactionTestCase
 from rest_framework.reverse import reverse
 from django.contrib.admin.sites import AdminSite
+from django.apps import apps
 
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
@@ -19,7 +21,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         merchant_user_account = self.create_merchant_user_account({})
         merchantBusiness = self.create_merchant_business(merchant_user_account)
-        
+
         _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 100)
         _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 50, 10)
 
@@ -50,7 +52,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "dfwhefoewhofh328rh2"
         })
-        
+
         merchantBusiness = self.create_merchant_business(
             merchant_user_account, merchant_data={
                 "name": "Orsum Pets",
@@ -70,7 +72,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
         # deviceLocation = "-29.857298, 31.024362"
         deviceLocation = "-29.7799367,30.875305"
-        getNearestBranchUrl = reverse("get_nearest_branch", kwargs={"coordinates": deviceLocation, "merchantId": 1})
+        getNearestBranchUrl = reverse(
+            "get_nearest_branch",
+            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
+        )
 
         response = self.client.get(
             getNearestBranchUrl,
@@ -79,7 +84,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
         self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
-        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
+        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 9)
         self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
 
     def test_get_updated_petstores_near_me(self):
@@ -139,6 +144,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.make_normal_account_super_admin(self.user_account.pk)
         merchant_user_account = self.create_merchant_user_account({})
         create_merchant_url = reverse("create_merchant_view")
+        create_merchant_payload["user_accountPk"] = merchant_user_account.pk
         response = self.client.post(
             create_merchant_url,
             data=create_merchant_payload,
@@ -176,7 +182,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchant = self.create_merchant_business(testmerchant_user_account)
         self.assertEqual(merchant.is_active, True)
         payload = {
-            "merchantId": 1,
+            "merchantId": merchant.pk,
         }
         deleteMerchantUrl = reverse("deactivate_merchant_view")
         response = self.client.post(
@@ -193,8 +199,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         testAccountToken = self.create_normal_test_account_and_login()
         _ = self.make_normal_account_super_admin(self.user_account.pk)
         testmerchant_user_account = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(testmerchant_user_account)
-        self.assertEqual(merchant.is_active, True)
+        merchant_business = self.create_merchant_business(testmerchant_user_account)
+        self.assertEqual(merchant_business.is_active, True)
         payload = {
             "merchantId": 100, # id doesn't exist
         }
@@ -207,18 +213,18 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data["message"], "Failed to deactivate merchant")
         self.assertFalse(response.data["success"])
-        merchant = MerchantBusiness.objects.get(pk=1)
-        self.assertEqual(merchant.is_active, True)
+        merchant_business = MerchantBusiness.objects.get(pk=merchant_business.pk)
+        self.assertEqual(merchant_business.is_active, True)
 
     def test_update_merchant(self):
         testAccountToken = self.create_normal_test_account_and_login()
         _ = self.make_normal_account_super_admin(self.user_account.pk)
         test_merchant_user_account = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(test_merchant_user_account)
-        self.assertEqual(merchant.name, "Absolute Pets")
-        self.assertEqual(merchant.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
+        merchant_business = self.create_merchant_business(test_merchant_user_account)
+        self.assertEqual(merchant_business.name, "Absolute Pets")
+        self.assertEqual(merchant_business.address, "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640")
         payload = {
-            "merchantPk": 1,
+            "merchantPk": merchant_business.pk,
             "name": "World of pets",
             "address": "32 rethman street newgermany",
         }
@@ -278,11 +284,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         order = Order.objects.all().first()
         self.assertEqual(response.data["message"], "Order acknowledged successfully")
         self.assertTrue(order.acknowledged)
-    
+
     @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
     def test_fulfill_order(self, mocked_response, mocked_send_notification):
-        
+
         mocked_response.return_value = MockedPaygateResponse()
 
         _ = self.create_test_customer()
@@ -295,11 +301,11 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantity_ordered': 1}, {'id': 2, 'quantity_ordered': 2}]",
+            "products": "[{'id': %s, 'quantity_ordered': 1}, {'id': %s, 'quantity_ordered': 2}]" % (p1.pk, p2.pk),
             "discountTotal": "0",
             "delivery": True,
             "deliveryDate": self.make_date(daysFromNow=1),
-            "address": "71 downthe street Bergville"
+            "address": "71 downthe street Bergville",
         }
         initiate_payment_url = reverse("initiate_payment_view")
         _ = self.client.post(
@@ -334,7 +340,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(order_from_response["status"], Order.DELIVERED)
         self.assertTrue(order_from_response["acknowledged"])
         self.assertEqual(order_from_response["transaction"]["status"], Transaction.COMPLETED)
-        
+
 
 class AdminFilterTests(GlobalTestCaseConfig, TestCase):
     def setUp(self):
