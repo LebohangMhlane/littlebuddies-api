@@ -1,4 +1,7 @@
+from django.apps import apps
+from django.db import connection
 from django.test import TestCase
+import pytest
 from rest_framework.reverse import reverse
 
 from unittest.mock import patch
@@ -6,6 +9,34 @@ from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPa
 
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
+
+
+@pytest.fixture(autouse=True)
+def clean_database(db):
+    """
+    Automatically clean up the database before each test.
+    """
+    for model in apps.get_models():
+        model.objects.all().delete()
+    reset_auto_increment_ids()
+
+
+def reset_auto_increment_ids():
+    """
+    Reset the auto-increment counter for all tables to 1.
+    """
+    with connection.cursor() as cursor:
+        # Disable foreign key checks to avoid constraints errors during truncation
+        cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+
+        # For MySQL and PostgreSQL, reset sequences (auto-increment primary key counters)
+        for model in apps.get_models():
+            table_name = model._meta.db_table
+            # Reset the auto-increment for MySQL and PostgreSQL
+            cursor.execute(f"ALTER TABLE `{table_name}` AUTO_INCREMENT = 1;")
+
+        # Re-enable foreign key checks
+        cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
 
 
 class PayGateTests(GlobalTestCaseConfig, TestCase):
