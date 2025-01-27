@@ -1,4 +1,5 @@
 import datetime
+from datetime import datetime
 import hashlib
 import requests
 
@@ -23,9 +24,7 @@ from apps.transactions.serializers.transaction_serializer import TransactionSeri
 
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
-from global_test_config.global_test_config import GlobalTestCaseConfig
-
-class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConfig):
+class PaymentInitializationView(APIView, GlobalViewFunctions):
 
     permission_classes = [IsAuthenticated]
 
@@ -73,7 +72,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
             "AMOUNT": f"{total_checkout_amount}", 
             "CURRENCY": "ZAR",
             "RETURN_URL": f"{settings.SERVER_URL}/payment_notification/",
-            "TRANSACTION_DATE": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "TRANSACTION_DATE": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "LOCALE": "en-za",
             "COUNTRY": "ZAF",
             "EMAIL": branch.merchant.user_account.user.email,
@@ -97,8 +96,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
 
     def send_initiate_payment_request_to_paygate(self, paygate_payload):
         return requests.post(settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygate_payload)
-
-    from datetime import datetime
 
     def create_transaction(
         self,
@@ -149,6 +146,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions, GlobalTestCaseConf
                 delivery=checkout_form.delivery,
                 deliveryDate=checkout_form.deliveryDate,
                 address=checkout_form.address,
+                delivery_fee=transaction.branch.merchant.delivery_fee
             )
             order.ordered_products.add(*transaction.products_purchased.all())
             order.save()
