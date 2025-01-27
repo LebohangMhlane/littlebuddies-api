@@ -40,7 +40,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             # Note: Now each product can only have one active sale campaign
             active_campaigns = SaleCampaign.objects.filter(
-                campaign_ends__gte=datetime.datetime.now(),
+                campaign_ends__gte=datetime.now(),
                 branch_product=OuterRef("pk"),
             ).order_by("id")
 

@@ -118,15 +118,18 @@ class CancelOrder(APIView, GlobalViewFunctions):
             order.acknowledged = False
             order.save()
 
+            def minus_delivery_fee():
+                delivery_fee = order.delivery_fee if order.delivery else 0.00
+                refund_amount = float(order.transaction.amount) - float(delivery_fee)
+                return refund_amount
+
             # we can improve by creating an excel file as well
             record_cancellation(
                 order=order,
                 user_account=request.user.useraccount,
                 reason="CUSTOMER_REQUEST",
                 notes=request.data.get("cancellation_notes", ""),
-                refund_amount=(
-                    order.total_amount if request.data.get("initiate_refund") else None
-                ),
+                refund_amount=(minus_delivery_fee()),
             )
 
             try:
