@@ -36,7 +36,7 @@ class GetStoreRange(APIView, GlobalViewFunctions):
         try:
             coordinates = kwargs.get('coordinates') # TODO: find out whats going on here
             mb = MerchantBusiness.objects.all()
-            sc = SaleCampaign.objects.filter(branch__merchant__in=mb)
+            sc = SaleCampaign.objects.filter(branch__merchant__in=mb, campaign_ends__gte=datetime.datetime.now())
             sale_campaigns = []
             if sc: 
                 scs = SaleCampaignSerializer(sc, many=True)

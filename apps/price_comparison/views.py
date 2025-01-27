@@ -16,7 +16,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
         try:
             query = kwargs.get("query", "").strip()
             store_ids = kwargs.get("store_ids", "").split(",") if kwargs.get("store_ids") else []
-            
+
             try:
                 store_ids = [sid.strip() for sid in store_ids if sid.strip()]
             except Exception:
@@ -27,7 +27,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             current_date = datetime.now().date()
             filters = Q(product__name__icontains=query, in_stock=True, is_active=True)
-            
+
             if store_ids:
                 filters &= Q(branch__merchant__id__in=store_ids)
 
@@ -40,9 +40,9 @@ class ProductSearchView(APIView, GlobalViewFunctions):
 
             # Note: Now each product can only have one active sale campaign
             active_campaigns = SaleCampaign.objects.filter(
-                campaign_ends__gte=current_date,
-                branch_product=OuterRef('pk')
-            ).order_by('id')
+                campaign_ends__gte=datetime.datetime.now(),
+                branch_product=OuterRef("pk"),
+            ).order_by("id")
 
             products = products.annotate(
                 has_campaign=Exists(active_campaigns),

@@ -1,3 +1,4 @@
+import datetime
 from django.shortcuts import render
 
 from django.views import View
@@ -32,7 +33,9 @@ class ManageBranchView(GlobalViewFunctions, View):
             all_branch_products = BranchProduct.objects.filter(branch=branch)
 
             # get all current sale campaigns:
-            all_sale_campaigns = SaleCampaign.objects.filter(branch=branch)
+            all_sale_campaigns = SaleCampaign.objects.filter(
+                branch=branch, campaign_ends__gte=datetime.datetime.now()
+            )
 
             # return a response:
             context = {}

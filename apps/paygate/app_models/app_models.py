@@ -1,5 +1,6 @@
+import datetime
 from django.conf import settings
-from apps.merchants.models import SaleCampaign
+from apps.merchants.models import Branch, SaleCampaign
 from apps.orders.models import OrderedProduct
 from apps.products.models import BranchProduct, GlobalProduct
 
@@ -15,6 +16,7 @@ class CheckoutForm():
     deliveryDate = ""
     address = ""
     productCount = 0
+    delivery_fee_set = "0.00"
 
     def __init__(self, payload):
         payload = payload.copy()
@@ -25,7 +27,13 @@ class CheckoutForm():
         self.deliveryDate = payload.get("deliveryDate")
         self.address = payload.get("address")
         self.productIds = self._set_product_ids(payload["products"])
+        self.delivery_fee_set = self._set_delivery_fee()
         self.set_product_count()
+
+    def _set_delivery_fee(self):
+        if self.delivery:
+            delivery_fee = Branch.objects.get(id=self.branch_id).merchant.delivery_fee
+            return str(delivery_fee)
 
     def verify_purchase(self):
 
@@ -91,7 +99,8 @@ class CheckoutForm():
                 # check if this product is on sale:
                 sale_campaign = SaleCampaign.objects.filter(
                     branch=branch_product.branch,
-                    branch_product=branch_product
+                    branch_product=branch_product,
+                    campaign_ends__gte=datetime.datetime.now(),
                 ).first()
 
                 # create the ordered product:

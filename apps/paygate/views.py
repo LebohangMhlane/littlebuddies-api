@@ -146,7 +146,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
                 delivery=checkout_form.delivery,
                 deliveryDate=checkout_form.deliveryDate,
                 address=checkout_form.address,
-                delivery_fee=transaction.branch.merchant.delivery_fee
+                delivery_fee=checkout_form.delivery_fee_set
             )
             order.ordered_products.add(*transaction.products_purchased.all())
             order.save()

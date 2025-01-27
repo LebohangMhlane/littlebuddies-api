@@ -227,7 +227,9 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
 
     def check_for_price_changes(self):
         branch = self.order.transaction.branch
-        sale_campaigns = SaleCampaign.objects.filter(branch=branch, active=True)
+        sale_campaigns = SaleCampaign.objects.filter(
+            branch=branch, active=True, campaign_ends__gte=datetime.datetime.now()
+        )
 
         # we need to check if the branch updated their prices recently:
         branch_products = branch.branchproduct_set.filter(in_stock=True, is_active=True)
