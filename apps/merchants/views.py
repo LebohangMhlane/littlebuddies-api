@@ -58,23 +58,29 @@ class GetStoreRange(APIView, GlobalViewFunctions):
 
 
 class GetNearestBranch(APIView, GlobalViewFunctions):
-
     def get(self, request, **kwargs):
         try:
-            # TODO: restrict api key access to server ip address:
             coordinates = kwargs["coordinates"]
             merchant_business = MerchantBusiness.objects.get(id=kwargs["merchantId"])
             gmaps_client = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
             customer_address = self._get_customer_address(coordinates, gmaps_client)
             branch_data = self._find_nearest_branch(coordinates, merchant_business.name, gmaps_client)
             distance_from_branch = self._get_distance(
-                coordinates, branch_data["branch"]["address"], gmaps_client)
+                coordinates, branch_data["branch"]["address"], gmaps_client
+            )
             self._set_distance(distance_from_branch, branch_data)
+
+            # Get last order and price changes
+            last_order = self._get_last_order(request.user, branch_data["branch"]["id"])
+            price_changes = self._get_price_changes(last_order, branch_data["products"]) if last_order else None
+
             return Response({
                 "success": True,
                 "message": "Nearest branch retrieved successfully",
                 "nearestBranch": branch_data,
-                "customerAddress": customer_address
+                "customerAddress": customer_address,
+                "lastOrder": last_order,
+                "priceChanges": price_changes
             }, status=200)
         except Exception as e:
             return Response({
@@ -82,6 +88,64 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 "message": "Failed to get stores near customer",
                 "error": str(e)
             }, status=200)
+
+    def _get_last_order(self, user, branch_id):
+        try:
+            last_order = Order.objects.filter(
+                user=user,
+                branch_id=branch_id,
+                status='DELIVERED' 
+            ).order_by('-created').first() 
+
+            if last_order:
+                return {
+                    "id": last_order.id,
+                    "date": last_order.created_at,
+                    "items": [
+                        {
+                            "product_id": item.branch_product.id,
+                            "name": item.branch_product.product.name,
+                            "quantity": item.quantity,
+                            "price_at_time": str(item.price_at_time)
+                        }
+                        for item in last_order.orderitem_set.all()
+                    ],
+                    "total": str(last_order.total)
+                }
+            return None
+        except Exception as e:
+            raise Exception(f"Failed to get last order: {str(e)}")
+
+    def _get_price_changes(self, last_order, current_products):
+        try:
+            price_changes = []
+            last_order_date = last_order["date"]
+
+            # dictionary of current products
+            current_products_dict = {
+                str(product["id"]): product
+                for product in current_products
+            }
+
+            for item in last_order["items"]:
+                product_id = str(item["product_id"])
+                if product_id in current_products_dict:
+                    old_price = float(item["price_at_time"])
+                    current_price = float(current_products_dict[product_id]["branch_price"])
+                    
+                    if old_price != current_price:
+                        price_changes.append({
+                            "product_id": product_id,
+                            "product_name": item["name"],
+                            "old_price": str(old_price),
+                            "new_price": str(current_price),
+                            "difference": str(round(current_price - old_price, 2)),
+                            "percentage_change": round(((current_price - old_price) / old_price) * 100, 2)
+                        })
+
+            return price_changes if price_changes else None
+        except Exception as e:
+            raise Exception(f"Failed to calculate price changes: {str(e)}")
 
     def get_branch_products(self, branch):
         bps = branch_productserializer(

@@ -5,6 +5,7 @@ import pytest
 from rest_framework.reverse import reverse
 from django.contrib.admin.sites import AdminSite
 from django.apps import apps
+from django.utils import timezone
 
 from apps.orders.models import Order
 from apps.transactions.models import Transaction
@@ -65,7 +66,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(len(response.data["petstores"]), 1)
 
     def test_get_nearest_branch(self):
-
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
 
@@ -97,8 +97,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 100)
         _ = self.create_product(merchantBusiness, merchant_user_account, "Bob's dog food", 50, 10)
 
-        # deviceLocation = "85 Dorothy Nyembe St, Durban Central, Durban, 4001"
-        # deviceLocation = "-29.857298, 31.024362"
         deviceLocation = "-29.7799367,30.875305"
         getNearestBranchUrl = reverse(
             "get_nearest_branch",
@@ -110,11 +108,21 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
 
-        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
-        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
-        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
-        self.assertEqual(response.data["nearestBranch"]["products"][0]["product"]["name"], "Bob's dog food")
-
+        # Assert the new response structure
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
+        
+        # Check the data structure
+        self.assertIn("data", response.data)
+        branch_data = response.data["data"]
+        
+        # Verify branch details
+        self.assertEqual(branch_data["branch"]["branch"]["id"], 1)
+        self.assertEqual(branch_data["branch"]["distance"]["distance"]["text"], "3.1 km")
+        self.assertEqual(
+            branch_data["branch"]["products"][0]["product"]["name"], 
+            "Bob's dog food"
+        )
     def test_get_updated_petstores_near_me(self):
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
@@ -369,6 +377,179 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(order_from_response["status"], Order.DELIVERED)
         self.assertTrue(order_from_response["acknowledged"])
         self.assertEqual(order_from_response["transaction"]["status"], Transaction.COMPLETED)
+
+    def test_get_nearest_branch_with_last_order(self):
+        """Test getting nearest branch with last order information"""
+        # Create test customer and login
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
+
+        # Create merchant and products
+        merchant_user_account = self.create_merchant_user_account({
+            "username": "TestMerchant",
+            "email": "test@merchant.com",
+        })
+        merchantBusiness = self.create_merchant_business(merchant_user_account)
+        branch = merchantBusiness.branch_set.first()
+        
+        # Create products
+        product1 = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
+        product2 = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
+
+        # Create a completed order
+        order = Order.objects.create(
+            user=customer,
+            branch=branch,
+            total=150.00,
+            status='DELIVERED',
+            created=timezone.now() - timezone.timedelta(days=1)
+        )
+        
+        # Create order items
+        Order.objects.create(
+            order=order,
+            branch_product=product1,
+            quantity=1,
+            price_at_time=100.00
+        )
+        Order.objects.create(
+            order=order,
+            branch_product=product2,
+            quantity=1,
+            price_at_time=50.00
+        )
+
+        # Update product prices to test price changes
+        product1.branch_price = 120.00  # 20% increase
+        product1.save()
+        product2.branch_price = 45.00   # 10% decrease
+        product2.save()
+
+        # Make request to get nearest branch
+        deviceLocation = "-29.7799367,30.875305"
+        getNearestBranchUrl = reverse(
+            "get_nearest_branch",
+            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
+        )
+
+        response = self.client.get(
+            getNearestBranchUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+
+        # Assert response structure
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
+        
+        # Verify last order data
+        last_order = response.data["data"]["lastOrder"]
+        self.assertIsNotNone(last_order)
+        self.assertEqual(last_order["total"], "150.00")
+        self.assertEqual(len(last_order["items"]), 2)
+        
+        # Verify price changes
+        price_changes = response.data["data"]["priceChanges"]
+        self.assertIsNotNone(price_changes)
+        self.assertEqual(len(price_changes), 2)
+        
+        # Check first price change (Dog Food)
+        dog_food_change = next(change for change in price_changes if change["product_name"] == "Dog Food")
+        self.assertEqual(dog_food_change["old_price"], "100.00")
+        self.assertEqual(dog_food_change["new_price"], "120.00")
+        self.assertEqual(dog_food_change["difference"], "20.00")
+        self.assertEqual(dog_food_change["percentage_change"], 20.00)
+        
+        # Check second price change (Cat Food)
+        cat_food_change = next(change for change in price_changes if change["product_name"] == "Cat Food")
+        self.assertEqual(cat_food_change["old_price"], "50.00")
+        self.assertEqual(cat_food_change["new_price"], "45.00")
+        self.assertEqual(cat_food_change["difference"], "-5.00")
+        self.assertEqual(cat_food_change["percentage_change"], -10.00)
+
+    def test_get_nearest_branch_no_last_order(self):
+        """Test getting nearest branch when there's no previous order"""
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
+
+        merchant_user_account = self.create_merchant_user_account({})
+        merchantBusiness = self.create_merchant_business(merchant_user_account)
+        
+        # Create products but no orders
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
+        _ = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
+
+        deviceLocation = "-29.7799367,30.875305"
+        getNearestBranchUrl = reverse(
+            "get_nearest_branch",
+            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
+        )
+
+        response = self.client.get(
+            getNearestBranchUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+
+        # Assert response structure
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
+        
+        # Verify no last order or price changes
+        self.assertIsNone(response.data["data"]["lastOrder"])
+        self.assertIsNone(response.data["data"]["priceChanges"])
+
+    def test_get_nearest_branch_no_price_changes(self):
+        """Test getting nearest branch when prices haven't changed"""
+        customer = self.create_test_customer()
+        authToken = self.login_as_customer()
+
+        merchant_user_account = self.create_merchant_user_account({})
+        merchantBusiness = self.create_merchant_business(merchant_user_account)
+        branch = merchantBusiness.branch_set.first()
+        
+        # Create products
+        product1 = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
+        product2 = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
+
+        # Create order with same prices as current
+        order = Order.objects.create(
+            user=customer,
+            branch=branch,
+            total=150.00,
+            status='DELIVERED',
+            created=timezone.now() - timezone.timedelta(days=1)
+        )
+        
+        Order.objects.create(
+            order=order,
+            branch_product=product1,
+            quantity=1,
+            price_at_time=100.00  # Same as current price
+        )
+        Order.objects.create(
+            order=order,
+            branch_product=product2,
+            quantity=1,
+            price_at_time=50.00   # Same as current price
+        )
+
+        deviceLocation = "-29.7799367,30.875305"
+        getNearestBranchUrl = reverse(
+            "get_nearest_branch",
+            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
+        )
+
+        response = self.client.get(
+            getNearestBranchUrl,
+            HTTP_AUTHORIZATION=f"Token {authToken}"
+        )
+
+        # Assert response structure
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
+        
+        # Verify last order exists but no price changes
+        self.assertIsNotNone(response.data["data"]["lastOrder"])
+        self.assertIsNone(response.data["data"]["priceChanges"])
 
 
 class AdminFilterTests(GlobalTestCaseConfig, TestCase):
