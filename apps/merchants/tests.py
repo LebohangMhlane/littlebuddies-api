@@ -2,12 +2,16 @@ from unittest.mock import patch
 from django.db import connection, transaction, connections
 from django.test import TestCase, RequestFactory, TransactionTestCase
 import pytest
+import json
+import uuid
+from django.contrib.auth.models import User
+
 from rest_framework.reverse import reverse
 from django.contrib.admin.sites import AdminSite
 from django.apps import apps
 from django.utils import timezone
 
-from apps.orders.models import Order
+from apps.orders.models import Order, OrderedProduct
 from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.merchants.models import MerchantBusiness
@@ -164,22 +168,20 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             getNearestBranchUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
-
-        # Assert the new response structure
+        
         self.assertTrue(response.data["success"])
-        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
+        self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
         
-        # Check the data structure
-        self.assertIn("data", response.data)
-        branch_data = response.data["data"]
+        self.assertIn("nearestBranch", response.data)
+        branch_data = response.data["nearestBranch"]
         
-        # Verify branch details
-        self.assertEqual(branch_data["branch"]["branch"]["id"], 1)
-        self.assertEqual(branch_data["branch"]["distance"]["distance"]["text"], "3.1 km")
+        self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
+        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
         self.assertEqual(
-            branch_data["branch"]["products"][0]["product"]["name"], 
+            response.data["nearestBranch"]["products"][0]["product"]["name"],
             "Bob's dog food"
         )
+
     def test_get_updated_petstores_near_me(self):
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
@@ -232,6 +234,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "address": "12 Pet Street Newgermany",
             "paygateId": "10011072130",
             "paygateSecret": "secret",
+            "deliveryFee": "50.00"
         }
         token = self.create_normal_test_account_and_login()
         self.make_normal_account_super_admin(self.user_account.pk)
@@ -334,47 +337,78 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
     def test_acknowlegde_order(self, mocked_response, mocked_send_notification):
-
         mocked_response.return_value = MockedPaygateResponse()
-
+        
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
         merchant_user_account = self.create_merchant_user_account()
         merchant = self.create_merchant_business(merchant_user_account)
         p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
+        
+        from decimal import Decimal
+        
         checkout_form_payload = {
             "branchId": str(merchant.pk),
-            "totalCheckoutAmount": "300.0",
-            "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
+            "totalCheckoutAmount": "300.00",
+            "products": json.dumps([
+                {"id": p1.pk, "quantityOrdered": 1}, 
+                {"id": p2.pk, "quantityOrdered": 2}
+            ]),
             "delivery": True,
             "deliveryDate": self.make_date(1),
-            "address": "71 downthe street Bergville"
+            "address": "71 downthe street Bergville",
+            "delivery_fee": "0.00"  # Changed to proper decimal format
         }
+        
         initiate_payment_url = reverse("initiate_payment_view")
-        _ = self.client.post(
+        init_response = self.client.post(
             initiate_payment_url,
             data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
-        payment_notification_response = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&TRANSACTION_STATUS=1&RESULT_CODE=990017&AUTH_CODE=5T8A0Z&CURRENCY=ZAR&AMOUNT=3299&RESULT_DESC=Auth+Done&TRANSACTION_ID=78705178&RISK_INDICATOR=AX&PAY_METHOD=CC&PAY_METHOD_DETAIL=Visa&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        
+        if not init_response.data.get('success'):
+            print(f"Full error: {init_response.data.get('error')}")
+        
+        self.assertTrue(init_response.data.get('success'), 
+                    f"Payment initialization failed: {init_response.data}")
+        
+        payment_notification_response = (
+            "PAYGATE_ID=10011072130"
+            "&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8"
+            "&REFERENCE=pgtest_123456789"
+            "&TRANSACTION_STATUS=1"
+            "&RESULT_CODE=990017"
+            "&AUTH_CODE=5T8A0Z"
+            "&CURRENCY=ZAR"
+            "&AMOUNT=30000"
+            "&RESULT_DESC=Auth+Done"
+            "&TRANSACTION_ID=78705178"
+            "&RISK_INDICATOR=AX"
+            "&PAY_METHOD=CC"
+            "&PAY_METHOD_DETAIL=Visa"
+            "&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
+        )
+        
         payment_notification_url = reverse("payment_notification_view")
-        _ = self.client.post(
+        notif_response = self.client.post(
             payment_notification_url,
             data=payment_notification_response,
             content_type='application/x-www-form-urlencoded'
         )
+        
         order = Order.objects.all().first()
-
-        # merchant should now acknowledge the order:
-        acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
+        self.assertIsNotNone(order, "Order was not created")
+        
+        acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk})
         merchantAuthToken = self.login_as_merchant()
         response = self.client.get(
             acknowledge_order_url,
-            data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
         )
-        order = Order.objects.all().first()
+        
+        order.refresh_from_db()
         self.assertEqual(response.data["message"], "Order acknowledged successfully")
         self.assertTrue(order.acknowledged)
 
@@ -415,7 +449,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             content_type='application/x-www-form-urlencoded'
         )
 
-        # merchant should now acknowledge the order at this point:
         order = Order.objects.all().first()
         acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk}) 
         merchant_auth_token = self.login_as_merchant()
@@ -437,21 +470,43 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_get_nearest_branch_with_last_order(self):
         """Test getting nearest branch with last order information"""
+
         # Create test customer and login
         customer = self.create_test_customer()
         authToken = self.login_as_customer()
 
-        # Create merchant and products
-        merchant_user_account = self.create_merchant_user_account({
-            "username": "TestMerchant",
-            "email": "test@merchant.com",
-        })
-        merchantBusiness = self.create_merchant_business(merchant_user_account)
-        branch = merchantBusiness.branch_set.first()
-        
+        # Create the merchant user account
+        merchant_user = User.objects.create_user(username="TestMerchant", email="test@merchant.com", password="testpassword")
+        merchant_user_account = UserAccount.objects.create(
+            user=merchant_user,
+            address="Shop 15, Fields Centre, 13 Old Main Rd, Kloof, 3640, South Africa",
+            phone_number=1234567890,
+            device_token="test_device_token",
+            is_merchant=True, 
+        )
+
+        # Create the merchant business
+        merchant_business = MerchantBusiness.objects.create(
+            user_account=merchant_user_account,
+            name="Test Merchant Business",
+            email="test@merchant.com",
+            address="Shop 15, Fields Centre, 13 Old Main Rd, Kloof, 3640, South Africa",
+            paygate_reference="PG_REF12345",
+            paygate_id="PG_ID12345",
+            paygate_secret="SECRET_KEY_12345",
+            delivery_fee=50.00,
+        )
+
+        # Assert that the merchant business was created successfully
+        self.assertIsNotNone(merchant_business)
+        self.assertEqual(merchant_business.user_account, merchant_user_account)
+   
+
+        branch = merchant_business.branch_set.first()
+
         # Create products
-        product1 = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
-        product2 = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
+        product1 = self.create_product(merchant_business, merchant_user_account, "Dog Food", 100)
+        product2 = self.create_product(merchant_business, merchant_user_account, "Cat Food", 50)
 
         # Create a completed order
         order = Order.objects.create(
@@ -461,7 +516,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             status='DELIVERED',
             created=timezone.now() - timezone.timedelta(days=1)
         )
-        
+
         # Create order items
         Order.objects.create(
             order=order,
@@ -486,7 +541,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         deviceLocation = "-29.7799367,30.875305"
         getNearestBranchUrl = reverse(
             "get_nearest_branch",
-            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
+            kwargs={"coordinates": deviceLocation, "merchantId": merchant_business.pk},
         )
 
         response = self.client.get(
@@ -497,25 +552,25 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         # Assert response structure
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
-        
+
         # Verify last order data
         last_order = response.data["data"]["lastOrder"]
         self.assertIsNotNone(last_order)
         self.assertEqual(last_order["total"], "150.00")
         self.assertEqual(len(last_order["items"]), 2)
-        
+
         # Verify price changes
         price_changes = response.data["data"]["priceChanges"]
         self.assertIsNotNone(price_changes)
         self.assertEqual(len(price_changes), 2)
-        
+
         # Check first price change (Dog Food)
         dog_food_change = next(change for change in price_changes if change["product_name"] == "Dog Food")
         self.assertEqual(dog_food_change["old_price"], "100.00")
         self.assertEqual(dog_food_change["new_price"], "120.00")
         self.assertEqual(dog_food_change["difference"], "20.00")
         self.assertEqual(dog_food_change["percentage_change"], 20.00)
-        
+
         # Check second price change (Cat Food)
         cat_food_change = next(change for change in price_changes if change["product_name"] == "Cat Food")
         self.assertEqual(cat_food_change["old_price"], "50.00")
@@ -546,13 +601,12 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
 
-        # Assert response structure
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
         
-        # Verify no last order or price changes
         self.assertIsNone(response.data["data"]["lastOrder"])
         self.assertIsNone(response.data["data"]["priceChanges"])
+
 
     def test_get_nearest_branch_no_price_changes(self):
         """Test getting nearest branch when prices haven't changed"""
@@ -562,32 +616,49 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         merchant_user_account = self.create_merchant_user_account({})
         merchantBusiness = self.create_merchant_business(merchant_user_account)
         branch = merchantBusiness.branch_set.first()
-        
+
         # Create products
         product1 = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
         product2 = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
 
-        # Create order with same prices as current
-        order = Order.objects.create(
-            user=customer,
-            branch=branch,
-            total=150.00,
-            status='DELIVERED',
-            created=timezone.now() - timezone.timedelta(days=1)
+        # Create ordered products
+        ordered_product1 = OrderedProduct.objects.create(
+            branch_product=product1,
+            quantity_ordered=1,
+            order_price=100.00  # Same as current price
+        )
+        ordered_product2 = OrderedProduct.objects.create(
+            branch_product=product2,
+            quantity_ordered=1,
+            order_price=50.00   # Same as current price
+        )
+
+        # Create transaction
+        transaction = Transaction.objects.create(
+            payRequestId=str(uuid.uuid4()),  # Unique ID for the transaction
+            reference="test_reference",  # Reference for the transaction
+            customer=customer,  # Customer who placed the order
+            branch=branch,  # The branch where the order was placed
+            amount="150.00",  # Total amount as string
+            discountTotal=0,  # No discount for this test
+            status=Transaction.COMPLETED,  # Assuming it's completed
         )
         
-        Order.objects.create(
-            order=order,
-            branch_product=product1,
-            quantity=1,
-            price_at_time=100.00  # Same as current price
+        # Link ordered products to the transaction
+        transaction.products_purchased.set([ordered_product1, ordered_product2])
+        transaction.numberOfProducts = 2  # Set number of products
+        transaction.save()
+
+        # Create order and associate ordered products
+        order = Order.objects.create(
+            transaction=transaction,
+            status=Order.DELIVERED,
+            created=timezone.now() - timezone.timedelta(days=1),
+            address="Customer's address",
+            delivery=True,
+            delivery_fee=0.00
         )
-        Order.objects.create(
-            order=order,
-            branch_product=product2,
-            quantity=1,
-            price_at_time=50.00   # Same as current price
-        )
+        order.ordered_products.set([ordered_product1, ordered_product2])
 
         deviceLocation = "-29.7799367,30.875305"
         getNearestBranchUrl = reverse(
@@ -607,7 +678,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         # Verify last order exists but no price changes
         self.assertIsNotNone(response.data["data"]["lastOrder"])
         self.assertIsNone(response.data["data"]["priceChanges"])
-
 
 class AdminFilterTests(GlobalTestCaseConfig, TestCase):
     def setUp(self):

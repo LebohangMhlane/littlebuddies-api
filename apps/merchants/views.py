@@ -1,6 +1,6 @@
 import datetime
 from django.conf import settings
-
+from rest_framework.permissions import IsAuthenticated
 import json
 
 import googlemaps.addressvalidation
@@ -22,6 +22,7 @@ from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
 from apps.merchants.serializers.merchant_serializer import BranchSerializer, MerchantSerializer, SaleCampaignSerializer
 
 from apps.orders.models import Order
+from apps.accounts.models import UserAccount
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.products.models import BranchProduct
 from apps.products.serializers.serializers import branch_productserializer, ProductSerializer
@@ -58,6 +59,7 @@ class GetStoreRange(APIView, GlobalViewFunctions):
 
 
 class GetNearestBranch(APIView, GlobalViewFunctions):
+    permission_classes = [IsAuthenticated]
     def get(self, request, **kwargs):
         try:
             coordinates = kwargs["coordinates"]
@@ -91,26 +93,28 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
 
     def _get_last_order(self, user, branch_id):
         try:
+            user_account = UserAccount.objects.get(user=user)
+
             last_order = Order.objects.filter(
-                user=user,
-                branch_id=branch_id,
-                status='DELIVERED' 
-            ).order_by('-created').first() 
+                transaction__customer=user_account,  
+                ordered_products__branch_product__branch=branch_id,
+                status='DELIVERED'
+            ).order_by('-created').first()
 
             if last_order:
                 return {
                     "id": last_order.id,
-                    "date": last_order.created_at,
+                    "date": last_order.created,
                     "items": [
                         {
-                            "product_id": item.branch_product.id,
-                            "name": item.branch_product.product.name,
-                            "quantity": item.quantity,
-                            "price_at_time": str(item.price_at_time)
+                            "product_id": ordered_product.branch_product.id,
+                            "name": ordered_product.branch_product.product.name,
+                            "quantity": ordered_product.quantity_ordered,
+                            "price_at_time": str(ordered_product.order_price)
                         }
-                        for item in last_order.orderitem_set.all()
+                        for ordered_product in last_order.ordered_products.all()
                     ],
-                    "total": str(last_order.total)
+                    "total": str(last_order.transaction.amount)
                 }
             return None
         except Exception as e:

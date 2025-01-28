@@ -251,44 +251,47 @@ class GlobalTestCaseConfig(TestCase):
         user_account.save()
         return user_account
 
-    def create_product(self, merchant:MerchantBusiness, merchant_user_account, name, price, discountPercent=0):
+    def create_product(self, merchant: MerchantBusiness, merchant_user_account, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
+            if not branches.exists():
+                raise ValueError(f"No branches found for the merchant: {merchant.name}")
 
-            try:
-                product = GlobalProduct.objects.get(
-                    name=name,
-                )
-            except:
-                product = GlobalProduct()
-                product.name = name
-                product.recommended_retail_price = 200
-                product.image = "image"
-                product.category = 1
-                product.description = ""
-                product.save()
+            product, created = GlobalProduct.objects.get_or_create(
+                name=name,
+                defaults={
+                    "recommended_retail_price": 200,
+                    "image": "image",
+                    "category": 1,
+                    "description": "",
+                },
+            )
 
+            branch_product = None  
             for branch in branches:
-                branch_product = BranchProduct()
-                branch_product.branch = branch
-                branch_product.branch_price = product.recommended_retail_price + price # store charging R100 more
-                branch_product.store_reference = "3EERDE2"
-                branch_product.created_by = merchant_user_account
-                branch_product.product = product
-                branch_product.save()
+                branch_product = BranchProduct.objects.create(
+                    branch=branch,
+                    branch_price=product.recommended_retail_price + price,  
+                    store_reference="3EERDE2",
+                    created_by=merchant_user_account,
+                    product=product,
+                )
 
                 if discountPercent > 0:
-                    sale_campaign = SaleCampaign()
-                    sale_campaign.branch = branch
-                    sale_campaign.campaign_ends = datetime.now() + timedelta(days=5)
-                    sale_campaign.percentage_off = discountPercent
-                    sale_campaign.save()
+                    sale_campaign = SaleCampaign.objects.create(
+                        branch=branch,
+                        campaign_ends=datetime.now() + timedelta(days=5),
+                        percentage_off=discountPercent,
+                    )
                     sale_campaign.branch_product.add(branch_product)
                     sale_campaign.save()
 
+            return branch_product
+
         except Exception as e:
-            pass
-        return branch_product
+            print(f"Error creating product: {e}")
+            raise
+
     
     def make_date(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)
