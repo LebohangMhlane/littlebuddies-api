@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from django.db import connection, transaction
+from django.db import connection, transaction, connections
 from django.test import TestCase, RequestFactory, TransactionTestCase
 import pytest
 from rest_framework.reverse import reverse
@@ -12,18 +12,75 @@ from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 from apps.merchants.models import MerchantBusiness
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
+from apps.accounts.models import UserAccount
 from apps.merchants.admin import MerchantBusinessAdmin, BranchAdmin, SaleCampaignAdmin
 
 
 @pytest.fixture(autouse=True)
 def clean_database(db):
     """
-    Automatically clean up the database before each test.
+    Database cleanup fixture that properly handles User -> UserAccount -> MerchantBusiness
+    dependency chain and other models.
     """
-    for model in apps.get_models():
-        model.objects.all().delete()
-    reset_auto_increment_ids()
+    from django.contrib.auth.models import User
+    from django.contrib.auth.models import Group, Permission
+    from django.contrib.contenttypes.models import ContentType
 
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            # Temporarily disable foreign key checks
+            if connection.vendor == 'mysql':
+                cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+            elif connection.vendor == 'postgresql':
+                cursor.execute("SET CONSTRAINTS ALL DEFERRED;")
+
+            try:
+                # Delete models in correct order (most dependent first)
+                MerchantBusiness.objects.all().delete()
+                UserAccount.objects.all().delete()
+                User.objects.exclude(is_superuser=True).delete()  # Preserve superuser if needed
+                
+                # Clean up auth related tables
+                Group.objects.all().delete()
+                Permission.objects.all().delete()
+                ContentType.objects.all().delete()
+
+                # Get all remaining tables
+                if connection.vendor == 'mysql':
+                    cursor.execute("SHOW TABLES;")
+                    tables = [table[0] for table in cursor.fetchall()]
+                elif connection.vendor == 'postgresql':
+                    cursor.execute("""
+                        SELECT tablename FROM pg_tables 
+                        WHERE schemaname = 'public';
+                    """)
+                    tables = [table[0] for table in cursor.fetchall()]
+
+                # Clean remaining tables and reset sequences
+                for table in tables:
+                    if connection.vendor == 'mysql':
+                        cursor.execute(f"TRUNCATE TABLE `{table}`;")
+                        cursor.execute(f"ALTER TABLE `{table}` AUTO_INCREMENT = 1;")
+                    elif connection.vendor == 'postgresql':
+                        cursor.execute(f'TRUNCATE TABLE "{table}" CASCADE;')
+                        cursor.execute(f"""
+                            SELECT setval(
+                                pg_get_serial_sequence('{table}', 'id'),
+                                1,
+                                false
+                            );
+                        """)
+
+            finally:
+                # Re-enable foreign key checks
+                if connection.vendor == 'mysql':
+                    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+                elif connection.vendor == 'postgresql':
+                    cursor.execute("SET CONSTRAINTS ALL IMMEDIATE;")
+
+    # Ensure all connections are reset
+    for connection in connections.all():
+        connection.close()
 
 def reset_auto_increment_ids():
     """
