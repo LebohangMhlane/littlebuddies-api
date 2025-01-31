@@ -74,7 +74,11 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
 
             # Get last order and price changes
             last_order = self._get_last_order(request.user, branch_data["branch"]["id"])
-            price_changes = self._get_price_changes(last_order, branch_data["products"]) if last_order else None
+            price_changes = (
+                self._get_price_changes(last_order, branch_data["products"])
+                if last_order
+                else None
+            )
 
             return Response({
                 "success": True,
@@ -136,16 +140,21 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 if product_id in current_products_dict:
                     old_price = float(item["price_at_time"])
                     current_price = float(current_products_dict[product_id]["branch_price"])
-                    
+
                     if old_price != current_price:
-                        price_changes.append({
-                            "product_id": product_id,
-                            "product_name": item["name"],
-                            "old_price": str(old_price),
-                            "new_price": str(current_price),
-                            "difference": str(round(current_price - old_price, 2)),
-                            "percentage_change": round(((current_price - old_price) / old_price) * 100, 2)
-                        })
+                        price_changes.append(
+                            {
+                                "product_id": product_id,
+                                "product_name": item["name"],
+                                "old_price": str(old_price),
+                                "new_price": str(current_price),
+                                "difference": str(round(current_price - old_price, 2)),
+                                "percentage_change": round(
+                                    ((current_price - old_price) / old_price) * 100, 2
+                                ),
+                                "image": current_products_dict[product_id]["product"]["photo"],
+                            }
+                        )
 
             return price_changes if price_changes else None
         except Exception as e:
