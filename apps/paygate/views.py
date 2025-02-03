@@ -24,6 +24,7 @@ from apps.transactions.serializers.transaction_serializer import TransactionSeri
 
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
+
 class PaymentInitializationView(APIView, GlobalViewFunctions):
 
     permission_classes = [IsAuthenticated]
@@ -38,50 +39,77 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
             branch = self.get_branch(checkout_form.branch_id)
 
             if checkout_form.verify_purchase():
-                paygate_payload, reference = self.prepare_paygate_payload(checkout_form, branch, request)
-                paygate_response = self.send_initiate_payment_request_to_paygate(paygate_payload)
+                paygate_payload, reference = self.prepare_paygate_payload(
+                    checkout_form, branch, request
+                )
+                paygate_response = self.send_initiate_payment_request_to_paygate(
+                    paygate_payload
+                )
 
                 if paygate_response.status_code == 200:
-                    response_as_a_dict = self.convert_response_to_dict(paygate_response.text.split("&"))
-                    data_integrity_secure, verified_payload = self.verify_payload_integrity(
-                        response_as_a_dict, secret=branch.merchant.get_merchant_secret_key()
+                    response_as_a_dict = self.convert_response_to_dict(
+                        paygate_response.text.split("&")
+                    )
+                    data_integrity_secure, verified_payload = (
+                        self.verify_payload_integrity(
+                            response_as_a_dict,
+                            secret=branch.merchant.get_merchant_secret_key(),
+                        )
                     )
 
                     if data_integrity_secure:
                         with atomic_transaction.atomic():
-                            transaction = self.create_transaction(request, checkout_form, branch, reference, verified_payload)
+                            transaction = self.create_transaction(
+                                request,
+                                checkout_form,
+                                branch,
+                                reference,
+                                verified_payload,
+                            )
 
                             if transaction:
                                 order = self.create_an_order(transaction, checkout_form)
-                                return self.return_success_response(verified_payload, transaction, order)
+                                return self.return_success_response(
+                                    verified_payload, transaction, order
+                                )
                             else:
                                 raise Exception("Transaction creation failed")
                     else:
                         raise Exception("Data integrity not secure")
                 else:
-                    raise Exception(f"Response from Paygate was {paygate_response.status_code}")
+                    raise Exception(
+                        f"Response from Paygate was {paygate_response.status_code}"
+                    )
         except Exception as e:
             return self.errorResponse(str(e))
 
-    def prepare_paygate_payload(self, checkout_form_payload: CheckoutForm, branch: Branch, request):
+    def prepare_paygate_payload(
+        self, checkout_form_payload: CheckoutForm, branch: Branch, request
+    ):
         reference = self.create_a_reference(branch, request)
-        total_checkout_amount = checkout_form_payload.total_checkout_amount.replace(".", "") # paygate doesn't use decimals
+        total_checkout_amount = checkout_form_payload.total_checkout_amount.replace(
+            ".", ""
+        )  # paygate doesn't use decimals
         paygate_payload = {
             "PAYGATE_ID": branch.merchant.paygate_id,
             "REFERENCE": reference,
-            "AMOUNT": f"{total_checkout_amount}", 
+            "AMOUNT": f"{total_checkout_amount}",
             "CURRENCY": "ZAR",
             "RETURN_URL": f"{settings.SERVER_URL}/payment_notification/",
-            "TRANSACTION_DATE": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "TRANSACTION_DATE": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "LOCALE": "en-za",
             "COUNTRY": "ZAF",
             "EMAIL": branch.merchant.user_account.user.email,
         }
-        paygate_payload["CHECKSUM"] = self.generate_checksum(paygate_payload, branch.merchant.get_merchant_secret_key())
+        paygate_payload["CHECKSUM"] = self.generate_checksum(
+            paygate_payload, branch.merchant.get_merchant_secret_key()
+        )
         return paygate_payload, reference
 
     def create_a_reference(self, branch: Branch, request):
-        number_of_branch_transactions = Transaction.objects.filter(branch=branch).count()
+        number_of_branch_transactions = Transaction.objects.filter(
+            branch=branch
+        ).count()
         reference = f"T{branch.id}{str(request.user.useraccount.phone_number)[-4:]}{request.user.pk}{number_of_branch_transactions}"
         return reference
 
@@ -95,7 +123,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
         return dict(data_piece.split("=") for data_piece in response_data)
 
     def send_initiate_payment_request_to_paygate(self, paygate_payload):
-        return requests.post(settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygate_payload)
+        return requests.post(
+            settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygate_payload
+        )
 
     def create_transaction(
         self,
@@ -115,15 +145,15 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
             "customer": request.user.useraccount,
             "branch": branch,
             "amount": checkout_form_payload.total_checkout_amount,
-            "numberOfProducts": checkout_form_payload.productCount,
-            "discountTotal": checkout_form_payload.discountTotal,
+            "numberOfProducts": checkout_form_payload.product_count,
+            "discountTotal": checkout_form_payload.discount_total,
             "status": Transaction.PENDING,
         }
 
         # Check if a matching transaction already exists
         existing_transaction = Transaction.objects.filter(
             **transaction_filters,
-            products_purchased__id__in=checkout_form_payload.productIds,
+            products_purchased__id__in=checkout_form_payload.product_ids,
         ).first()
 
         if existing_transaction:
@@ -144,9 +174,9 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
                 transaction=transaction,
                 status=Order.PAYMENT_PENDING,
                 delivery=checkout_form.delivery,
-                deliveryDate=checkout_form.deliveryDate,
+                deliveryDate=checkout_form.delivery_date,
                 address=checkout_form.address,
-                delivery_fee=checkout_form.delivery_fee_set
+                delivery_fee=checkout_form.delivery_fee,
             )
             order.ordered_products.add(*transaction.products_purchased.all())
             order.save()
@@ -216,7 +246,9 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
 
         try:
             pay_request_id = receieved_payload["PAY_REQUEST_ID"]
-            transaction = Transaction.objects.filter(payRequestId=pay_request_id).first()
+            transaction = Transaction.objects.filter(
+                payRequestId=pay_request_id
+            ).first()
             data_integrity_secure, validated_payload = self.verify_payload_integrity(
                 receieved_payload,
                 secret=transaction.branch.merchant.get_merchant_secret_key(),
@@ -239,12 +271,10 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             order.save()
             return order
         return None
-    
+
     def update_and_send_notification(self, updatedTransaction):
         order = self.updateOrder(updatedTransaction)
-        _ = FirebaseInstance().send_transaction_status_notification(
-            updatedTransaction
-        )
+        _ = FirebaseInstance().send_transaction_status_notification(updatedTransaction)
         self.sendOrderEmail(updatedTransaction, order)
 
     def sendOrderEmail(self, updatedTransaction, order):

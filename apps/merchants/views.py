@@ -114,7 +114,9 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                             "product_id": ordered_product.branch_product.id,
                             "name": ordered_product.branch_product.product.name,
                             "quantity": ordered_product.quantity_ordered,
-                            "price_at_time": str(ordered_product.order_price)
+                            "price_at_time": str(ordered_product.order_price),
+                            "description": ordered_product.branch_product.product.description,
+                            "image": ordered_product.branch_product.product.image
                         }
                         for ordered_product in last_order.ordered_products.all()
                     ],

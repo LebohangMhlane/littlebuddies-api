@@ -2,7 +2,7 @@ import datetime
 from django.conf import settings
 from apps.merchants.models import Branch, SaleCampaign
 from apps.orders.models import OrderedProduct
-from apps.products.models import BranchProduct, GlobalProduct
+from apps.products.models import BranchProduct
 
 # what the mobile app sends to the server to initiate payment after checkout:
 
@@ -10,13 +10,13 @@ class CheckoutForm():
     branch_id = 0
     total_checkout_amount = "0.0"
     branch_products = []
-    productIds = []
-    discountTotal = 0
+    product_ids = []
+    discount_total = 0
     delivery = True
-    deliveryDate = ""
+    delivery_date = ""
     address = ""
-    productCount = 0
-    delivery_fee_set = "0.00"
+    product_count = 0
+    delivery_fee = "0.00"
 
     def __init__(self, payload):
         payload = payload.copy()
@@ -24,10 +24,10 @@ class CheckoutForm():
         self.total_checkout_amount = payload["totalCheckoutAmount"]
         self.branch_products = self._set_ordered_products(payload.get("products"))
         self.delivery = bool(payload.get("delivery"))
-        self.deliveryDate = payload.get("deliveryDate")
+        self.delivery_date = payload.get("deliveryDate")
         self.address = payload.get("address")
-        self.productIds = self._set_product_ids(payload["products"])
-        self.delivery_fee_set = self._set_delivery_fee()
+        self.product_ids = self._set_product_ids(payload["products"])
+        self.delivery_fee = self._set_delivery_fee()
         self.set_product_count()
 
     def _set_delivery_fee(self):
@@ -131,4 +131,4 @@ class CheckoutForm():
 
     def set_product_count(self):
         for product in self.branch_products:
-            self.productCount += int(product.quantity_ordered)
+            self.product_count += int(product.quantity_ordered)
