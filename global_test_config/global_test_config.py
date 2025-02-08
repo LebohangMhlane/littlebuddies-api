@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -28,7 +26,7 @@ class GlobalTestCaseConfig(TestCase):
         pass
 
     def create_a_branch(self, merchant):
-        
+
         # create a dummy branch:
         branch = Branch()
         branch.is_active = True
@@ -42,7 +40,7 @@ class GlobalTestCaseConfig(TestCase):
             "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
-        
+
     def create_normal_test_account(self):
         userInputData = {
             "username": "Lebo",
@@ -65,7 +63,7 @@ class GlobalTestCaseConfig(TestCase):
             user__username=response.data["user_account"]["user"]["username"]
         )
         return testUserAccount
-    
+
     def create_test_customer(self):
         userInputData = {
             "username": "customer",
@@ -96,7 +94,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         token = Token.objects.create(user=customer)
         return test_user_account
-    
+
     def create_merchant_user_account(self, user_data={}):
         try:
             fake_user_data = {
@@ -124,7 +122,7 @@ class GlobalTestCaseConfig(TestCase):
             return merchant_user_account
         except Exception as e:
             pass
-    
+
     def create_dynamic_merchant_user_account(self, userData):
         userInputData = {
             "username": userData["username"],
@@ -145,7 +143,7 @@ class GlobalTestCaseConfig(TestCase):
         )
         testmerchant_user_account = UserAccount.objects.get(user__email=userInputData["email"])
         return testmerchant_user_account
-    
+
     def create_normal_test_account_and_login(self):
         user_account = self.create_normal_test_account()
         loginUrl = reverse("login")
@@ -186,7 +184,7 @@ class GlobalTestCaseConfig(TestCase):
 
     def login_as_super_admin(self):
         pass
-    
+
     def make_user_account_a_merchant(self, user_account:UserAccount) -> UserAccount:
         user_account.is_merchant = True
         user_account.save()
@@ -204,6 +202,7 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.paygate_reference="pgtest_123456789"
                 merchant.paygate_id="10011072130"
                 merchant.paygate_secret="secret"
+                merchant.delivery_fee = "20.00"
                 merchant.set_branch_areas(["New Germany", "Durban Central"])
                 merchant.save()
             else:
@@ -214,6 +213,7 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.paygate_reference="pgtest_123456789"
                 merchant.paygate_id=merchant_data["paygateId"]
                 merchant.paygate_secret=merchant_data["paygateSecret"]
+                merchant.delivery_fee = merchant_data["deliveryFee"]
                 merchant.set_branch_areas(merchant_data["branchAreas"])
                 merchant.save()
         except Exception as e:
@@ -226,7 +226,7 @@ class GlobalTestCaseConfig(TestCase):
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
                 branch1.save()
-                
+
                 branch2 = Branch()
                 branch2.is_active=True
                 branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
@@ -242,7 +242,7 @@ class GlobalTestCaseConfig(TestCase):
         except Exception as e:
             pass
         return merchant
-    
+
     def make_normal_account_super_admin(self, user_accountPk:int):
         user_account = UserAccount.objects.get(pk=user_accountPk)
         user_account.user.is_superuser = True
@@ -292,7 +292,6 @@ class GlobalTestCaseConfig(TestCase):
             print(f"Error creating product: {e}")
             raise
 
-    
     def make_date(self, daysFromNow):
         date = datetime.now() + timedelta(days=daysFromNow)
         date = date.strftime("%d %B %Y")

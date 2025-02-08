@@ -68,6 +68,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
                 "paygateSecret": "secret",
                 "address": "72 rethman street newgermany",
                 "branchAreas": ["Durban", "Down the road"],
+                "deliveryFee": "20.00"
             }
         )
         self.merchant_business_2.save()
