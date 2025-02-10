@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from datetime import time
 
 from django.db import models
 from django.conf import settings
@@ -83,6 +84,7 @@ class Branch(models.Model):
     address = models.CharField(max_length=120)
     area = models.CharField(max_length=120, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
+    closing_time = models.TimeField(default=time(16, 30))
 
     def __str__(self) -> str:
         return f"{self.merchant.name} - {self.address}"
