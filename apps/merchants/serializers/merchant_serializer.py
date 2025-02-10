@@ -9,7 +9,7 @@ class MerchantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MerchantBusiness
-        fields = ['id', 'name', 'email', 'address', 'logo', 'delivery_fee']
+        fields = ['id', 'name', 'email', 'address', 'logo', 'delivery_fee', 'closing_time']
         depth = 2
 
     def is_valid(self, *, raise_exception=False):
@@ -29,6 +29,7 @@ class MerchantSerializer(serializers.ModelSerializer):
             merchant.paygate_id = validated_data["paygateId"]
             merchant.paygate_secret = validated_data["paygateSecret"]
             merchant.delivery_fee = validated_data["deliveryFee"]
+            merchant.closing_time = validated_data["closingTime"]
             merchant.save()
             return merchant
         except Exception as e:
