@@ -72,7 +72,7 @@ class CheckoutForm():
             branch_id = self.branch_id
             branch = Branch.objects.get(id=branch_id)
             todays_time = datetime.datetime.now().time()
-            if todays_time > branch.closing_time:
+            if todays_time > branch.merchant.closing_time:
                 raise Exception("Store is closed")
             return True
 
