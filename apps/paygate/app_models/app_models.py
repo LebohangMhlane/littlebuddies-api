@@ -68,7 +68,15 @@ class CheckoutForm():
             # raise Exception("Total product prices do not match the checkout amount")
             return True
 
-        if verifyProductExistence() and checkifPricesMatch():
+        def check_closing_time():
+            branch_id = self.branch_id
+            branch = Branch.objects.get(id=branch_id)
+            todays_time = datetime.datetime.now().time()
+            if todays_time > branch.closing_time:
+                raise Exception("Store is closed")
+            return True
+
+        if verifyProductExistence() and checkifPricesMatch() and check_closing_time():
             return True
 
     def _set_ordered_products(self, branch_products):

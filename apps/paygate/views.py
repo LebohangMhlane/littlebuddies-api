@@ -35,12 +35,12 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            checkout_form = CheckoutForm(payload=request.data)
-            branch = self.get_branch(checkout_form.branch_id)
+            checkout_data = CheckoutForm(payload=request.data)
+            branch = self.get_branch(checkout_data.branch_id)
 
-            if checkout_form.verify_purchase():
+            if checkout_data.verify_purchase():
                 paygate_payload, reference = self.prepare_paygate_payload(
-                    checkout_form, branch, request
+                    checkout_data, branch, request
                 )
                 paygate_response = self.send_initiate_payment_request_to_paygate(
                     paygate_payload
@@ -61,14 +61,14 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
                         with atomic_transaction.atomic():
                             transaction = self.create_transaction(
                                 request,
-                                checkout_form,
+                                checkout_data,
                                 branch,
                                 reference,
                                 verified_payload,
                             )
 
                             if transaction:
-                                order = self.create_an_order(transaction, checkout_form)
+                                order = self.create_an_order(transaction, checkout_data)
                                 return self.return_success_response(
                                     verified_payload, transaction, order
                                 )

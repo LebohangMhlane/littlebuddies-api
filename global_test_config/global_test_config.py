@@ -225,6 +225,7 @@ class GlobalTestCaseConfig(TestCase):
                 branch1.address = "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
                 branch1.merchant = merchant
                 branch1.area = "New Germany"
+                branch1.closing_time = (datetime.now() + timedelta(hours=2)).time()
                 branch1.save()
 
                 branch2 = Branch()
@@ -232,12 +233,14 @@ class GlobalTestCaseConfig(TestCase):
                 branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
                 branch2.merchant = merchant
                 branch2.area = "Durban Central"
+                branch1.closing_time = (datetime.now() - timedelta(hours=2)).time()
                 branch2.save()
             else:
                 branch1.is_active=True
                 branch1.address = merchant_data["address"]
                 branch1.merchant = merchant
                 branch1.area = merchant_data["branchAreas"][0]
+                branch1.closing_time = (datetime.now() - timedelta(hours=2)).time()
                 branch1.save()
         except Exception as e:
             pass

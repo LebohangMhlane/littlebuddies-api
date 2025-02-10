@@ -51,10 +51,10 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         testCustomer = self.create_test_customer()
         authToken = self.login_as_customer()
         merchant_user_account = self.create_merchant_user_account()
-        merchant = self.create_merchant_business(merchant_user_account)
-        p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
-        p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
-        branch = merchant.branch_set.all().first()
+        merchant_business = self.create_merchant_business(merchant_user_account)
+        p1 = self.create_product(merchant_business, merchant_user_account, "Bob's dog food", 200)
+        p2 = self.create_product(merchant_business, merchant_user_account, "Bob's cat food", 100)
+        branch = merchant_business.branch_set.all().first()
         checkout_form_payload = {
             "branchId": str(branch.pk),
             "totalCheckoutAmount": "400.0",
