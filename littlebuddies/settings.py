@@ -18,13 +18,46 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "django_app.log",
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "littlebuddies": {  # Custom logger for your app
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
 
-logging.basicConfig(
-    level=logging.DEBUG,  
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-    handlers=[logging.StreamHandler()]
-)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -108,6 +141,7 @@ INSTALLED_APPS = [
     'apps.price_comparison',
     'apps.discounts',
     'apps.merchant_dashboard',
+    'apps.merchant_wallets',
     'whitenoise.runserver_nostatic'
 ]
 

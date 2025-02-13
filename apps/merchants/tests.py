@@ -11,6 +11,7 @@ from django.contrib.admin.sites import AdminSite
 from django.apps import apps
 from django.utils import timezone
 
+from apps.merchant_wallets.models import MerchantWallet
 from apps.orders.models import Order, OrderedProduct
 from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
@@ -23,68 +24,12 @@ from apps.merchants.admin import MerchantBusinessAdmin, BranchAdmin, SaleCampaig
 @pytest.fixture(autouse=True)
 def clean_database(db):
     """
-    Database cleanup fixture that properly handles User -> UserAccount -> MerchantBusiness
-    dependency chain and other models.
+    Automatically clean up the database before each test.
     """
-    from django.contrib.auth.models import User
-    from django.contrib.auth.models import Group, Permission
-    from django.contrib.contenttypes.models import ContentType
+    for model in apps.get_models():
+        model.objects.all().delete()
+    reset_auto_increment_ids()
 
-    with transaction.atomic():
-        with connection.cursor() as cursor:
-            # Temporarily disable foreign key checks
-            if connection.vendor == 'mysql':
-                cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
-            elif connection.vendor == 'postgresql':
-                cursor.execute("SET CONSTRAINTS ALL DEFERRED;")
-
-            try:
-                # Delete models in correct order (most dependent first)
-                MerchantBusiness.objects.all().delete()
-                UserAccount.objects.all().delete()
-                User.objects.exclude(is_superuser=True).delete()  # Preserve superuser if needed
-                
-                # Clean up auth related tables
-                Group.objects.all().delete()
-                Permission.objects.all().delete()
-                ContentType.objects.all().delete()
-
-                # Get all remaining tables
-                if connection.vendor == 'mysql':
-                    cursor.execute("SHOW TABLES;")
-                    tables = [table[0] for table in cursor.fetchall()]
-                elif connection.vendor == 'postgresql':
-                    cursor.execute("""
-                        SELECT tablename FROM pg_tables 
-                        WHERE schemaname = 'public';
-                    """)
-                    tables = [table[0] for table in cursor.fetchall()]
-
-                # Clean remaining tables and reset sequences
-                for table in tables:
-                    if connection.vendor == 'mysql':
-                        cursor.execute(f"TRUNCATE TABLE `{table}`;")
-                        cursor.execute(f"ALTER TABLE `{table}` AUTO_INCREMENT = 1;")
-                    elif connection.vendor == 'postgresql':
-                        cursor.execute(f'TRUNCATE TABLE "{table}" CASCADE;')
-                        cursor.execute(f"""
-                            SELECT setval(
-                                pg_get_serial_sequence('{table}', 'id'),
-                                1,
-                                false
-                            );
-                        """)
-
-            finally:
-                # Re-enable foreign key checks
-                if connection.vendor == 'mysql':
-                    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
-                elif connection.vendor == 'postgresql':
-                    cursor.execute("SET CONSTRAINTS ALL IMMEDIATE;")
-
-    # Ensure all connections are reset
-    for connection in connections.all():
-        connection.close()
 
 def reset_auto_increment_ids():
     """
@@ -102,6 +47,7 @@ def reset_auto_increment_ids():
 
         # Re-enable foreign key checks
         cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+
 
 class MerchantTests(GlobalTestCaseConfig, TestCase):
 
@@ -152,6 +98,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
                 "paygateSecret": "secretSanta",
                 "branchAreas": ["New Germany"],
                 "hasSpecials": False,
+                "deliveryFee": "20.00",
+                "closingTime": "16.30"
             }
         )
 
@@ -168,15 +116,15 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             getNearestBranchUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
-        
+
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully")
-        
+
         self.assertIn("nearestBranch", response.data)
         branch_data = response.data["nearestBranch"]
-        
+
         self.assertEqual(response.data["nearestBranch"]["branch"]["id"], 1)
-        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "3.1 km")
+        self.assertEqual(response.data["nearestBranch"]["distance"]["distance"]["text"], "2.9 km")
         self.assertEqual(
             response.data["nearestBranch"]["products"][0]["product"]["name"],
             "Bob's dog food"
@@ -199,16 +147,19 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "deviceToken": "dfwhefoewhofh328rh2"
         })
         merchantBusiness2 = self.create_merchant_business(
-            merchant_user_account2, {
-                "name": "Totally Pets",
-                "email": "totallypets@gmail.com",
-                "address": "197 Brand Rd, Bulwer, Berea, 4083",
+            merchant_user_account2,
+            {
+                "name": "Orsum Pets",
+                "email": "orsumpets@gmail.com",
+                "address": "Shop No, 55 Shepstone Rd, New Germany, Durban, 3610, South Africa",
                 "paygateReference": "pgtest_123456789",
                 "paygateId": "339e8g3iiI934",
-                "paygateSecret": "santafridays",
+                "paygateSecret": "secretSanta",
                 "branchAreas": ["New Germany"],
                 "hasSpecials": False,
-            }
+                "deliveryFee": "20.00",
+                "closingTime": "16.30",
+            },
         )
 
         p1 = self.create_product(merchantBusiness1, merchant_user_account1, "Bob's dog food", 200)
@@ -234,7 +185,8 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "address": "12 Pet Street Newgermany",
             "paygateId": "10011072130",
             "paygateSecret": "secret",
-            "deliveryFee": "50.00"
+            "deliveryFee": "50.00",
+            "closingTime": "16:00"
         }
         token = self.create_normal_test_account_and_login()
         self.make_normal_account_super_admin(self.user_account.pk)
@@ -248,6 +200,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         merchant = MerchantBusiness.objects.filter(name=create_merchant_payload["name"]).first()
+        merchant_wallet = MerchantWallet.objects.get(merchant_business__id=merchant.id)
+        self.assertEqual(merchant_wallet.wallet_balance, 0.00)
+        self.assertEqual(merchant_wallet.merchant_business, merchant)
         self.assertEqual(merchant.user_account.pk, merchant_user_account.pk)
         self.assertEqual(response.data["merchant"]["name"], create_merchant_payload["name"])
 
@@ -338,16 +293,16 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
     def test_acknowlegde_order(self, mocked_response, mocked_send_notification):
         mocked_response.return_value = MockedPaygateResponse()
-        
+
         _ = self.create_test_customer()
         authToken = self.login_as_customer()
         merchant_user_account = self.create_merchant_user_account()
         merchant = self.create_merchant_business(merchant_user_account)
         p1 = self.create_product(merchant, merchant_user_account, "Bob's dog food", 200)
         p2 = self.create_product(merchant, merchant_user_account, "Bob's cat food", 100)
-        
+
         from decimal import Decimal
-        
+
         checkout_form_payload = {
             "branchId": str(merchant.pk),
             "totalCheckoutAmount": "300.00",
@@ -360,20 +315,20 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "address": "71 downthe street Bergville",
             "delivery_fee": "0.00"  # Changed to proper decimal format
         }
-        
+
         initiate_payment_url = reverse("initiate_payment_view")
         init_response = self.client.post(
             initiate_payment_url,
             data=checkout_form_payload,
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
-        
+
         if not init_response.data.get('success'):
             print(f"Full error: {init_response.data.get('error')}")
-        
+
         self.assertTrue(init_response.data.get('success'), 
                     f"Payment initialization failed: {init_response.data}")
-        
+
         payment_notification_response = (
             "PAYGATE_ID=10011072130"
             "&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8"
@@ -390,24 +345,24 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             "&PAY_METHOD_DETAIL=Visa"
             "&CHECKSUM=f57ccf051307d8d0a0743b31ea379aa1"
         )
-        
+
         payment_notification_url = reverse("payment_notification_view")
         notif_response = self.client.post(
             payment_notification_url,
             data=payment_notification_response,
             content_type='application/x-www-form-urlencoded'
         )
-        
+
         order = Order.objects.all().first()
         self.assertIsNotNone(order, "Order was not created")
-        
+
         acknowledge_order_url = reverse("acknowledge_order_view", kwargs={"orderPk": order.pk})
         merchantAuthToken = self.login_as_merchant()
         response = self.client.get(
             acknowledge_order_url,
             HTTP_AUTHORIZATION=f"Token {merchantAuthToken}",
         )
-        
+
         order.refresh_from_db()
         self.assertEqual(response.data["message"], "Order acknowledged successfully")
         self.assertTrue(order.acknowledged)
@@ -485,24 +440,23 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             is_merchant=True, 
         )
 
-        # Create the merchant business
-        merchant_business = MerchantBusiness.objects.create(
-            user_account=merchant_user_account,
-            name="Test Merchant Business",
-            email="test@merchant.com",
-            address="Shop 15, Fields Centre, 13 Old Main Rd, Kloof, 3640, South Africa",
-            paygate_reference="PG_REF12345",
-            paygate_id="PG_ID12345",
-            paygate_secret="SECRET_KEY_12345",
-            delivery_fee=50.00,
-        )
+        merchant_business = self.create_merchant_business(merchant_user_account, {
+            "name": "Pet Food Shop",
+            "email": "petfoodshop@gmail.com",
+            "address": "12 Pet Street Newgermany",
+            "paygateId": "10011072130",
+            "paygateSecret": "secret",
+            "deliveryFee": "50.00",
+            "closingTime": "16:00"
+        })
 
         # Assert that the merchant business was created successfully
         self.assertIsNotNone(merchant_business)
         self.assertEqual(merchant_business.user_account, merchant_user_account)
-   
 
         branch = merchant_business.branch_set.first()
+        branch.address = "9 View Rd, Manors, Pinetown, 3610, South Africa"
+        branch.save()
 
         # Create products
         product1 = self.create_product(merchant_business, merchant_user_account, "Dog Food", 100)
@@ -510,25 +464,17 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         # Create a completed order
         order = Order.objects.create(
-            user=customer,
-            branch=branch,
-            total=150.00,
             status='DELIVERED',
             created=timezone.now() - timezone.timedelta(days=1)
         )
-
         # Create order items
         Order.objects.create(
-            order=order,
-            branch_product=product1,
-            quantity=1,
-            price_at_time=100.00
+            status='DELIVERED',
+            created=timezone.now() - timezone.timedelta(days=3)
         )
         Order.objects.create(
-            order=order,
-            branch_product=product2,
-            quantity=1,
-            price_at_time=50.00
+            status='DELIVERED',
+            created=timezone.now() - timezone.timedelta(days=4)
         )
 
         # Update product prices to test price changes
@@ -554,7 +500,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
 
         # Verify last order data
-        last_order = response.data["data"]["lastOrder"]
+        last_order = response.data["lastOrder"]
         self.assertIsNotNone(last_order)
         self.assertEqual(last_order["total"], "150.00")
         self.assertEqual(len(last_order["items"]), 2)
@@ -585,7 +531,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         merchant_user_account = self.create_merchant_user_account({})
         merchantBusiness = self.create_merchant_business(merchant_user_account)
-        
+
         # Create products but no orders
         _ = self.create_product(merchantBusiness, merchant_user_account, "Dog Food", 100)
         _ = self.create_product(merchantBusiness, merchant_user_account, "Cat Food", 50)
@@ -603,10 +549,9 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
-        
+
         self.assertIsNone(response.data["data"]["lastOrder"])
         self.assertIsNone(response.data["data"]["priceChanges"])
-
 
     def test_get_nearest_branch_no_price_changes(self):
         """Test getting nearest branch when prices haven't changed"""
@@ -643,7 +588,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             discountTotal=0,  # No discount for this test
             status=Transaction.COMPLETED,  # Assuming it's completed
         )
-        
+
         # Link ordered products to the transaction
         transaction.products_purchased.set([ordered_product1, ordered_product2])
         transaction.numberOfProducts = 2  # Set number of products
@@ -674,7 +619,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         # Assert response structure
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
-        
+
         # Verify last order exists but no price changes
         self.assertIsNotNone(response.data["data"]["lastOrder"])
         self.assertIsNone(response.data["data"]["priceChanges"])

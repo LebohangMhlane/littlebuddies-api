@@ -216,7 +216,6 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.paygate_secret=merchant_data["paygateSecret"]
                 merchant.delivery_fee = merchant_data["deliveryFee"]
                 merchant.closing_time = (datetime.now() + timedelta(hours=2)).time()
-                merchant.set_branch_areas(merchant_data["branchAreas"])
                 merchant.save()
         except Exception as e:
             pass
@@ -239,7 +238,6 @@ class GlobalTestCaseConfig(TestCase):
                 branch1.is_active=True
                 branch1.address = merchant_data["address"]
                 branch1.merchant = merchant
-                branch1.area = merchant_data["branchAreas"][0]
                 branch1.save()
         except Exception as e:
             pass
@@ -285,7 +283,7 @@ class GlobalTestCaseConfig(TestCase):
                         campaign_ends=datetime.now() + timedelta(days=5),
                         percentage_off=discountPercent,
                     )
-                    sale_campaign.branch_product.add(branch_product)
+                    sale_campaign.branch_product = branch_product
                     sale_campaign.save()
 
             return branch_product

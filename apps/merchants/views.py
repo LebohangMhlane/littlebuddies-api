@@ -82,7 +82,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
 
             return Response({
                 "success": True,
-                "message": "Nearest branch retrieved successfully",
+                "message": "Nearest branch retrieved successfully!",
                 "nearestBranch": branch_data,
                 "customerAddress": customer_address,
                 "lastOrder": last_order,
