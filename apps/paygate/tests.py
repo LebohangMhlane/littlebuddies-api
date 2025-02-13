@@ -5,6 +5,7 @@ import pytest
 from rest_framework.reverse import reverse
 
 from unittest.mock import patch
+from apps.merchant_wallets.models import MerchantWallet
 from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
 
 from apps.orders.models import Order
@@ -57,7 +58,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         branch = merchant_business.branch_set.all().first()
         checkout_form_payload = {
             "branchId": str(branch.pk),
-            "totalCheckoutAmount": "400.0",
+            "totalCheckoutAmount": "400.00",
             "products": "[{'id': 1, 'quantityOrdered': 1}, {'id': 2, 'quantityOrdered': 2}]",
             "discountTotal": "0",
             "delivery": True,
@@ -72,12 +73,16 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         )
         transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
         self.assertIsNotNone(transaction)
-        self.assertTrue(transaction.amount == checkout_form_payload["totalCheckoutAmount"])
+        self.assertTrue(transaction.full_amount == checkout_form_payload["totalCheckoutAmount"])
         self.assertEqual(response.data["message"], "Paygate response was successful")
         self.assertEqual(response.data["paygate_payload"]["PAYGATE_ID"], "10011072130")
         self.assertEqual(response.data["transaction"]["products_purchased"][0]["branch_product"]["product"], 1)
         self.assertEqual(response.data["transaction"]["products_purchased"][1]["quantity_ordered"], 2)
         self.assertEqual(response.data["transaction"]["customer"]["address"], testCustomer.address)
+        self.assertEqual(
+            str(response.data["transaction"]["service_fee"]), "60.00"
+        )
+        self.assertEqual(str(response.data["transaction"]["amount_minus_service_fee"]), "340.00")
 
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
     def test_check_transaction_status(self, mocked_response):
@@ -161,3 +166,6 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
         self.assertEqual(order.transaction.status, Transaction.COMPLETED)
         self.assertEqual(order.transaction.customer.id, customer.id)
+
+        merchant_wallet = MerchantWallet.objects.get(merchant_business=merchant)
+        self.assertEqual(merchant_wallet.get_balance(), "255.00")

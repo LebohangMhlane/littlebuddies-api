@@ -7,6 +7,7 @@ from rest_framework.reverse import reverse
 from rest_framework.authtoken.models import Token
 
 from apps.accounts.models import UserAccount
+from apps.merchant_wallets.models import MerchantWallet
 from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
 from apps.products.models import BranchProduct, GlobalProduct
 
@@ -190,6 +191,11 @@ class GlobalTestCaseConfig(TestCase):
         user_account.save()
         return user_account
 
+    def create_merchant_wallet(self, merchant_business:MerchantBusiness):
+        merchant_wallet = MerchantWallet()
+        merchant_wallet.merchant_business = merchant_business
+        merchant_wallet.save()
+
     def create_merchant_business(self, user_account:UserAccount, merchant_data={}):
         user_account = self.make_user_account_a_merchant(user_account)
         try:
@@ -206,6 +212,7 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.closing_time = (datetime.now() + timedelta(hours=2)).time()
                 merchant.set_branch_areas(["New Germany", "Durban Central"])
                 merchant.save()
+                self.create_merchant_wallet(merchant)
             else:
                 merchant.user_account=user_account
                 merchant.name=merchant_data["name"]
@@ -217,6 +224,7 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.delivery_fee = merchant_data["deliveryFee"]
                 merchant.closing_time = (datetime.now() + timedelta(hours=2)).time()
                 merchant.save()
+                self.create_merchant_wallet(merchant)
         except Exception as e:
             pass
         try:
@@ -254,7 +262,7 @@ class GlobalTestCaseConfig(TestCase):
     def create_product(self, merchant: MerchantBusiness, merchant_user_account, name, price, discountPercent=0):
         try:
             branches = Branch.objects.filter(merchant=merchant)
-            if not branches.exists():
+            if not branches:
                 raise ValueError(f"No branches found for the merchant: {merchant.name}")
 
             product, created = GlobalProduct.objects.get_or_create(

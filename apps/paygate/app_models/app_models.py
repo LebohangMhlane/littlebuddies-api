@@ -8,7 +8,7 @@ from apps.products.models import BranchProduct
 
 class CheckoutForm():
     branch_id = 0
-    total_checkout_amount = "0.0"
+    total_checkout_amount = "0.00"
     branch_products = []
     product_ids = []
     discount_total = 0

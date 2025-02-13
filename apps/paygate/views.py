@@ -2,6 +2,7 @@ import datetime
 from datetime import datetime
 import hashlib
 import requests
+from decimal import Decimal, ROUND_DOWN
 
 from django.db import transaction as atomic_transaction
 from django.http import HttpResponse
@@ -15,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.integrations.firebase_integration.firebase_module import FirebaseInstance
+from apps.merchant_wallets.models import MerchantWallet
 from apps.merchants.models import Branch
 from apps.orders.models import Order
 from apps.orders.serializers.order_serializer import OrderSerializer
@@ -127,6 +129,18 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
             settings.PAYGATE_INITIATE_PAYMENT_URL, data=paygate_payload
         )
 
+    def grab_our_fee(self, total_checkout_amount):
+        '''# minus our 15% fee from the transaction:'''
+        our_fee = Decimal(total_checkout_amount) * Decimal('0.15')
+        our_fee = our_fee.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+        our_fee = str(our_fee)
+        return our_fee
+
+    def get_amount_minus_service_fee(self, total_checkout_amount):
+        return Decimal(total_checkout_amount) - Decimal(
+            self.grab_our_fee(total_checkout_amount)
+        )
+
     def create_transaction(
         self,
         request,
@@ -139,12 +153,19 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
         Creates a new transaction if one does not already exist with the same details.
         Returns the existing or newly created transaction.
         """
+        total_checkout_amount = checkout_form_payload.total_checkout_amount
         transaction_filters = {
             "payRequestId": verified_payload["PAY_REQUEST_ID"],
             "reference": reference,
             "customer": request.user.useraccount,
             "branch": branch,
-            "amount": checkout_form_payload.total_checkout_amount,
+            "full_amount": total_checkout_amount,
+            "service_fee": self.grab_our_fee(
+                total_checkout_amount
+            ),
+            "amount_minus_service_fee": self.get_amount_minus_service_fee(
+                total_checkout_amount
+            ),
             "numberOfProducts": checkout_form_payload.product_count,
             "discountTotal": checkout_form_payload.discount_total,
             "status": Transaction.PENDING,
@@ -256,10 +277,28 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             transaction_status = int(validated_payload["TRANSACTION_STATUS"])
             transaction = set_transaction_status(transaction_status, transaction)
             transaction.save()
+            if transaction.status == Transaction.COMPLETED:
+                self.update_merchant_wallet(transaction)
             return transaction
         except Exception as e:
             # we cannot return an error response to paygate in this view
+            # TODO: save transactions that failed here for whatever reason
             pass
+
+    def update_merchant_wallet(self, transaction:Transaction):
+        merchant_wallet = MerchantWallet.objects.get(
+            merchant_business=transaction.branch.merchant
+        )
+        if merchant_wallet:
+            merchant_wallet.transactions.add(transaction)
+            merchant_wallet.update_balance(transaction)
+            merchant_wallet.save()
+        else:
+            merchant_wallet = MerchantWallet()
+            merchant_wallet.merchant_business = transaction.branch.merchant
+            merchant_wallet.transactions.add(transaction)
+            merchant_wallet.update_balance(transaction)
+            merchant_wallet.save()
 
     def updateOrder(self, transaction):
         order = Order.objects.get(transaction=transaction)

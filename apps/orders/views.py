@@ -120,7 +120,7 @@ class CancelOrder(APIView, GlobalViewFunctions):
 
             def minus_delivery_fee():
                 delivery_fee = order.delivery_fee if order.delivery else 0.00
-                refund_amount = float(order.transaction.amount) - float(delivery_fee)
+                refund_amount = float(order.transaction.full_amount) - float(delivery_fee)
                 return refund_amount
 
             # we can improve by creating an excel file as well
@@ -283,7 +283,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                 if not "sale_campaign_price" in price_changes
                 else float(price_changes["sale_campaign_price"])
             )
-        self.order_changes["old_total"] = float(self.order.transaction.amount)
+        self.order_changes["old_total"] = float(self.order.transaction.full_amount)
         self.order_changes["new_total"] = new_order_total
 
     def get(self, request, *args, **kwargs):

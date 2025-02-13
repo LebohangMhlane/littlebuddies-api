@@ -120,7 +120,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                         }
                         for ordered_product in last_order.ordered_products.all()
                     ],
-                    "total": str(last_order.transaction.amount)
+                    "total": str(last_order.transaction.full_amount)
                 }
             return None
         except Exception as e:
