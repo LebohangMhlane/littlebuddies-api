@@ -30,13 +30,20 @@ class ProductAdmin(admin.ModelAdmin):
             return qs.none()
 
 class BranchProductAdmin(admin.ModelAdmin):
-    list_display = ('product', 'branch', 'merchant_name', 'branch_price', 'in_stock', 'is_active')
-    list_filter = ('in_stock', 'is_active', 'branch')
-    search_fields = ('product__name', 'merchant_name', 'store_reference')
+    list_display = (
+        "product",
+        "branch",
+        "branch_price",
+        "in_stock",
+        "is_active",
+    )
+    list_filter = ("in_stock", "is_active", "branch")
+    search_fields = ("product__name", "merchant_name", "store_reference")
+    readonly_fields = ("created_by",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.useraccount.is_super_user:
             return qs
         try:
             user_account = request.user.useraccount
@@ -45,16 +52,17 @@ class BranchProductAdmin(admin.ModelAdmin):
             return qs.none()
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser:
+        if not request.user.useraccount.is_super_user:
             if db_field.name == "branch":
                 kwargs["queryset"] = Branch.objects.filter(
                     merchant__user_account=request.user.useraccount
                 )
-            elif db_field.name == "product":
-                kwargs["queryset"] = GlobalProduct.objects.filter(
-                    branchproduct__branch__merchant__user_account=request.user.useraccount
-                ).distinct()
+            if db_field.name == "created_by":
+                kwargs["queryset"] = UserAccount.objects.filter(user=request.user)
+                kwargs["initial"] = request.user
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # TODO: set read only fields:
 
     def save_model(self, request, obj, form, change):
         if not change:  

@@ -322,7 +322,7 @@ class DeactivateMerchantView(APIView, GlobalViewFunctions):
 
     def post(self, request):
         try:
-            if request.user.useraccount.can_create_merchants:
+            if request.user.useraccount.is_super_user:
                 self.deactivateMerchant(request.data["merchantId"])
                 self.notifyAllOfDeactivation()
                 return Response({

@@ -265,7 +265,7 @@ class UpdateAccountView(APIView, GlobalViewFunctions):
         return user_account
 
     def validateKey(self, key, request):
-        if key == "can_create_merchants" or key == "isMerchant":
+        if key == "is_super_user" or key == "is_merchant":
             exceptionString = f"You don't have permission to modify {key}"
             self.if_user_is_super_admin(request, exceptionString)
 

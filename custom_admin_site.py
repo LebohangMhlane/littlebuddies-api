@@ -6,7 +6,7 @@ from apps.accounts.models import UserAccount
 class CustomAdminSite(AdminSite):
 
     def set_apps_to_hide(self):
-        return ["accounts"]
+        return ["accounts", "authtoken", "auth"]
 
     def set_models_to_hide(self):
         return []

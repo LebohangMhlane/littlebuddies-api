@@ -9,12 +9,24 @@ from custom_admin_site import custom_admin_site
 class UserAccountAdmin(ModelAdmin):
     list_display = (
         "user",
-        "phone_number",
+        "phone_number", 
         "phone_number_verified",
         "email_verified",
         "is_active",
         "is_merchant",
-        "can_create_merchants",
+        "is_super_user",
+    )
+    readonly_fields = (
+        "address",
+        "phone_number",
+        "phone_number_verified",
+        "email_verified",
+        "is_merchant",
+        "is_super_user",
+        "is_active",
+        "password_change_date",
+        "device_token",
+        "user",
     )
 
     def _check_permissions(self, user):

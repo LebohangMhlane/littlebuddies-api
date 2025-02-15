@@ -24,8 +24,6 @@ class BranchProduct(models.Model):
     in_stock = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
-    merchant_name = models.CharField(max_length=191, null=True, blank=True)
-    merchant_logo = models.CharField(max_length=191, null=True, blank=True)
     product = models.ForeignKey(GlobalProduct, on_delete=models.CASCADE)
     branch_price = models.DecimalField(blank=False, null=True, decimal_places=2, default=0.00, max_digits=6)
     store_reference = models.CharField(max_length=191, blank=False, default="")

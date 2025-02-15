@@ -12,12 +12,13 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         "name",
         "email",
         "address",
+        "user_account",
         "is_active",
     )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.useraccount.is_super_user:
             return qs
         return qs.filter(user_account__user=request.user)
 
@@ -27,10 +28,12 @@ class BranchAdmin(admin.ModelAdmin):
         "address",
         "is_active",
     )
-        
+
+    readonly_fields = ("merchant", "address", "area")
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.useraccount.is_super_user:
             return qs
         return qs.filter(merchant__user_account__user=request.user)
 
@@ -44,12 +47,12 @@ class SaleCampaignAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.useraccount.is_super_user:
             return qs
         return qs.filter(branch__merchant__user_account__user=request.user)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser:
+        if not request.user.useraccount.is_super_user:
             if db_field.name == "branch":
                 kwargs["queryset"] = Branch.objects.filter(
                     merchant__user_account__user=request.user

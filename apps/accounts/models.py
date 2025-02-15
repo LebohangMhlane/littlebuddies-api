@@ -11,12 +11,12 @@ class UserAccount(models.Model):
     email_verified = models.BooleanField(default=False)
     is_merchant = models.BooleanField(default=False)
     device_token = models.CharField(max_length=191, blank=False, unique=False)
-    can_create_merchants = models.BooleanField(default=False)
+    is_super_user = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     password_change_date = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{self.user.username}'s - User Account"
+        return f"{self.user.username}"
 
     def save(self, *args, **kwargs):
         self.is_active = self.user.is_active

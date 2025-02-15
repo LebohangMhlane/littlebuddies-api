@@ -54,7 +54,7 @@ class GlobalViewFunctions():
         return branch
 
     def if_user_is_super_admin(self, request):
-        if request.user.is_superuser and request.user.useraccount.can_create_merchants:
+        if request.user.is_superuser and request.user.useraccount.is_super_user:
             return True
         return False
     
