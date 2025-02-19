@@ -137,7 +137,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 1)
         self.assertEqual(response.data['products'][0]['branch_price'], "50.00")
-        self.assertEqual(response.data['products'][0]['merchant_name'], 'Absolute Pets')
+        self.assertEqual(response.data['products'][0]['branch']['merchant']['name'], 'Absolute Pets')
 
     def test_search_with_store_filter(self):
         """Test search with single store filter"""
@@ -351,6 +351,7 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
 
         url = self.get_search_url('Dog Food', "1,2")
         response = self.client.get(url)
+        print('RESPONSE:', response.data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['products']), 2)
@@ -376,11 +377,11 @@ class ProductSearchViewTests(GlobalTestCaseConfig, TestCase):
         )
 
         regular_price = 50.00
-        campaign_price = 51.00
+        expected_campaign_price = round(75.00 * (1 - 33.0 / 100), 2)
 
         self.assertTrue(
-            (abs(first_price - regular_price) < 0.01 and abs(second_price - campaign_price) < 0.01) or
-            (abs(first_price - campaign_price) < 0.01 and abs(second_price - regular_price) < 0.01)
+            (abs(first_price - regular_price) < 0.01 and abs(second_price - expected_campaign_price) < 0.01) or
+            (abs(first_price - expected_campaign_price) < 0.01 and abs(second_price - regular_price) < 0.01)
         )
 
         self.assertEqual(
