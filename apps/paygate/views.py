@@ -168,7 +168,7 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
             ),
             "numberOfProducts": checkout_form_payload.product_count,
             "discountTotal": checkout_form_payload.discount_total,
-            "status": Transaction.PENDING,
+            "status": Transaction.STATUS_CHOICES[0][0],
         }
 
         # Check if a matching transaction already exists
@@ -180,7 +180,6 @@ class PaymentInitializationView(APIView, GlobalViewFunctions):
         if existing_transaction:
             return existing_transaction
 
-        # Create a new transaction
         new_transaction = Transaction.objects.create(
             **transaction_filters,
         )

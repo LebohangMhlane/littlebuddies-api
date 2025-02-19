@@ -12,7 +12,7 @@ urlpatterns = [
 
     # little buddies unique url name urls:
     path('get-store-range/<str:coordinates>/', GetStoreRange.as_view(), name="get_store_range"),
-    path('get-nearest-branch/<str:coordinates>/<int:merchantId>', GetNearestBranch.as_view(), name="get_nearest_branch"),
+    path('get-nearest-branch/<str:coordinates>/<int:merchantId>/<int:branch_id>/', GetNearestBranch.as_view(), name="get_nearest_branch"),
     path('get-updated-petstores-near-me/<str:storeIds>/', GetUpdatedMerchantsNearby.as_view(), name="get_updated_petstores_near_me"),
 
 

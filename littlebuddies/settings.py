@@ -157,9 +157,9 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "mysql", 
+        "NAME": "lilbuddies", 
         "USER": "root",  
-        "PASSWORD": "Mbuzi@1287",
+        "PASSWORD": "",
         "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
         "PORT": "3306",
     }

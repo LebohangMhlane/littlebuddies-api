@@ -49,18 +49,15 @@ class ProductSerializer(ModelSerializer):
         except Exception as e:
             raise Exception("Failed to create a product")
         return product
-    
-
 
 class branch_productserializer(ModelSerializer):
+    class Meta:
+        model = BranchProduct
+        fields = ['id', 'branch_price', 'product', 'branch']  
+        depth = 2
 
-        class Meta:
-            model = BranchProduct
-            fields = ['id', 'branch_price', 'merchant_name', 'merchant_logo', 'product', 'branch']
-            depth = 2
-
-        def is_valid(self, *, raise_exception=False):
-            return super().is_valid(raise_exception=raise_exception)
-        
-        def create(self, validated_data):
-            return super().create(validated_data)
+    def is_valid(self, *, raise_exception=False):
+        return super().is_valid(raise_exception=raise_exception)
+    
+    def create(self, validated_data):
+        return super().create(validated_data)

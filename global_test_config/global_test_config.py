@@ -78,22 +78,29 @@ class GlobalTestCaseConfig(TestCase):
             "device_token": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
             "email_verified": True,
         }
-        customer = User.objects.create(
+
+        customer, created = User.objects.get_or_create(
             username=userInputData["username"],
-            password=make_password(userInputData["password"]),
-            first_name=userInputData["first_name"],
-            last_name=userInputData["last_name"],
-            email=userInputData["email"],
+            defaults={
+                "password": make_password(userInputData["password"]),
+                "first_name": userInputData["first_name"],
+                "last_name": userInputData["last_name"],
+                "email": userInputData["email"],
+            }
         )
-        test_user_account = UserAccount.objects.create(
+
+        test_user_account, _ = UserAccount.objects.get_or_create(
             user=customer,
-            address=userInputData["address"],
-            phone_number=userInputData["phone_number"],
-            is_merchant=userInputData["is_merchant"],
-            device_token=userInputData["device_token"],
-            email_verified=userInputData["email_verified"],
+            defaults={
+                "address": userInputData["address"],
+                "phone_number": userInputData["phone_number"],
+                "is_merchant": userInputData["is_merchant"],
+                "device_token": userInputData["device_token"],
+                "email_verified": userInputData["email_verified"],
+            }
         )
-        token = Token.objects.create(user=customer)
+
+        token, _ = Token.objects.get_or_create(user=customer)
         return test_user_account
 
     def create_merchant_user_account(self, user_data={}):
@@ -268,21 +275,20 @@ class GlobalTestCaseConfig(TestCase):
             product, created = GlobalProduct.objects.get_or_create(
                 name=name,
                 defaults={
-                    "recommended_retail_price": 200,
+                    "recommended_retail_price": price,  
                     "image": "image",
                     "category": 1,
                     "description": "",
                 },
             )
 
-            branch_product = None  
             for branch in branches:
                 branch_product = BranchProduct.objects.create(
                     branch=branch,
-                    branch_price=product.recommended_retail_price + price,  
+                    branch_price=product.recommended_retail_price,  
                     store_reference="3EERDE2",
                     created_by=merchant_user_account,
-                    product=product,
+                    product=product,  
                 )
 
                 if discountPercent > 0:
@@ -290,11 +296,10 @@ class GlobalTestCaseConfig(TestCase):
                         branch=branch,
                         campaign_ends=datetime.now() + timedelta(days=5),
                         percentage_off=discountPercent,
+                        branch_product=branch_product 
                     )
-                    sale_campaign.branch_product = branch_product
-                    sale_campaign.save()
 
-            return branch_product
+            return product  
 
         except Exception as e:
             print(f"Error creating product: {e}")

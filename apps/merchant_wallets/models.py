@@ -7,7 +7,7 @@ from apps.transactions.serializers.transaction_serializer import TransactionSeri
 
 
 class MerchantWallet(models.Model):
-    merchant_business = models.ForeignKey(to=MerchantBusiness, max_length=100, on_delete=models.CASCADE)
+    merchant_business = models.ForeignKey('merchants.MerchantBusiness', on_delete=models.CASCADE)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     transactions = models.ManyToManyField(to='transactions.Transaction', blank=True)
 
