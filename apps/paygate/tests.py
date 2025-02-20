@@ -123,7 +123,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         self.assertEqual(response.data["message"], f"Transaction {reference} status retrieved successfully")
-        self.assertEqual(response.data["transactionStatus"], transaction.COMPLETED)
+        self.assertEqual(response.data["transactionStatus"], "COMPLETED")
 
     # @patch("apps.integrations.firebase_integration.firebase_module.FirebaseInstance.send_transaction_status_notification")
     @patch("apps.paygate.views.PaymentInitializationView.send_initiate_payment_request_to_paygate")
@@ -164,7 +164,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             order.transaction.branch.id, int(checkout_form_payload["branchId"])
         )
         self.assertEqual(order.status, Order.PENDING_DELIVERY)
-        self.assertEqual(order.transaction.status, Transaction.COMPLETED)
+        self.assertEqual(order.transaction.status, "COMPLETED")
         self.assertEqual(order.transaction.customer.id, customer.id)
 
         merchant_wallet = MerchantWallet.objects.get(merchant_business=merchant)

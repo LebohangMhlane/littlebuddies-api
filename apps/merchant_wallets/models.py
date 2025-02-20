@@ -22,5 +22,5 @@ class MerchantWallet(models.Model):
         return str(self.wallet_balance)
 
     def update_balance(self, transaction:Transaction):
-        if transaction.status == Transaction.COMPLETED:
+        if transaction.status == "COMPLETED":
             self.wallet_balance += Decimal(transaction.amount_minus_service_fee)

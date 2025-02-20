@@ -276,7 +276,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
             transaction_status = int(validated_payload["TRANSACTION_STATUS"])
             transaction = set_transaction_status(transaction_status, transaction)
             transaction.save()
-            if transaction.status == Transaction.COMPLETED:
+            if transaction.status == "COMPLETED":
                 self.update_merchant_wallet(transaction)
             return transaction
         except Exception as e:
@@ -302,7 +302,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
     def updateOrder(self, transaction):
         order = Order.objects.get(transaction=transaction)
         if order:
-            if order.transaction.status == Transaction.COMPLETED:
+            if order.transaction.status == "COMPLETED":
                 order.status = order.PENDING_DELIVERY
             else:
                 order.status = order.transaction.status
@@ -316,6 +316,7 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
         self.sendOrderEmail(updatedTransaction, order)
 
     def sendOrderEmail(self, updatedTransaction, order):
+        # TODO: send email detailing the order to the customer
         pass
 
 
