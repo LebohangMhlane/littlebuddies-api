@@ -34,5 +34,4 @@ class BranchProduct(models.Model):
 
     @receiver(pre_save, sender="products.BranchProduct")
     def update_merchant_name(instance, **kwargs):
-        instance.merchant_name = instance.branch.merchant.name
-        instance.merchant_logo = instance.branch.merchant.logo
+        pass

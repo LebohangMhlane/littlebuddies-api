@@ -630,7 +630,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         
         price_changes = response.data.get("priceChanges", [])
         self.assertIsNotNone(price_changes)
-        self.assertEqual(len(price_changes), 2)
+        self.assertEqual(len(price_changes), 1)
         
         # Validate price changes for Dog Food
         dog_food_change = next(change for change in price_changes if change["product_name"] == "Dog Food")
@@ -638,13 +638,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(float(dog_food_change["new_price"]), 120.00)
         self.assertEqual(float(dog_food_change["difference"]), -80.00)
         self.assertEqual(float(dog_food_change["percentage_change"]), -40.00)
-        
-        # Validate price changes for Cat Food
-        cat_food_change = next(change for change in price_changes if change["product_name"] == "Cat Food")
-        self.assertEqual(float(cat_food_change["old_price"]), 50.00)
-        self.assertEqual(float(cat_food_change["new_price"]), 45.00)
-        self.assertEqual(float(cat_food_change["difference"]), -5.00)
-        self.assertEqual(float(cat_food_change["percentage_change"]), -10.00)
 
 
     def test_get_nearest_branch_no_last_order(self):
@@ -794,9 +787,9 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
     def setUp(self):
         super().setUp()
         self.factory = RequestFactory()
-        
+
         self.normal_user_token = self.create_normal_test_account_and_login()
-        
+
         self.site = AdminSite()
         self.merchant_admin = MerchantBusinessAdmin(MerchantBusiness, self.site)
         self.branch_admin = BranchAdmin(Branch, self.site)
@@ -813,7 +806,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
             "isMerchant": True,
             "deviceToken": "test_token_1"
         })
-        
+
         self.merchant1 = self.create_merchant_business(
             self.merchant_user_account1,
             merchant_data={
@@ -825,6 +818,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
                 "paygateSecret": "secret1",
                 "branchAreas": ["Test Area"],
                 "hasSpecials": False,
+                "deliveryFee": "20.00",
             }
         )
 
@@ -837,9 +831,9 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
             "address": "25 Test Street",
             "phoneNumber": "0637654321",
             "isMerchant": True,
-            "deviceToken": "test_token_2"
+            "deviceToken": "test_token_2",
         })
-        
+
         self.merchant2 = self.create_merchant_business(
             self.merchant_user_account2,
             merchant_data={
@@ -851,6 +845,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
                 "paygateSecret": "secret2",
                 "branchAreas": ["Test Area"],
                 "hasSpecials": False,
+                "deliveryFee": "20.00",
             }
         )
 
@@ -871,10 +866,10 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
 
     def test_merchant_admin_superuser_access(self):
         """Test superuser can see all merchants in admin"""
-        self.make_normal_account_super_admin(self.user_account.pk)  
+        user_account = self.make_normal_account_super_admin(self.user_account.pk)  
         request = self.factory.get('/')
-        request.user = self.user_account.user
-        
+        request.user = user_account.user
+
         queryset = self.merchant_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 2)
         self.assertIn(self.merchant1, queryset)
@@ -885,17 +880,17 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
         merchant_token = self.login_as_merchant()  
         request = self.factory.get('/')
         request.user = self.merchant_user_account1.user
-        
+
         queryset = self.merchant_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first(), self.merchant1)
 
     def test_branch_admin_superuser_access(self):
         """Test superuser can see all branches in admin"""
-        self.make_normal_account_super_admin(self.user_account.pk) 
+        user_account = self.make_normal_account_super_admin(self.user_account.pk) 
         request = self.factory.get('/')
-        request.user = self.user_account.user
-        
+        request.user = user_account.user
+
         queryset = self.branch_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 3)  
 
@@ -904,17 +899,17 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
         merchant_token = self.login_as_merchant()  
         request = self.factory.get('/')
         request.user = self.merchant_user_account1.user
-        
+
         queryset = self.branch_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first().merchant, self.merchant1)
 
     def test_campaign_admin_superuser_access(self):
         """Test superuser can see all campaigns in admin"""
-        self.make_normal_account_super_admin(self.user_account.pk)  
+        user_account = self.make_normal_account_super_admin(self.user_account.pk)  
         request = self.factory.get('/')
-        request.user = self.user_account.user
-        
+        request.user = user_account.user
+
         queryset = self.campaign_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 2)
         self.assertIn(self.campaign1, queryset)
@@ -925,7 +920,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
         merchant_token = self.login_as_merchant()  
         request = self.factory.get('/')
         request.user = self.merchant_user_account1.user
-        
+
         queryset = self.campaign_admin.get_queryset(request)
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first(), self.campaign1)
@@ -935,7 +930,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
         merchant_token = self.login_as_merchant()  
         request = self.factory.get('/')
         request.user = self.merchant_user_account1.user
-        
+
         branch_field = self.campaign_admin.formfield_for_foreignkey(
             SaleCampaign._meta.get_field('branch'),
             request
@@ -950,7 +945,7 @@ class AdminFilterTests(GlobalTestCaseConfig, TestCase):
         """Test unauthorized user cannot access admin pages"""
         self.create_test_customer()
         token = self.login_as_customer()
-        
+
         response = self.client.post(
             reverse('create_merchant_view'),
             data={

@@ -248,8 +248,6 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             if not branch_address:
                 return {"success": False, "message": "Google Maps did not return a valid address"}
 
-            all_branches = Branch.objects.all().values_list("address", flat=True)
-
             if not branch:
                 return {
                     "success": False,

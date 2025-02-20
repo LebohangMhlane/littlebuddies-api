@@ -61,7 +61,7 @@ PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.tr
 
 # server stuff
 DEVELOPEMENT_URL = (
-    "https://cbe0-41-10-116-66.ngrok-free.app"  # using ngrok server during development
+    "https://3f63-41-10-122-84.ngrok-free.app"  # using ngrok server during development
 )
 
 APP_URL = "54.160.249.30"
@@ -71,7 +71,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.103", "localhost", APP_URL, DEVELOPEMENT_URL.split('/')[-1], '127.0.0.1']
+ALLOWED_HOSTS = ["10.0.0.104", "localhost", APP_URL, DEVELOPEMENT_URL.split('/')[-1], '127.0.0.1']
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -157,9 +157,9 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "lilbuddies", 
+        "NAME": "littlebuddies", 
         "USER": "root",  
-        "PASSWORD": "",
+        "PASSWORD": "ThepasswordisMysql1!",
         "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
         "PORT": "3306",
     }

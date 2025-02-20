@@ -270,7 +270,6 @@ class AdminTests(TestCase):
             branch_price=price,
             store_reference=f"REF-{branch.address}-{global_product.name}",
             created_by=created_by,
-            merchant_name=branch.merchant.name,
             in_stock=True,
             is_active=True
         )
@@ -333,7 +332,6 @@ class AdminTests(TestCase):
             product=global_product,
             branch_price=100,
             store_reference="TEST-REF",
-            merchant_name=merchant.name,
             in_stock=True,
             is_active=True
         )

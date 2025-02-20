@@ -382,17 +382,17 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
             )
             num_of_orders_placed = Order.objects.filter(
                 transaction__customer=user_account,
-                transaction__status=Transaction.COMPLETED,
-                status=Order.PENDING_DELIVERY
+                transaction__status="COMPLETED",
+                status=Order.PENDING_DELIVERY,
             ).count()
             num_of_orders_completed = Order.objects.filter(
                 transaction__customer=user_account,
-                transaction__status=Transaction.COMPLETED,
-                status=Order.DELIVERED
+                transaction__status="COMPLETED",
+                status=Order.DELIVERED,
             ).count()
             num_of_orders_cancelled = Order.objects.filter(
                 transaction__customer=user_account,
-                transaction__status=Transaction.CANCELLED,
+                transaction__status="CANCELLED",
                 status=Order.CANCELLED
             ).count()
             user_account_settings.num_of_orders_placed = num_of_orders_placed
@@ -421,7 +421,7 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "error": f"Failed to get account settings: {e.args[0]}",
                 }
             )
-        
+
     def determine_favourite_store(self):
         pass
 

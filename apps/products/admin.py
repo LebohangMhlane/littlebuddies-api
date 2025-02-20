@@ -38,7 +38,7 @@ class BranchProductAdmin(admin.ModelAdmin):
         "is_active",
     )
     list_filter = ("in_stock", "is_active", "branch")
-    search_fields = ("product__name", "merchant_name", "store_reference")
+    search_fields = ("product__name", "store_reference")
     readonly_fields = ("created_by",)
 
     def get_queryset(self, request):
@@ -67,8 +67,6 @@ class BranchProductAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:  
             obj.created_by = request.user.useraccount
-            obj.merchant_name = obj.branch.merchant.name
-            obj.merchant_logo = obj.branch.merchant.logo
         super().save_model(request, obj, form, change)
 
 custom_admin_site.register(GlobalProduct, ProductAdmin)

@@ -112,7 +112,7 @@ class PayGateTests(GlobalTestCaseConfig, TestCase):
             HTTP_AUTHORIZATION=f"Token {authToken}",
         )
         transaction = Transaction.objects.get(id=response.data["transaction"]["id"])
-        transaction.status = transaction.COMPLETED
+        transaction.status = "COMPLETED"
         transaction.save()
         reference = transaction.reference
 

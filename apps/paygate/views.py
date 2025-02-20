@@ -240,28 +240,28 @@ class PaymentNotificationView(APIView, GlobalViewFunctions):
 
     def post(self, request, *args, **kwargs):
         try:
-            updated_transaction = self.verifyAndUpdateTransactionStatus(request.data)
+            updated_transaction = self.verify_and_update_transaction_status(request.data)
             self.update_and_send_notification(updated_transaction)
         except Exception as e:
             pass
         return HttpResponse("OK")
 
-    def verifyAndUpdateTransactionStatus(self, receieved_payload):
+    def verify_and_update_transaction_status(self, receieved_payload):
         def set_transaction_status(transactionStatus, transaction: Transaction):
             if transactionStatus == 0:
-                transaction.status = Transaction.NOT_DONE
+                transaction.status = "NOT_DONE"
             elif transactionStatus == 1:
-                transaction.status = Transaction.COMPLETED
+                transaction.status = "COMPLETED"
             elif transactionStatus == 2:
-                transaction.status = Transaction.DECLINED
+                transaction.status = "DECLINED"
             elif transactionStatus == 3:
-                transaction.status = Transaction.CANCELLED
+                transaction.status = "CANCELLED"
             elif transactionStatus == 4:
-                transaction.status = Transaction.CUSTOMER_CANCELLED
+                transaction.status = "CUSTOMER_CANCELLED"
             elif transactionStatus == 5:
-                transaction.status = Transaction.RECEIVED_BY_PAYGATE
+                transaction.status = "RECEIVED_BY_PAYGATE"
             elif transactionStatus == 7:
-                transaction.status = Transaction.SETTLEMENT_VOIDED
+                transaction.status = "SETTLEMENT_VOIDED"
             return transaction
 
         try:

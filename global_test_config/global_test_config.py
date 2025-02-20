@@ -258,11 +258,11 @@ class GlobalTestCaseConfig(TestCase):
             pass
         return merchant
 
-    def make_normal_account_super_admin(self, user_accountPk:int):
-        user_account = UserAccount.objects.get(pk=user_accountPk)
+    def make_normal_account_super_admin(self, user_account_pk:int):
+        user_account = UserAccount.objects.get(pk=user_account_pk)
         user_account.user.is_superuser = True
-        user_account.user.save()
         user_account.is_super_user = True
+        user_account.user.save()
         user_account.save()
         return user_account
 
