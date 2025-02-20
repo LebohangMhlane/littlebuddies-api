@@ -1,7 +1,6 @@
 from decimal import Decimal
 from django.db import models
 
-from apps.merchants.models import MerchantBusiness
 from apps.transactions.models import Transaction
 from apps.transactions.serializers.transaction_serializer import TransactionSerializer
 
