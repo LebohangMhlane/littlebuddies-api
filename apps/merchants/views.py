@@ -62,46 +62,36 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
     permission_classes = [IsAuthenticated]
     def get(self, request, **kwargs):
         try:
+            # get the coordinates sent by the mobile user:
             coordinates = kwargs["coordinates"]
+
+            # get the merchant business they want to get the nearest branch of:
             merchant_business = MerchantBusiness.objects.get(id=kwargs["merchantId"])
+
+            # initialize the google maps service:
             gmaps_client = googlemaps.Client(key=settings.GOOGLE_SERVICES_API_KEY)
 
+            # get the customers address based on the coordinates:
             customer_address = self._get_customer_address(coordinates, gmaps_client)
 
-            user = request.user
-            branch_id = kwargs.get("branch_id")
-
-            last_order = self._get_last_order(user, branch_id)
-
-            branch_data = self._find_nearest_branch(
+            # find the nearest branch of the merchant business that is closes to the customers address:
+            branch_data = self._locate_nearest_branch(
                 coordinates, 
-                merchant_business.name, 
+                merchant_business,
                 gmaps_client, 
-                user,  
-                branch_id,  
-                last_order  
             )
 
-            if not branch_data.get("branch"):
-                return Response({
-                    "success": False,
-                    "message": "No nearest branch found.",
-                    "error": "Branch data is missing"
-                }, status=400)
+            # get the last order made from this branch by this user:
+            if branch_data:
+                branch_id = branch_data["branch"]["id"]
+                user = request.user
+                last_order = self._get_last_order(user, branch_id)
 
-            distance_from_branch = self._get_distance(
-                coordinates, branch_data["branch"]["address"], gmaps_client
-            )
-            self._set_distance(distance_from_branch, branch_data)
-
-            branch_real_id = branch_data["branch"].get("id")
-            if branch_real_id and branch_real_id != branch_id:
-                last_order = self._get_last_order(user, branch_real_id)
-
-            price_changes = (
-                self._get_price_changes(last_order, branch_data["products"])
-                if last_order else None
-            )
+                # check for price changes:
+                price_changes = (
+                    self._get_price_changes(last_order, branch_data["products"])
+                    if last_order else None
+                )
 
             return Response({
                 "success": True,
@@ -115,7 +105,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
         except Exception as e:
             return Response({
                 "success": False,
-                "message": "Failed to get stores near customer",
+                "message": "Failed to get nearest branch",
                 "error": str(e)
             }, status=400)  
 
@@ -136,16 +126,16 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             if last_order:
                 ordered_products_count = last_order.ordered_products.count()
                 transaction_products_count = last_order.transaction.products_purchased.count()
-                
+
                 order_products = list(last_order.ordered_products.select_related(
                     'branch_product__product'
                 ).all())
                 transaction_products = list(last_order.transaction.products_purchased.select_related(
                     'branch_product__product'
                 ).all())
-                
+
                 products_to_use = order_products if order_products else transaction_products
-                
+
                 response = {
                     "id": last_order.id,
                     "date": last_order.created,
@@ -162,7 +152,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                     ],
                     "total": str(last_order.transaction.full_amount)
                 }
-                
+
                 return response
             return None
         except Exception as e:
@@ -204,13 +194,13 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
         except Exception as e:
             raise Exception(f"Failed to calculate price changes: {str(e)}")
 
-    def get_branch_products(self, branch):
+    def _get_branch_products(self, branch):
         bps = branch_productserializer(
             BranchProduct.objects.filter(branch=branch), many=True
         )
         return bps
 
-    def get_branch_sale_campaigns(self, branch):
+    def _get_branch_sale_campaigns(self, branch):
         sale_campaigns = SaleCampaign.objects.filter(
             branch=branch, campaign_ends__gte=datetime.datetime.now()
         )
@@ -220,54 +210,52 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             return sale_campaigns, scs.data
         return None, None
 
-    def _find_nearest_branch(self, coordinates, merchant_name, gmaps_client, user, branch_id, last_order):
+    def _locate_nearest_branch(
+        self, coordinates, merchant_business: MerchantBusiness, gmaps_client
+    ):
         try:
-            merchant = MerchantBusiness.objects.filter(name=merchant_name).first()
-            if not merchant:
-                raise Exception("Merchant not found")
-
+            # use the coordinates provided to find the nearest branch:
             nearest_branch = googlemaps.places.find_place(
                 client=gmaps_client,
-                input=merchant.name,  
+                input=merchant_business.name,
                 input_type="textquery",
                 fields=["formatted_address", "name"],
-                location_bias=f"circle:3000@{coordinates}"
+                location_bias=f"circle:3000@{coordinates}",
             )
-
+            # if the response does not contain any candidates, return an error response:
             if not nearest_branch["candidates"]:
                 return {"success": False, "message": "No branches found in Google Maps response"}
 
+            # get the address of the located branch:
             branch_address = nearest_branch["candidates"][0]["formatted_address"]
             normalized_branch_address = " ".join(branch_address.split())
 
-            branch = Branch.objects.filter(
-                address__icontains=normalized_branch_address,
-                merchant__name__icontains=merchant_name
-            ).first()
+            # in our database, find the branch that matches this address:
+            # this must return one, if it does not this is a critical error:
+            try:
+                branch = Branch.objects.get(
+                    address__icontains=normalized_branch_address,
+                    merchant__name__icontains=merchant_business.name
+                )
+            except Exception as e:
+                raise Exception(f"Failed to find branch matching address (Critical error): {str(e)}")
 
-            if not branch_address:
-                return {"success": False, "message": "Google Maps did not return a valid address"}
-
-            if not branch:
-                return {
-                    "success": False,
-                    "message": f"No matching branch found for address: {branch_address}",
-                    "error": "Branch not found in database",
-                }
-
+            # serialize the branch and get the products and sale campaigns:
             bs = BranchSerializer(branch, many=False)
-            branch_products = self.get_branch_products(branch)
-            sale_campaigns, sale_campaigns_serialized = self.get_branch_sale_campaigns(branch)
+            branch_products = self._get_branch_products(branch)
+            sale_campaigns, sale_campaigns_serialized = self._get_branch_sale_campaigns(branch)
 
+            # if sale campaigns have been found we need to adjust the prices in the branch products
+            # according to the sale campaign discount percentages:
             self._adjust_prices_based_on_sale_campaigns(
                 sale_campaigns, branch_products.data
             )
 
+            # set the branch data response:
             branch_data = {
                 "branch": bs.data, 
                 "products": branch_products.data,
                 "sale_campaigns": sale_campaigns_serialized if sale_campaigns else [],
-                "lastOrder": last_order,
             }
             return branch_data
 

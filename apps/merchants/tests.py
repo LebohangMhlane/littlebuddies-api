@@ -136,11 +136,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             created_by=merchant_user_account
         )
 
-        branch_id = branch.id
         deviceLocation = "-26.1945368,28.3080212"
         getNearestBranchUrl = reverse(
             "get_nearest_branch",
-            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk, "branch_id": branch_id},
+            kwargs={"coordinates": deviceLocation, "merchantId": merchantBusiness.pk},
         )
 
         response = self.client.get(
