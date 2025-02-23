@@ -105,8 +105,14 @@ class SaleCampaign(models.Model):
 
     active = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
-    percentage_off = models.PositiveIntegerField()
-    branch_product = models.ForeignKey("products.BranchProduct", on_delete=models.CASCADE, null=True, blank=True)
+    percentage_off = models.PositiveIntegerField(blank=False)
+    branch_product = models.ForeignKey(
+        "products.BranchProduct",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+        unique=True,
+    )
     campaign_ends = models.DateField(default=default_campaign_end_date)
 
     class Meta:
