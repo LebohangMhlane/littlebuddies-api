@@ -34,7 +34,7 @@ class MerchantBusiness(models.Model):
     closing_time = models.TimeField(default=time(16, 30))
 
     def __str__(self) -> str:
-        return f"{self.name} - {self.user_account.user.username}"
+        return f"{self.name}"
 
     def save(self, *args, **kwargs):
         self.verify_user_account(self.user_account)
@@ -86,8 +86,13 @@ class Branch(models.Model):
     area = models.CharField(max_length=120, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
 
+    class Meta:
+        verbose_name = "My Branch"
+        verbose_name_plural = "My Branches"
+
     def __str__(self) -> str:
         return f"{self.merchant.name} - {self.address}"
+    
 
 def default_campaign_end_date():
     return datetime.now() + timedelta(days=5)

@@ -5,6 +5,10 @@ from apps.accounts.models import UserAccount
 
 class CustomAdminSite(AdminSite):
 
+    site_header = ("Littlebuddies Management Dashboard")  
+    site_title = "Management Dashboard"  
+    index_title = "Welcome to Littlebuddies"  
+    
     def set_apps_to_hide(self):
         return ["accounts", "authtoken", "auth"]
 
