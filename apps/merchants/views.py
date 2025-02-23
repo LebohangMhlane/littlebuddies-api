@@ -87,7 +87,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 user = request.user
                 last_order = self._get_last_order(user, branch_id)
 
-                # check for price changes:
+                # check for and set price changes:
                 price_changes = (
                     self._get_price_changes(last_order, branch_data["products"])
                     if last_order else None
@@ -111,22 +111,23 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
 
     def _get_last_order(self, user, branch_id):
         try:
+            # get the users acccount:
             user_account = UserAccount.objects.get(user=user)
-            orders = Order.objects.filter(transaction__customer=user_account, status='DELIVERED')
 
-            ordered_products = OrderedProduct.objects.filter(
-                transaction__customer=user_account, 
+            # get the last order made by the user from this branch:
+            last_order = (
+                Order.objects.filter(
+                    transaction__customer=user_account,
+                    transaction__branch_id=branch_id,
+                    status="DELIVERED",
+                )
+                .order_by("-created")
+                .first()
             )
 
-            last_order = Order.objects.filter(
-                transaction__customer=user_account,
-                status='DELIVERED'
-            ).order_by('-created').first()
-
-            if last_order:
-                ordered_products_count = last_order.ordered_products.count()
-                transaction_products_count = last_order.transaction.products_purchased.count()
-
+            if last_order is not None:
+                
+                # get the ordered products from the transaction and order:
                 order_products = list(last_order.ordered_products.select_related(
                     'branch_product__product'
                 ).all())
@@ -134,11 +135,12 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                     'branch_product__product'
                 ).all())
 
+                # get the products to use from eithe the transaction or the order:
                 products_to_use = order_products if order_products else transaction_products
-
+                # prepare the last order data:
                 response = {
                     "id": last_order.id,
-                    "date": last_order.created,
+                    "date": datetime.datetime.strftime(last_order.created, "%Y-%m-%d %H:%M:%S"),
                     "items": [
                         {
                             "product_id": ordered_product.branch_product.id,
@@ -240,9 +242,11 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             except Exception as e:
                 raise Exception(f"Failed to find branch matching address (Critical error): {str(e)}")
 
-            # serialize the branch and get the products and sale campaigns:
+            # serialize the branch and get the products:
             bs = BranchSerializer(branch, many=False)
             branch_products = self._get_branch_products(branch)
+
+            #  get the sale campaigns created by this branch:
             sale_campaigns, sale_campaigns_serialized = self._get_branch_sale_campaigns(branch)
 
             # if sale campaigns have been found we need to adjust the prices in the branch products

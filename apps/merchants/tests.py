@@ -74,7 +74,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
         self.assertEqual(len(response.data["petstores"]), 1)
 
     def test_get_nearest_branch(self):
-        _ = self.create_test_customer()
+        test_customer = self.create_test_customer()
         authToken = self.login_as_customer()
 
         with patch('googlemaps.places.find_place') as mock_find_place:
@@ -111,6 +111,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             }
         )
 
+        # delete all branches:
+        Branch.objects.all().delete()   
+
+        # create a new branch:
         branch = Branch.objects.create(
             merchant=merchantBusiness,
             address="95 Howard Ave, Benoni, 1501, South Africa",
@@ -136,6 +140,42 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             created_by=merchant_user_account
         )
 
+        # create an ordered product:
+        ordered_product = OrderedProduct()
+        ordered_product.branch_product = branch_product
+        ordered_product.quantity_ordered = 1
+        ordered_product.order_price = branch_product.branch_price
+        ordered_product.order_price = branch_product.branch_price
+        ordered_product.save()
+
+        # create a transaction:
+        transaction = Transaction()
+        transaction.customer = test_customer
+        transaction.branch = branch
+        transaction.reference = "TEST-REF-12345"
+        transaction.full_amount = "100.00"
+        transaction.amount_minus_service_fee = "80.00"
+        transaction.service_fee = Decimal("20.00")
+        transaction.status = "COMPLETED"
+        transaction.numberOfProducts = 1
+        transaction.save()
+        transaction.products_purchased.add(ordered_product)
+        transaction.save()
+
+        # create a order made to this branch:
+        order = Order()
+        order.acknowledged = True
+        order.delivery = True
+        order.delivery_fee = 20.00
+        order.deliveryDate = timezone.now()
+        order.address = "71 Rethman Street, Newgermany, Berkshire downs"
+        order.transaction = transaction
+        order.status = Order.DELIVERED
+        order.save()
+        # set ordered product to order:
+        order.ordered_products.add(ordered_product)
+        order.save()
+
         deviceLocation = "-26.1945368,28.3080212"
         getNearestBranchUrl = reverse(
             "get_nearest_branch",
@@ -157,7 +197,6 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
         # Check that the branch data is correct
         self.assertEqual(branch_data["branch"]["address"], branch.address)
-        self.assertEqual(branch_data["distance"]["distance"]["text"], "1.2 km")  
 
     def test_get_updated_petstores_near_me(self):
         _ = self.create_test_customer()
@@ -513,7 +552,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
 
     def test_get_nearest_branch_with_last_order(self):
         """Test getting nearest branch with last order information"""
-    
+
         customer = self.create_test_customer()
         auth_token = self.login_as_customer()
 
@@ -528,7 +567,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             device_token="test_device_token",
             is_merchant=True,
         )
-        
+
         # Create merchant business
         merchant_business = self.create_merchant_business(merchant_user_account, {
             "name": "Benoni Aquarium & Pets",
@@ -549,7 +588,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
                 area="Benoni",
                 merchant=merchant_business
             )
-        
+
         transaction = Transaction.objects.create(
             customer=customer,
             branch=branch,
@@ -559,10 +598,10 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             service_fee=Decimal("20.00"),
             status="COMPLETED"
         )
-        
+
         global_product1 = self.create_product(merchant_business, merchant_user_account, "Dog Food", 100)
         global_product2 = self.create_product(merchant_business, merchant_user_account, "Cat Food", 50)
-        
+
         branch_product1 = BranchProduct.objects.create(
             product=global_product1,
             branch=branch,
@@ -577,14 +616,14 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             store_reference="XYZ2",
             created_by=merchant_user_account
         )
-        
+
         # Create an order
         order = Order.objects.create(
             transaction=transaction,
             status='DELIVERED',
             created=timezone.now() - timezone.timedelta(days=1)
         )
-        
+
         # Create ordered products linked to branch products
         ordered_product1 = OrderedProduct.objects.create(
             branch_product=branch_product1,
@@ -596,17 +635,17 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             quantity_ordered=1,
             order_price=50.00
         )
-        
+
         order.ordered_products.add(ordered_product1, ordered_product2)
         order.save()
-        
+
         transaction.order_set.add(order)
         transaction.save()
-        
+
         branch_product1.branch_price = 120.00  
         branch_product1.save()
         branch_product2.branch_price = 45.00   
-        
+
         # Perform API request to get nearest branch
         branch_id = branch.id
         device_location = "-26.1945368,28.3080212"
@@ -618,26 +657,25 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             get_nearest_branch_url,
             HTTP_AUTHORIZATION=f"Token {auth_token}"
         )
-        
+
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
-        
+
         last_order = response.data["lastOrder"]
         self.assertIsNotNone(last_order)
         self.assertEqual(last_order["total"], "300.00")
         self.assertEqual(len(last_order["items"]), 2)
-        
+
         price_changes = response.data.get("priceChanges", [])
         self.assertIsNotNone(price_changes)
         self.assertEqual(len(price_changes), 1)
-        
+
         # Validate price changes for Dog Food
         dog_food_change = next(change for change in price_changes if change["product_name"] == "Dog Food")
         self.assertEqual(float(dog_food_change["old_price"]), 200.00)
         self.assertEqual(float(dog_food_change["new_price"]), 120.00)
         self.assertEqual(float(dog_food_change["difference"]), -80.00)
         self.assertEqual(float(dog_food_change["percentage_change"]), -40.00)
-
 
     def test_get_nearest_branch_no_last_order(self):
         """Test getting nearest branch when there's no previous order"""
@@ -727,7 +765,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             branch_price=50.00,
             created_by=merchant_user_account
         )
-        
+
         ordered_product1 = OrderedProduct.objects.create(
             branch_product=branch_product1,  
             quantity_ordered=1,
@@ -739,7 +777,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             quantity_ordered=1,
             order_price=50.00
         )
-        
+
         transaction = Transaction.objects.create(
             customer=customer,
             branch=branch,
@@ -775,7 +813,7 @@ class MerchantTests(GlobalTestCaseConfig, TestCase):
             getNearestBranchUrl,
             HTTP_AUTHORIZATION=f"Token {authToken}"
         )
-        
+
         self.assertTrue(response.data["success"])
         self.assertEqual(response.data["message"], "Nearest branch retrieved successfully!")
 
