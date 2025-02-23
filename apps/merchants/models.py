@@ -33,6 +33,10 @@ class MerchantBusiness(models.Model):
     delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
     closing_time = models.TimeField(default=time(16, 30))
 
+    class Meta:
+        verbose_name = "a business"
+        verbose_name_plural = "My Business"
+
     def __str__(self) -> str:
         return f"{self.name}"
 
@@ -87,12 +91,12 @@ class Branch(models.Model):
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
 
     class Meta:
-        verbose_name = "My Branch"
+        verbose_name = "a branch"
         verbose_name_plural = "My Branches"
 
     def __str__(self) -> str:
         return f"{self.merchant.name} - {self.address}"
-    
+
 
 def default_campaign_end_date():
     return datetime.now() + timedelta(days=5)
@@ -104,6 +108,10 @@ class SaleCampaign(models.Model):
     percentage_off = models.PositiveIntegerField()
     branch_product = models.ForeignKey("products.BranchProduct", on_delete=models.CASCADE, null=True, blank=True)
     campaign_ends = models.DateField(default=default_campaign_end_date)
+
+    class Meta:
+        verbose_name = "Sale Campaign"
+        verbose_name_plural = "Sale Campaigns"
 
     def __str__(self) -> str:
         return f"{self.branch.merchant.name} - {self.branch.area} - sale campaign"

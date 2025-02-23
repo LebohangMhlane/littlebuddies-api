@@ -43,9 +43,9 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
 
 class BranchAdmin(admin.ModelAdmin):
     list_display = (
-        "merchant",
         "address",
         "is_active",
+        "merchant",
     )
 
     readonly_fields = ("merchant", "address", "area")
