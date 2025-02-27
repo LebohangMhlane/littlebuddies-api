@@ -154,13 +154,25 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "littlebuddies",
+#         "USER": "root",
+#         "PASSWORD": "ThepasswordisMysql1!",
+#         "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
+#         "PORT": "3306",
+#     }
+# }
+
+# Google Cloud MySql Database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "littlebuddies", 
-        "USER": "root",  
-        "PASSWORD": "ThepasswordisMysql1!",
-        "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
+        "NAME": "littlebuddies",
+        "USER": "Lebo",
+        "PASSWORD": "ThepasswordisLittlebuddies1!",
+        "HOST": "34.35.76.83",  # Replace with your MySQL host, e.g., '127.0.0.1'
         "PORT": "3306",
     }
 }
