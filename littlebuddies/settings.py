@@ -71,7 +71,7 @@ if DEBUG:
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.104", "localhost", APP_URL, DEVELOPEMENT_URL.split('/')[-1], '127.0.0.1']
+ALLOWED_HOSTS = eval(os.environ.get("ALLOWED_HOSTS"))
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -169,10 +169,10 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "littlebuddies",
-        "USER": "Lebo",
-        "PASSWORD": "ThepasswordisLittlebuddies1!",
-        "HOST": "34.35.76.83",  # Replace with your MySQL host, e.g., '127.0.0.1'
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("USER"),
+        "PASSWORD": os.environ.get("PASSWORD"),
+        "HOST": os.environ.get("HOST"),
         "PORT": "3306",
     }
 }
