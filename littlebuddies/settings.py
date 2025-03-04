@@ -64,7 +64,8 @@ DEVELOPEMENT_URL = (
     "https://3f63-41-10-122-84.ngrok-free.app"  # using ngrok server during development
 )
 
-APP_URL = "54.160.249.30"
+# Google Cloud instance url
+APP_URL = "http://34.35.70.196"
 
 if DEBUG:
     SERVER_URL = DEVELOPEMENT_URL
