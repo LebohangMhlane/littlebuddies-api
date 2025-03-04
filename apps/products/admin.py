@@ -62,7 +62,15 @@ class BranchProductAdmin(admin.ModelAdmin):
                 kwargs["initial"] = request.user
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    # TODO: set read only fields:
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(self.readonly_fields)
+        
+        if obj:
+            # fields that shouldn't be editable after creation
+            readonly_fields.append("branch")
+            readonly_fields.append("product")
+            
+        return readonly_fields
 
     def save_model(self, request, obj, form, change):
         if not change:  

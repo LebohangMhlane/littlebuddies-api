@@ -14,30 +14,34 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         "address",
         "is_active",
     )
+    
+    def get_exclude(self, request, obj=None):
+        if request.user.useraccount.is_super_user:
+            return []
+        return [
+            "fernet_token",
+            "paygate_secret",
+            "logo",
+            "paygate_id",
+            "user_account",
+        ]
 
-    exclude = (
-        "fernet_token",
-        "paygate_secret",
-        "logo",
-        "paygate_id",
-        "user_account",
-    )
-
-    readonly_fields = (
-        "name",
-        "email",
-        "address",
-        "is_active",
-        "paygate_reference",
-        "delivery_fee",
-        "closing_time",
-    )
+    def get_readonly_fields(self, request, obj=None):
+        if request.user.useraccount.is_super_user:
+            return []
+        return [
+            "name",
+            "email",
+            "address",
+            "is_active",
+            "paygate_reference",
+            "delivery_fee",
+            "closing_time",
+        ]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.useraccount.is_super_user:
-            self.readonly_fields = ()
-            self.exclude = ()
             return qs
         return qs.filter(user_account__user=request.user)
 
