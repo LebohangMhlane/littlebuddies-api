@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from apps.orders.models import Order, OrderedProduct, record_cancellation
 from global_test_config.global_test_config import (
     GlobalTestCaseConfig,
-    MockedPaygateResponse,
+    MockedPaystackResponse,
 )
 from apps.transactions.models import Transaction
 from apps.accounts.models import UserAccount

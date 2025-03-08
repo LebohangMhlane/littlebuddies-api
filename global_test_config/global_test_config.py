@@ -1,20 +1,13 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
-
-from rest_framework.reverse import reverse
-from rest_framework.authtoken.models import Token
-
 from apps.accounts.models import UserAccount
-from apps.merchant_wallets.models import MerchantWallet
-from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
+from apps.merchants.models import Branch, MerchantBusiness
 from apps.products.models import BranchProduct, GlobalProduct
-
 
 # test functions shared by all tests
 
-class MockedPaygateResponse():
+class MockedPaystackResponse():
 
     status_code = 200
     text = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&CHECKSUM=b41a77f83a275a849f23e30b4666e837"

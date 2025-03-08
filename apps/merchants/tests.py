@@ -15,7 +15,7 @@ from django.utils import timezone
 from apps.merchant_wallets.models import MerchantWallet
 from apps.orders.models import Order, OrderedProduct
 from apps.transactions.models import Transaction
-from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaygateResponse
+from global_test_config.global_test_config import GlobalTestCaseConfig, MockedPaystackResponse
 from apps.merchants.models import MerchantBusiness
 from apps.merchants.models import MerchantBusiness, Branch, SaleCampaign
 from apps.accounts.models import UserAccount

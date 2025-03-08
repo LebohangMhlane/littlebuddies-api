@@ -1,6 +1,4 @@
 from django.db import models
-from django.dispatch import receiver
-from django.db.models.signals import pre_save
 
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch
