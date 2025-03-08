@@ -20,21 +20,19 @@ class Transaction(models.Model):
         ("CUSTOMER_CANCELLED", "Customer Cancelled"),
     ]
 
-    payRequestId = models.CharField(max_length=36, blank=False, null=True)
     reference = models.CharField(max_length=191, blank=False, null=True)
     customer = models.ForeignKey("accounts.UserAccount", on_delete=models.CASCADE, blank=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
-    products_purchased = models.ManyToManyField("orders.OrderedProduct", blank=True)
-    numberOfProducts = models.PositiveIntegerField(default=0)
-    full_amount = models.CharField(default="0.00", max_length=7, blank=False)
+    products_ordered = models.ManyToManyField("orders.OrderedProduct", blank=True)
+    grand_total = models.CharField(default="0.00", max_length=7, blank=False)
     amount_minus_service_fee = models.CharField(
         default="0.00", max_length=7, blank=False
     )
     service_fee = models.DecimalField(default="0.00", decimal_places=2, max_digits=10, blank=False)
-    discountTotal = models.PositiveIntegerField(default=0, blank=False)
+    discount_total = models.PositiveIntegerField(default=0, blank=False)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
-    dateCreated = models.DateTimeField(auto_now_add=True)
-    dateCompleted = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    date_completed = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         customer_name = (

@@ -87,7 +87,6 @@ class Branch(models.Model):
 
     is_active = models.BooleanField(default=False)
     address = models.CharField(max_length=120)
-    area = models.CharField(max_length=120, default="")
     merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
 
     class Meta:
@@ -111,7 +110,6 @@ class SaleCampaign(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=False,
-        unique=True,
     )
     campaign_ends = models.DateField(default=default_campaign_end_date)
 
@@ -120,7 +118,7 @@ class SaleCampaign(models.Model):
         verbose_name_plural = "Sale Campaigns"
 
     def __str__(self) -> str:
-        return f"{self.branch.merchant.name} - {self.branch.area} - sale campaign"
+        return f"{self.branch.merchant.name} - {self.branch} - sale campaign"
 
     def calculate_sale_campaign_price(self):
         branch_price = self.branch_product.branch_price

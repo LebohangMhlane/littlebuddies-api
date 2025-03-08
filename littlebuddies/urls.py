@@ -14,39 +14,14 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.urls import include, path
 from django.conf import settings
-from  django.conf.urls.static import static 
-
-from apps.paygate.views import (PaymentSuccessView, 
-                                PaymentInitializationView, 
-                                PaymentCancelledView,
-                                PaymentNotificationView, 
-                                )
+from django.conf.urls.static import static
 import custom_admin_site
 
 urlpatterns = [
     path("admin/", custom_admin_site.custom_admin_site.urls),
-    path(
-        "initiate_payment/",
-        PaymentInitializationView.as_view(),
-        name="initiate_payment_view",
-    ),
-    path(
-        "payment_successful/",
-        PaymentSuccessView.as_view(),
-        name="payment_successful_view",
-    ),
-    path(
-        "payment_cancelled/",
-        PaymentCancelledView.as_view(),
-        name="payment_cancelled_view",
-    ),
-    path(
-        "payment_notification/",
-        PaymentNotificationView.as_view(),
-        name="payment_notification_view",
-    ),
     path("accounts/", include("apps.accounts.urls"), name="account_urls"),
     path("merchants/", include("apps.merchants.urls"), name="merchant_urls"),
     path("products/", include("apps.products.urls"), name="product_urls"),
@@ -66,5 +41,5 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_URL)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_URL)

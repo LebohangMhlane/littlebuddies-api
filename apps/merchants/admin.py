@@ -48,7 +48,7 @@ class BranchAdmin(admin.ModelAdmin):
         "merchant",
     )
 
-    readonly_fields = ("merchant", "address", "area")
+    readonly_fields = ("merchant", "address")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

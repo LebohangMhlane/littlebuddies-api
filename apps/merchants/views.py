@@ -131,7 +131,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                 order_products = list(last_order.ordered_products.select_related(
                     'branch_product__product'
                 ).all())
-                transaction_products = list(last_order.transaction.products_purchased.select_related(
+                transaction_products = list(last_order.transaction.products_ordered.select_related(
                     'branch_product__product'
                 ).all())
 
@@ -152,7 +152,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                         }
                         for ordered_product in products_to_use
                     ],
-                    "total": str(last_order.transaction.full_amount)
+                    "total": str(last_order.transaction.grand_total)
                 }
 
                 return response
