@@ -55,9 +55,8 @@ DEBUG = True
 
 FIREBASE_APP = FirebaseApp()
 
-# Paygate stuff
-
-PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
+# Paystack stuff
+PAYSTACK_SECRET_KEY = "sk_test_8d7f4a2a27d5fd71a22a1590dde35b2d61fe6895"
 
 # server stuff
 DEVELOPEMENT_URL = (

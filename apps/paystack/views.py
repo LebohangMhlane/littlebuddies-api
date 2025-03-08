@@ -2,7 +2,6 @@ import uuid
 import requests
 import json
 from django.conf import settings
-from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -10,38 +9,61 @@ from .models import Payment
 
 
 class InitializePaymentView(APIView):
+
+    permission_classes = []
+
     def post(self, request):
-        email = request.data.get("email")
-        amount = int(request.data.get("amount"))  # Paystack expects amount in cents
-        reference = str(uuid.uuid4())  # Generate a unique transaction reference
+        try:
+            # prepare the payload we send to paystack to initialize the payment:
+            email = request.data.get("email")
+            amount = float(request.data.get("amount"))  # Paystack expects amount in cents
+            reference = str(uuid.uuid4())  # Generate a unique transaction reference
 
-        headers = {
-            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-            "Content-Type": "application/json",
-        }
-        data = {
-            "email": email,
-            "amount": amount * 100,  # Convert to kobo (or cents)
-            "reference": reference,
-        }
+            # set the authentication paystack requires:
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json",
+            }
 
-        response = requests.post(
-            "https://api.paystack.co/transaction/initialize", json=data, headers=headers
-        )
-        response_data = response.json()
+            # set the payload:
+            data = {
+                "email": email,
+                "amount": amount * 100,  # Convert to kobo (or cents)
+                "reference": reference,
+            }
 
-        if response_data.get("status"):
-            # Save payment in DB
-            Payment.objects.create(email=email, amount=amount, reference=reference)
-            return Response(
-                {"payment_url": response_data["data"]["authorization_url"]},
-                status=status.HTTP_201_CREATED,
+            # send the payload to paystack to initialize the payment process:
+            response = requests.post(
+                "https://api.paystack.co/transaction/initialize", json=data, headers=headers
             )
 
-        return Response(
-            {"error": "Failed to initialize payment"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+            if response.status_code == 200:
+                # convert the response to readable json:
+                response_data = response.json()
+
+                # create the payment in the database:
+                if response_data.get("status"):
+                    Payment.objects.create(email=email, amount=amount, reference=reference)
+                    return Response(
+                        {
+                            "success": True,
+                            "payment_url": response_data["data"]["authorization_url"],
+                            "message": "Payment initialized successfully!",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+            else:
+                raise Exception("Failed to initialize payment")
+        except Exception as e:
+            # return an error response:
+            return Response(
+                {
+                    "success": False,
+                    "payment_url": "",
+                    "message": f"Failed to initialize payment: {e}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class VerifyPaymentView(APIView):
