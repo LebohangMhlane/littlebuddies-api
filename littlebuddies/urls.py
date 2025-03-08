@@ -38,6 +38,11 @@ urlpatterns = [
         include("apps.merchant_dashboard.urls"),
         name="merchant_dashboard",
     ),
+    path(
+        "paystack/",
+        include("apps.paystack.urls"),
+        name="paystack",
+    ),
 ]
 
 if settings.DEBUG:

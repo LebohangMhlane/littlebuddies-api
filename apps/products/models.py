@@ -24,14 +24,10 @@ class BranchProduct(models.Model):
     in_stock = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
-    product = models.ForeignKey(GlobalProduct, on_delete=models.CASCADE)
+    global_product = models.ForeignKey(GlobalProduct, on_delete=models.CASCADE)
     branch_price = models.DecimalField(blank=False, null=True, decimal_places=2, default=0.00, max_digits=6)
     store_reference = models.CharField(max_length=191, blank=False, default="")
     created_by = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
 
     def __str__(self) -> str:
         return f"{self.branch.merchant.name} - Product {self.product.name}"
-
-    @receiver(pre_save, sender="products.BranchProduct")
-    def update_merchant_name(instance, **kwargs):
-        pass

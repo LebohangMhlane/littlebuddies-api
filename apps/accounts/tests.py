@@ -72,7 +72,7 @@ class AccountsTests(GlobalTestCaseConfig, TestCase):
             "email": "asandamhlane@gmail.com",
             "password": "HelloWorld",
         }
-        response = self.create_normal_test_account()
+        response = self.create_customer_user_account()
         loginUrl = reverse("login")
         loginPayload = {
             "email": userInputData["email"],

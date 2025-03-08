@@ -28,7 +28,6 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         "email",
         "address",
         "is_active",
-        "paygate_reference",
         "delivery_fee",
         "closing_time",
     )

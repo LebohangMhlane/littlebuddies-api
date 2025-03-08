@@ -155,29 +155,29 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.mysql",
-#         "NAME": "littlebuddies",
-#         "USER": "root",
-#         "PASSWORD": "ThepasswordisMysql1!",
-#         "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
-#         "PORT": "3306",
-#     }
-# }
-
-# Google Cloud MySql Database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("USER"),
-        "PASSWORD": os.environ.get("PASSWORD"),
-        "HOST": os.environ.get("HOST"),
+        "NAME": "littlebuddies",
+        "USER": "root",
+        "PASSWORD": "ThepasswordisMysql1!",
+        "HOST": "localhost",  # Replace with your MySQL host, e.g., '127.0.0.1'
         "PORT": "3306",
-        "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
 }
+
+# Google Cloud MySql Database
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": os.environ.get("DB_NAME"),
+#         "USER": os.environ.get("USER"),
+#         "PASSWORD": os.environ.get("PASSWORD"),
+#         "HOST": os.environ.get("HOST"),
+#         "PORT": "3306",
+#         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

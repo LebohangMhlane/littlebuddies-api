@@ -23,289 +23,266 @@ class GlobalTestCaseConfig(TestCase):
 
     # TODO: remember to clean up test cases and move all repetitive tasks here:
 
-    def create_branch_product(self, branch):
-        pass
-
-    def create_a_branch(self, merchant):
-
-        # create a dummy branch:
-        branch = Branch()
-        branch.is_active = True
-        branch.address = "12 down the road street, Durban, 3000"
-        branch.merchant = merchant
-        branch.area = "Westville"
-        branch.save()
-
     def setUp(self) -> None:
-        self.loginPayload = {
+
+        # setup log in data:
+        self.login_payload = {
             "email": "asandamhlane@gmail.com",
-            "password": "HelloWorld",
+            "password": "ThisIsMyPassword",
         }
 
-    def create_normal_test_account(self):
-        userInputData = {
-            "username": "Lebo",
-            "password": "HelloWorld",
-            "firstName": "Lebohang",
-            "lastName": "Mhlane",
-            "email": "asandamhlane@gmail.com",
-            "address": "71 rethman street newgermany",
-            "phoneNumber": "0621837747",
-            "isMerchant": False,
-            "deviceToken": "fhewofhew89f394ry34f7g4f"
-        }
-        create_account_url = reverse("create_account_view")
-        response = self.client.post(
-            path=create_account_url,
-            content_type=f"application/json",
-            data=userInputData,
-        )
-        testUserAccount = UserAccount.objects.get(
-            user__username=response.data["user_account"]["user"]["username"]
-        )
-        return testUserAccount
+        # create default data:
+        self.create_default_data()
 
-    def create_test_customer(self):
-        userInputData = {
-            "username": "customer",
-            "password": "HelloWorld",
-            "first_name": "Customer",
-            "last_name": "IWantToOrder",
-            "email": "customer@gmail.com",
-            "address": "71 Rethman Street, New Germany, Durban",
-            "phone_number": "0631837747",
-            "is_merchant": False,
-            "device_token": "cqmGKjazRUS5HfJypYk6r6:APA91bG0D4HYDz-21j2rK3mKP-M7HOAhcxR1_XEDCXUMqB4V_9Jd_1WFIAHq_zIw1o5LTPJUxJk4Xskzd4F1dO_OSk_bx4l48Jcac_KeXbGv5Fwj0aDZ-4-YsTEBvZei3t0dRgmw3yz0",
-            "email_verified": True,
-        }
+    def create_default_data(self):
 
-        customer, created = User.objects.get_or_create(
-            username=userInputData["username"],
-            defaults={
-                "password": make_password(userInputData["password"]),
-                "first_name": userInputData["first_name"],
-                "last_name": userInputData["last_name"],
-                "email": userInputData["email"],
-            }
+        # create a customer user account:
+        self.customer_user_account = self.create_customer_user_account()
+
+        # create a merchant user account:
+        self.merchant_user_account = self.create_merchant_user_account()
+
+        # create a branch:
+        self.branch = self.create_a_branch(merchant_user_account=self.merchant_user_account)
+
+        # create a branch product:
+        self.branch_product = self.create_a_branch_product(
+            branch=self.branch, merchant_user_account=self.merchant_user_account
         )
 
-        test_user_account, _ = UserAccount.objects.get_or_create(
-            user=customer,
-            defaults={
-                "address": userInputData["address"],
-                "phone_number": userInputData["phone_number"],
-                "is_merchant": userInputData["is_merchant"],
-                "device_token": userInputData["device_token"],
-                "email_verified": userInputData["email_verified"],
-            }
-        )
+    def create_a_branch(
+        self,
+        custom_merchant_business={},
+        custom_branch_data={},
+        merchant_user_account=None,
+    ):
 
-        token, _ = Token.objects.get_or_create(user=customer)
-        return test_user_account
+        '''
+        ### if you want to create a merchant business with your own data then pass the required fields into the custom_merchant_business dictionary:
+        '''
 
-    def create_merchant_user_account(self, user_data={}):
         try:
-            fake_user_data = {
-                "username": "Mike",
-                "password": "HelloWorld",
-                "firstName": "Mike",
-                "lastName": "Myers",
-                "email": "mikemyers@gmail.com",
-                "address": "72 rethman street newgermany",
-                "phoneNumber": "0631837737",
-                "isMerchant": True,
-                "deviceToken": "fhwefhf2h3f9we7yfwefy32"
-            }
-            create_account_url = reverse("create_account_view")
-            _ = self.client.post(
-                path=create_account_url,
-                content_type=f"application/json",
-                data=fake_user_data if len(user_data) == 0 else user_data,
-            )
-            merchant_user_account = UserAccount.objects.get(
-                user__email=fake_user_data["email"] if len(user_data) == 0 else user_data["email"]
-            )
-            merchant_user_account.is_merchant = True
-            merchant_user_account.save()
-            return merchant_user_account
-        except Exception as e:
-            pass
+            if len(custom_merchant_business) == 0:
 
-    def create_dynamic_merchant_user_account(self, userData):
-        userInputData = {
-            "username": userData["username"],
-            "password": userData["password"],
-            "firstName": userData["firstName"],
-            "lastName": userData["lastName"],
-            "email": userData["email"],
-            "address": userData["address"],
-            "phoneNumber": userData["phoneNumber"],
-            "isMerchant": userData["isMerchant"],
-            "deviceToken": userData["deviceToken"]
-        }
-        create_account_url = reverse("create_account_view")
-        response = self.client.post(
-            path=create_account_url,
-            content_type=f"application/json",
-            data=userInputData,
-        )
-        testmerchant_user_account = UserAccount.objects.get(user__email=userInputData["email"])
-        return testmerchant_user_account
-
-    def create_normal_test_account_and_login(self):
-        user_account = self.create_normal_test_account()
-        loginUrl = reverse("login")
-        response = self.client.post(
-            path=loginUrl,
-            content_type=f"application/json",
-            data=self.loginPayload,
-        )
-        self.authToken = response.data["token"]
-        self.user_account = user_account
-        return self.authToken
-
-    def login_as_merchant(self):
-        loginUrl = reverse("login")
-        loginPayload = {
-            "email": "mikemyers@gmail.com",
-            "password": "HelloWorld",
-        }
-        response = self.client.post(
-            loginUrl,
-            data=loginPayload
-        )
-        self.authToken = response.data["token"]
-        return self.authToken
-
-    def login_as_customer(self):
-        loginUrl = reverse("login")
-        loginPayload = {
-            "email": "customer@gmail.com",
-            "password": "HelloWorld",
-        }
-        response = self.client.post(
-            loginUrl,
-            data=loginPayload
-        )
-        self.authToken = response.data["token"]
-        return self.authToken
-
-    def login_as_super_admin(self):
-        pass
-
-    def make_user_account_a_merchant(self, user_account:UserAccount) -> UserAccount:
-        user_account.is_merchant = True
-        user_account.save()
-        return user_account
-
-    def create_merchant_wallet(self, merchant_business:MerchantBusiness):
-        merchant_wallet = MerchantWallet()
-        merchant_wallet.merchant_business = merchant_business
-        merchant_wallet.save()
-
-    def create_merchant_business(self, user_account:UserAccount, merchant_data={}):
-        user_account = self.make_user_account_a_merchant(user_account)
-        try:
-            merchant = MerchantBusiness()
-            if len(merchant_data) == 0:
-                merchant.user_account = user_account
-                merchant.name="Absolute Pets"
-                merchant.email="absolutepets@gmail.com"
-                merchant.address="Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
-                merchant.paygate_reference="pgtest_123456789"
-                merchant.paygate_id="10011072130"
-                merchant.paygate_secret="secret"
-                merchant.delivery_fee = "20.00"
-                merchant.closing_time = (datetime.now() + timedelta(hours=2)).time()
-                merchant.set_branch_areas(["New Germany", "Durban Central"])
+                # first we create a merchant business:
+                merchant = MerchantBusiness()
+                merchant.logo = "My Company Logo"
+                merchant.user_account = merchant_user_account
+                merchant.name = "Orsum Pets"
+                merchant.email = "orsumpets@gmail.com"
+                merchant.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
+                merchant.delivery_fee = 20.00
                 merchant.save()
-                self.create_merchant_wallet(merchant)
-            else:
-                merchant.user_account=user_account
-                merchant.name=merchant_data["name"]
-                merchant.email=merchant_data["email"]
-                merchant.address=merchant_data["address"]
-                merchant.paygate_reference="pgtest_123456789"
-                merchant.paygate_id=merchant_data["paygateId"]
-                merchant.paygate_secret=merchant_data["paygateSecret"]
-                merchant.delivery_fee = merchant_data["deliveryFee"]
-                merchant.closing_time = (datetime.now() + timedelta(hours=2)).time()
-                merchant.save()
-                self.create_merchant_wallet(merchant)
-        except Exception as e:
-            pass
-        try:
-            branch1 = Branch()
-            if len(merchant_data) == 0:
-                branch1.is_active=True
-                branch1.address = "Absolute Pets Village @ Kloof, Shop 33, Kloof Village Mall, 33 Village Rd, Kloof, 3640"
-                branch1.merchant = merchant
-                branch1.area = "New Germany"
-                branch1.save()
 
-                branch2 = Branch()
-                branch2.is_active=True
-                branch2.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
-                branch2.merchant = merchant
-                branch2.area = "Durban Central"
-                branch2.save()
-            else:
-                branch1.is_active=True
-                branch1.address = merchant_data["address"]
-                branch1.merchant = merchant
-                branch1.save()
-        except Exception as e:
-            pass
-        return merchant
-
-    def make_normal_account_super_admin(self, user_account_pk:int):
-        user_account = UserAccount.objects.get(pk=user_account_pk)
-        user_account.user.is_superuser = True
-        user_account.is_super_user = True
-        user_account.user.save()
-        user_account.save()
-        return user_account
-
-    def create_product(self, merchant: MerchantBusiness, merchant_user_account, name, price, discountPercent=0):
-        try:
-            branches = Branch.objects.filter(merchant=merchant)
-            if not branches:
-                raise ValueError(f"No branches found for the merchant: {merchant.name}")
-
-            product, created = GlobalProduct.objects.get_or_create(
-                name=name,
-                defaults={
-                    "recommended_retail_price": price,  
-                    "image": "image",
-                    "category": 1,
-                    "description": "",
-                },
-            )
-
-            for branch in branches:
-                branch_product = BranchProduct.objects.create(
-                    branch=branch,
-                    branch_price=product.recommended_retail_price,  
-                    store_reference="3EERDE2",
-                    created_by=merchant_user_account,
-                    product=product,  
+                # create a dummy branch:
+                branch = Branch()
+                branch.is_active = True
+                branch.address = (
+                    "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
                 )
+                branch.merchant = merchant
+                branch.save()
 
-                if discountPercent > 0:
-                    sale_campaign = SaleCampaign.objects.create(
-                        branch=branch,
-                        campaign_ends=datetime.now() + timedelta(days=5),
-                        percentage_off=discountPercent,
-                        branch_product=branch_product 
-                    )
+                return branch
+            else:
+                # first we create a merchant business:
+                merchant = MerchantBusiness()
+                merchant.logo = custom_merchant_business["logo"]
+                merchant.user_account = custom_merchant_business["user_account"]
+                merchant.name = custom_merchant_business["name"]
+                merchant.email = custom_merchant_business["email"]
+                merchant.address = custom_merchant_business["address"]
+                merchant.delivery_fee = custom_merchant_business["delivery_fee"]
+                merchant.save()
 
-            return product  
+                # create a dummy branch:
+                branch = Branch()
+                branch.is_active = custom_branch_data["is_active"]
+                branch.address = custom_branch_data["address"]
+                branch.merchant = merchant
+                branch.save()
 
+                return branch
+        except Exception as e:
+            print(f"Error creating branch: {e}")
+            return None
+
+    def create_customer_user_account(self, custom_user_data={}, custom_account_data={}):
+        """
+        ### if you want to create a user account with your own data then pass the required fields into the custom_account_data dictionary
+        """
+
+        # both instances must have custom data if either one has custom data:
+        if len(custom_user_data) == 0 and len(custom_account_data) == 0:
+            pass
+        else:
+            raise Exception("If custom data is provided for one instance, you must provide custom data for both instances")
+
+        try:
+            if len(custom_user_data) == 0:
+                # first we create a dummy user:
+                user = User()
+                user.username = "johndoe0621837747"
+                user.first_name = "John"
+                user.last_name = "Doe"
+                user.password = "ThisIsMyPassword"
+                user.email = "asandamhlane@gmail.com"
+                user.save()
+
+                # now we can create a user account:
+                user_account = UserAccount()
+                user_account.user = user
+                user_account.address = "71 rethman street newgermany"
+                user_account.phone_number = "0621837747"
+                user_account.is_merchant = False
+                user_account.email_verified = True
+                user_account.is_super_user = False
+                user_account.device_token = "fhewofhew89f394ry34f7g4f"
+                user_account.save()
+
+                # return the user account:
+                return user_account
+            else:
+                # first we create a dummy user:
+                user = User()
+                user.first_name = custom_user_data["first_name"]
+                user.last_name = custom_user_data["last_name"]
+                user.password = custom_user_data["password"]
+                user.email = custom_user_data["email"]
+                user.save()
+
+                # now we can create a user account:
+                user_account = UserAccount()
+                user_account.user = user
+                user_account.address = custom_account_data["address"]
+                user_account.phone_number = custom_account_data["phone_number"]
+                user_account.is_merchant = custom_account_data["is_merchant"]
+                user_account.email_verified = custom_account_data["email_verified"]
+                user_account.is_super_user = custom_account_data["is_super_user"]
+                user_account.device_token = custom_account_data["device_token"]
+                user_account.save()
+
+                # return the user account:
+                return user_account
+        except Exception as e:
+            print(f"Error creating user account: {e}")
+            return None
+
+    def create_merchant_user_account(self, custom_user_data={}, custom_account_data={}):
+        """
+        ### if you want to create a user account with your own data then pass the required fields into the custom_account_data dictionary
+        """
+
+        # both instances must have custom data if either one has custom data:
+        if len(custom_user_data) == 0 and len(custom_account_data) == 0:
+            pass
+        else:
+            raise Exception(
+                "If custom data is provided for one instance, you must provide custom data for both instances"
+            )
+
+        try:
+            if len(custom_user_data) == 0:
+                # first we create a dummy user:
+                user = User()
+                user.username = "janedoe0624834547"
+                user.first_name = "Jane"
+                user.last_name = "Doe"
+                user.password = "ThisIsMyPassword"
+                user.email = "jane@gmail.com"
+                user.save()
+
+                # now we can create a user account:
+                user_account = UserAccount()
+                user_account.user = user
+                user_account.address = "53 rethman street newgermany"
+                user_account.phone_number = "0624834547"
+                user_account.is_merchant = True
+                user_account.email_verified = True
+                user_account.is_super_user = False
+                user_account.device_token = "fhewofhew34235556f7g4f"
+                user_account.save()
+
+                # return the user account:
+                return user_account
+            else:
+                # first we create a dummy user:
+                user = User()
+                user.first_name = custom_user_data["first_name"]
+                user.last_name = custom_user_data["last_name"]
+                user.password = custom_user_data["password"]
+                user.email = custom_user_data["email"]
+                user.save()
+
+                # now we can create a user account:
+                user_account = UserAccount()
+                user_account.user = user
+                user_account.address = custom_account_data["address"]
+                user_account.phone_number = custom_account_data["phone_number"]
+                user_account.is_merchant = custom_account_data["is_merchant"]
+                user_account.email_verified = custom_account_data["email_verified"]
+                user_account.is_super_user = custom_account_data["is_super_user"]
+                user_account.device_token = custom_account_data["device_token"]
+                user_account.save()
+
+                # return the user account:
+                return user_account
+        except Exception as e:
+            print(f"Error creating user account: {e}")
+            return None
+
+    def create_a_branch_product(
+        self, branch=None, merchant_user_account=None, custom_global_product_data={}
+    ):
+
+        '''
+        #### if you want to create a global product with your own data then pass the required fields into the custom_global_product_data dictionary
+        '''
+
+        try:
+            if len(custom_global_product_data) == 0:
+                # first we create a new global product:
+                global_product = GlobalProduct()
+                global_product.name = "Dog Food"
+                global_product.description = "A bag of dog food"
+                global_product.recommended_retail_price = 100.00
+                global_product.save()
+
+                # if theres a branch, we create and return a branch product instead:
+                if branch:
+                    branch_product = BranchProduct()
+                    branch_product.branch = branch
+                    branch_product.global_product = global_product
+                    branch_product.branch_price = 50.00
+                    branch_product.created_by = merchant_user_account
+                    branch_product.save()
+                    return branch_product
+
+                # else we return the global product:
+                return global_product
+            else:
+                # first we create a new global product using provided custom product data:
+                global_product = GlobalProduct()
+                global_product.name = custom_global_product_data["name"]
+                global_product.description = custom_global_product_data["description"]
+                global_product.recommended_retail_price = custom_global_product_data["recommended_retail_price"]
+                global_product.save()
+
+                # if theres a branch, we create and return a branch product instead:
+                if branch:
+                    branch_product = BranchProduct()
+                    branch_product.branch = branch
+                    branch_product.global_product = global_product
+                    branch_product.branch_price = custom_global_product_data["branch_price"]
+                    branch_product.created_by = custom_global_product_data["created_by"]
+                    branch_product.save()
+
+                # else we return the global product:
+                return global_product
         except Exception as e:
             print(f"Error creating product: {e}")
-            raise
 
-    def make_date(self, daysFromNow):
-        date = datetime.now() + timedelta(days=daysFromNow)
+    def make_date(self, days_from_now):
+        date = datetime.now() + timedelta(days=days_from_now)
         date = date.strftime("%d %B %Y")
         return date

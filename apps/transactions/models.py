@@ -1,9 +1,7 @@
 from django.db import models
-# from django.dispatch import receiver
-# from django.db.models.signals import post_save
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Branch, MerchantBusiness
+from apps.merchants.models import Branch
 
 
 class Transaction(models.Model):
@@ -28,6 +26,7 @@ class Transaction(models.Model):
     amount_minus_service_fee = models.CharField(
         default="0.00", max_length=7, blank=False
     )
+    payment = models.ForeignKey("paystack.Payment", on_delete=models.CASCADE, null=True)
     service_fee = models.DecimalField(default="0.00", decimal_places=2, max_digits=10, blank=False)
     discount_total = models.PositiveIntegerField(default=0, blank=False)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
