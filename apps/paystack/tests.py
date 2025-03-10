@@ -1,7 +1,10 @@
+from datetime import datetime
 import json
 from django.urls import reverse
 import requests
 
+from apps.paystack.models import Payment
+from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig
 
 
@@ -17,16 +20,20 @@ class TestPaystack(GlobalTestCaseConfig):
 
         # set the checkout payload:
         order_data = {
-            "email": self.customer_user_account.user.email,
             "amount": "499.99",  # Convert to kobo (or cents)
-            "reference": "paystack_test_reference",
-            "ordered_products": [1, 2, 3],
-            "branch": 1
+            "ordered_products": [1, 2, 3, 3],
+            "branch": 1,
+            "is_delivery": True,
+            "delivery_date": datetime.today(),
+            "delivery_address": "34 Blue Lagoon Street Offsprings"
         }
 
         # send the request to our server to start the payment process:
         response = self.client.post(
-            paystack_initialize_payment_url, data=order_data, content_type="application/json"
+            paystack_initialize_payment_url,
+            data=order_data,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Token {self.user_token}"
         )
 
         # if something went wrong:
@@ -36,6 +43,19 @@ class TestPaystack(GlobalTestCaseConfig):
 
         # do checks if things went well:
         else:
+            # check the transaction:
+            transaction = Transaction.objects.all()[0]
+            self.assertEqual(transaction.status, "PENDING")
+            self.assertEqual(transaction.total_with_service_fee, order_data["amount"])
+
+            # check the payment:
+            payment = Payment.objects.all()[0]
+            self.assertEqual(payment.email, self.customer_user_account.user.email)
+            self.assertFalse(payment.paid)
+            self.assertEqual(str(payment.amount), order_data["amount"])
+            self.assertEqual(payment.reference, transaction.reference)
+
+            # check the response data:
             response_data = response.json()
             self.assertEqual(response_data["success"], True)
             self.assertTrue("payment_url" in response_data)

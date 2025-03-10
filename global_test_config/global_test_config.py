@@ -4,13 +4,16 @@ from django.contrib.auth.models import User
 from apps.accounts.models import UserAccount
 from apps.merchants.models import Branch, MerchantBusiness
 from apps.products.models import BranchProduct, GlobalProduct
+from rest_framework.authtoken.models import Token
 
 # test functions shared by all tests
 
-class MockedPaystackResponse():
+
+class MockedPaystackResponse:
 
     status_code = 200
     text = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&CHECKSUM=b41a77f83a275a849f23e30b4666e837"
+
 
 class GlobalTestCaseConfig(TestCase):
 
@@ -30,17 +33,31 @@ class GlobalTestCaseConfig(TestCase):
     def create_default_data(self):
 
         # create a customer user account:
-        self.customer_user_account = self.create_customer_user_account()
+        self.customer_user_account, self.user_token = self.create_customer_user_account()
 
         # create a merchant user account:
         self.merchant_user_account = self.create_merchant_user_account()
 
         # create a branch:
-        self.branch = self.create_a_branch(merchant_user_account=self.merchant_user_account)
+        self.branch = self.create_a_branch(
+            merchant_user_account=self.merchant_user_account
+        )
 
-        # create a branch product:
+        # create branch products:
         self.branch_product = self.create_a_branch_product(
-            branch=self.branch, merchant_user_account=self.merchant_user_account
+            branch=self.branch,
+            merchant_user_account=self.merchant_user_account,
+            item_number=1,
+        )
+        self.branch_product = self.create_a_branch_product(
+            branch=self.branch,
+            merchant_user_account=self.merchant_user_account,
+            item_number=2,
+        )
+        self.branch_product = self.create_a_branch_product(
+            branch=self.branch,
+            merchant_user_account=self.merchant_user_account,
+            item_number=3,
         )
 
     def create_a_branch(
@@ -49,10 +66,9 @@ class GlobalTestCaseConfig(TestCase):
         custom_branch_data={},
         merchant_user_account=None,
     ):
-
-        '''
+        """
         ### if you want to create a merchant business with your own data then pass the required fields into the custom_merchant_business dictionary:
-        '''
+        """
 
         try:
             if len(custom_merchant_business) == 0:
@@ -63,7 +79,9 @@ class GlobalTestCaseConfig(TestCase):
                 merchant.user_account = merchant_user_account
                 merchant.name = "Orsum Pets"
                 merchant.email = "orsumpets@gmail.com"
-                merchant.address = "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
+                merchant.address = (
+                    "Shop 116A, Musgrave Centre, 115 Musgrave Rd, Berea, Durban, 4001"
+                )
                 merchant.delivery_fee = 20.00
                 merchant.save()
 
@@ -109,7 +127,9 @@ class GlobalTestCaseConfig(TestCase):
         if len(custom_user_data) == 0 and len(custom_account_data) == 0:
             pass
         else:
-            raise Exception("If custom data is provided for one instance, you must provide custom data for both instances")
+            raise Exception(
+                "If custom data is provided for one instance, you must provide custom data for both instances"
+            )
 
         try:
             if len(custom_user_data) == 0:
@@ -133,8 +153,14 @@ class GlobalTestCaseConfig(TestCase):
                 user_account.device_token = "fhewofhew89f394ry34f7g4f"
                 user_account.save()
 
+                # create a token for the user:
+                user_token = Token()
+                user_token.user = user
+                user_token.generate_key()
+                user_token.save()
+
                 # return the user account:
-                return user_account
+                return user_account, user_token.key
             else:
                 # first we create a dummy user:
                 user = User()
@@ -225,18 +251,21 @@ class GlobalTestCaseConfig(TestCase):
             return None
 
     def create_a_branch_product(
-        self, branch=None, merchant_user_account=None, custom_global_product_data={}
+        self,
+        branch=None,
+        merchant_user_account=None,
+        custom_global_product_data={},
+        item_number=1,
     ):
-
-        '''
+        """
         #### if you want to create a global product with your own data then pass the required fields into the custom_global_product_data dictionary
-        '''
+        """
 
         try:
             if len(custom_global_product_data) == 0:
                 # first we create a new global product:
                 global_product = GlobalProduct()
-                global_product.name = "Dog Food"
+                global_product.name = f"Dog Food-{item_number}"
                 global_product.description = "A bag of dog food"
                 global_product.recommended_retail_price = 100.00
                 global_product.save()
@@ -258,7 +287,9 @@ class GlobalTestCaseConfig(TestCase):
                 global_product = GlobalProduct()
                 global_product.name = custom_global_product_data["name"]
                 global_product.description = custom_global_product_data["description"]
-                global_product.recommended_retail_price = custom_global_product_data["recommended_retail_price"]
+                global_product.recommended_retail_price = custom_global_product_data[
+                    "recommended_retail_price"
+                ]
                 global_product.save()
 
                 # if theres a branch, we create and return a branch product instead:
@@ -266,7 +297,9 @@ class GlobalTestCaseConfig(TestCase):
                     branch_product = BranchProduct()
                     branch_product.branch = branch
                     branch_product.global_product = global_product
-                    branch_product.branch_price = custom_global_product_data["branch_price"]
+                    branch_product.branch_price = custom_global_product_data[
+                        "branch_price"
+                    ]
                     branch_product.created_by = custom_global_product_data["created_by"]
                     branch_product.save()
 

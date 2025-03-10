@@ -82,4 +82,4 @@ class SaleCampaign(models.Model):
 
     def calculate_sale_campaign_price(self):
         branch_price = self.branch_product.branch_price
-        return branch_price - (branch_price * self.percentage_off / 100)
+        return round(branch_price - (branch_price * self.percentage_off / 100), 2)

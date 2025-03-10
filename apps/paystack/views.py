@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from apps.merchants.models import Branch, SaleCampaign
-from apps.orders.models import OrderedProduct
+from apps.orders.models import Order, OrderedProduct
 from apps.products.models import BranchProduct
 from apps.transactions.models import Transaction
 from .models import Payment
@@ -19,12 +19,14 @@ class InitializePaymentView(APIView):
 
     def post(self, request):
         try:
-            # prepare the order data, Order, Transaction, verifying it etc:
-            order_data_prepared = self.prepare_the_order_data(request)
+            # prepare the order data, create the ordered products and transaction:
+            transaction = self.prepare_the_order_data(request)
 
             # once the order data has been prepared and verified successfully, we can now initialize the payment:
-            if order_data_prepared:
-                return self.initialize_paystack_payment(request, transaction=None)
+            if transaction:
+                return self.initialize_paystack_payment(
+                    request, transaction=transaction
+                )
         except Exception as e:
             return Response(
                 {
@@ -35,24 +37,55 @@ class InitializePaymentView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def create_a_transaction(self, reference, branch, order_amount, products_ordered):
+    def create_a_transaction(self, request, branch, order_amount, products_ordered):
         try:
             transaction = Transaction()
-            transaction.reference = reference
+            # Generate a unique transaction reference
+            transaction.reference = str(uuid.uuid4())
+            transaction.customer = request.user.useraccount
             transaction.branch = branch
+            transaction.total_with_service_fee = order_amount
             transaction.total_minus_service_fee = round(order_amount * 0.82, 2)
-            transaction.products_ordered = products_ordered
+            transaction.save()
+            transaction.products_ordered.set(products_ordered)
+            transaction.save()
+
+            return transaction
         except Exception as e:
             raise Exception(f"Failed to create a transaction: {e}")
 
-    def create_a_order(self):
-        pass
+    def create_a_order(self, request, transaction: Transaction):
+        try:
+            # get the merchant this order belongs to:
+            merchant_business = transaction.branch.merchant
+
+            # create the order:
+            order = Order()
+            order.customer = request.user.useraccount
+            order.transaction = transaction
+            order.status = Order.PAYMENT_PENDING
+            order.delivery = request.data["is_delivery"]
+            order.delivery_fee = merchant_business.delivery_fee
+            order.delivery_date = request.data["delivery_date"]
+            order.delivery_address = request.data["delivery_address"]
+            order.save()
+
+            return order
+        except Exception as e:
+            raise Exception(f"Failed to create an order: {e}")
 
     def prepare_the_order_data(self, request):
 
         def create_ordered_products():
             products_ordered = []
+            previously_processed_order_id = 0
             for id in ordered_product_ids:
+                # we dont want to process a product that has already been processed:
+                if id == previously_processed_order_id:
+                    continue
+                else:
+                    previously_processed_order_id = id
+
                 try:
                     # get the product:
                     branch_product = BranchProduct.objects.get(id=id, branch=branch)
@@ -61,32 +94,43 @@ class InitializePaymentView(APIView):
                     ordered_product = OrderedProduct()
                     ordered_product.branch_product = branch_product
 
-                    # set the sale campaign if there was one:
+                    # find the sale campaign if there was one:
                     sale_campaign = SaleCampaign.objects.filter(
                         branch_product=branch_product, branch=branch
                     )
-                    if sale_campaign.count() > 0:
-                        ordered_product.sale_campaign = sale_campaign.first()
+                    if sale_campaign.count() > 0:  # TODO: test sale campaign:
+                        # set the sale_campaign:
+                        sale_campaign = sale_campaign.first()
+                        ordered_product.sale_campaign = sale_campaign
+
+                        # set the order price / we must take the sale campaign into account:
+                        sale_campaign_price = (
+                            sale_campaign.calculate_sale_campaign_price()
+                        )
+                        ordered_product.order_price = sale_campaign_price
+                    else:
+                        ordered_product.order_price = branch_product.branch_price
 
                     # set how many items of this product was ordered:
-                    ordered_product.quantity_ordered = 2
-
-                    # set the order price:
-                    ordered_product.order_price = branch_product.branch_price
+                    ordered_product.quantity_ordered = ordered_product_ids.count(id)
 
                     # save the ordered product:
                     ordered_product.save()
 
                     # store it in the list:
                     products_ordered.append(ordered_product)
+
                 except Exception as e:
                     raise Exception(f"Failed to create ordered product: {e}")
+
+            # TODO: code accounting:
+            # calculate all the total amounts for each product and it must match exactly the total amount of the order price:
+            return products_ordered
 
         try:
             # get the order data from the request:
             ordered_product_ids = request.data["ordered_products"]
             branch = request.data["branch"]
-            reference = request.data["reference"]
 
             # get the order amount from the order data:
             order_amount = float(request.data["amount"])
@@ -100,18 +144,22 @@ class InitializePaymentView(APIView):
             products_ordered = create_ordered_products()
 
             # create the transaction:
-            transaction = self.create_a_transaction(reference, branch, order_amount)
+            transaction = self.create_a_transaction(
+                request, branch, order_amount, products_ordered
+            )
 
-            return True
+            # now we create an order:
+            order = self.create_a_order(request)
+
+            return transaction
         except Exception as e:
             raise e
 
-    def initialize_paystack_payment(self, request, transaction=None):
+    def initialize_paystack_payment(self, request, transaction: Transaction = None):
 
         # prepare the payload we send to paystack to initialize the payment:
-        email = request.data.get("email")
+        email = request.user.email
         amount = float(request.data.get("amount"))  # Paystack expects amount in cents
-        reference = str(uuid.uuid4())  # Generate a unique transaction reference
 
         # set the authentication paystack requires:
         headers = {
@@ -123,7 +171,7 @@ class InitializePaymentView(APIView):
         data = {
             "email": email,
             "amount": amount * 100,  # Convert to kobo (or cents)
-            "reference": reference,
+            "reference": transaction.reference,
         }
 
         # send the payload to paystack to initialize the payment process:
@@ -135,9 +183,16 @@ class InitializePaymentView(APIView):
             # convert the response to readable json:
             response_data = response.json()
 
-            # create the payment in the database:
             if response_data.get("status"):
-                Payment.objects.create(email=email, amount=amount, reference=reference)
+                # create the payment in the database:
+                payment = Payment.objects.create(
+                    email=email, amount=amount, reference=transaction.reference
+                )
+
+                # add the payment to the transaction:
+                transaction.payment = payment
+                transaction.save()
+
                 return Response(
                     {
                         "success": True,
@@ -164,6 +219,14 @@ class VerifyPaymentView(APIView):
             if payment:
                 payment.paid = True
                 payment.save()
+
+                # update the transaction status:
+
+                # create the order:
+
+                # send order emails:
+                pass
+
             return Response(
                 {"message": "Payment verified successfully"}, status=status.HTTP_200_OK
             )
