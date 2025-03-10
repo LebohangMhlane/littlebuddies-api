@@ -152,7 +152,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                         }
                         for ordered_product in products_to_use
                     ],
-                    "total": str(last_order.transaction.grand_total)
+                    "total": str(last_order.transaction.final_total)
                 }
 
                 return response

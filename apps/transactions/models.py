@@ -22,8 +22,8 @@ class Transaction(models.Model):
     customer = models.ForeignKey("accounts.UserAccount", on_delete=models.CASCADE, blank=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
     products_ordered = models.ManyToManyField("orders.OrderedProduct", blank=True)
-    grand_total = models.CharField(default="0.00", max_length=7, blank=False)
-    amount_minus_service_fee = models.CharField(
+    total_with_service_fee = models.CharField(default="0.00", max_length=7, blank=False)
+    total_minus_service_fee = models.CharField(
         default="0.00", max_length=7, blank=False
     )
     payment = models.ForeignKey("paystack.Payment", on_delete=models.CASCADE, null=True)
@@ -43,7 +43,7 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         super(Transaction, self).save(*args, **kwargs)
 
-    def getTransactionStatus(self):
+    def get_transaction_status(self):
         return self.status
 
 

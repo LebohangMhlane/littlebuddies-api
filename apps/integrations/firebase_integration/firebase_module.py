@@ -10,7 +10,7 @@ class FirebaseInstance(GlobalUtils):
 
     def send_transaction_status_notification(self, transaction: Transaction):
         try:
-            transactionStatus = transaction.getTransactionStatus()
+            transactionStatus = transaction.get_transaction_status()
             if transaction.status == "COMPLETED":
                 message = messaging.Message(
                     notification=messaging.Notification(

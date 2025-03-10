@@ -1,3 +1,4 @@
+import json
 from django.urls import reverse
 import requests
 
@@ -15,15 +16,17 @@ class TestPaystack(GlobalTestCaseConfig):
         paystack_initialize_payment_url = reverse("initialize_payment")
 
         # set the checkout payload:
-        data = {
+        order_data = {
             "email": self.customer_user_account.user.email,
-            "amount": "199.99",  # Convert to kobo (or cents)
+            "amount": "499.99",  # Convert to kobo (or cents)
             "reference": "paystack_test_reference",
+            "ordered_products": [1, 2, 3],
+            "branch": 1
         }
 
         # send the request to our server to start the payment process:
         response = self.client.post(
-            paystack_initialize_payment_url, data=data
+            paystack_initialize_payment_url, data=order_data, content_type="application/json"
         )
 
         # if something went wrong:
@@ -39,7 +42,6 @@ class TestPaystack(GlobalTestCaseConfig):
             self.assertEqual(
                 response_data["message"], "Payment initialized successfully!"
             )
-
 
     def test_verify_payment_view(self):
         pass
