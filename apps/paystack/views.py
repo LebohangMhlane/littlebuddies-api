@@ -149,7 +149,7 @@ class InitializePaymentView(APIView):
             )
 
             # now we create an order:
-            order = self.create_a_order(request)
+            self.create_a_order(request, transaction)
 
             return transaction
         except Exception as e:

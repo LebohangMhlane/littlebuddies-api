@@ -3,6 +3,7 @@ import json
 from django.urls import reverse
 import requests
 
+from apps.orders.models import Order
 from apps.paystack.models import Payment
 from apps.transactions.models import Transaction
 from global_test_config.global_test_config import GlobalTestCaseConfig
@@ -54,6 +55,12 @@ class TestPaystack(GlobalTestCaseConfig):
             self.assertFalse(payment.paid)
             self.assertEqual(str(payment.amount), order_data["amount"])
             self.assertEqual(payment.reference, transaction.reference)
+
+            # check the order:
+            order = Order.objects.all()[0]
+            self.assertEqual(order.status, "PAYMENT_PENDING")
+            self.assertEqual(order.delivery, True)
+            self.assertEqual(str(order.delivery_fee), "20.00")
 
             # check the response data:
             response_data = response.json()
