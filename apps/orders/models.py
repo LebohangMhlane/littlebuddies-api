@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
-from apps.products.models import BranchProduct, GlobalProduct
+from apps.products.models import BranchProduct
 from apps.accounts.models import UserAccount
 
 def setDate():
@@ -34,6 +34,7 @@ class Order(models.Model):
     status = models.CharField(max_length=16, choices=order_statuses, default=PAYMENT_PENDING)
     created = models.DateTimeField(auto_now_add=True)
     acknowledged = models.BooleanField(default=False)
+    acknowledgement_notification_sent = models.BooleanField(default=False)
     delivery = models.BooleanField(default=True)
     delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
     delivery_date = models.CharField(max_length=100, blank=False, null=True, default=setDate)
