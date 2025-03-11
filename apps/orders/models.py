@@ -15,7 +15,7 @@ def setDate():
 class Order(models.Model):
 
     class Meta:
-        verbose_name = "an Order"
+        verbose_name = "Order"
 
     PENDING_PICKUP = "PENDING_PICKUP"
     PENDING_DELIVERY = "PENDING_DELIVERY"
@@ -27,6 +27,7 @@ class Order(models.Model):
         PENDING_DELIVERY: "PENDING_DELIVERY",
         DELIVERED: "DELIVERED",
         CANCELLED: "CANCELLED",
+        PENDING_PICKUP: "PENDING_PICKUP",
         PAYMENT_PENDING: "PAYMENT_PENDING"
     }
 

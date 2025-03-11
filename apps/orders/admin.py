@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 
 from apps.orders.models import CancelledOrder, Order, OrderedProduct
@@ -7,16 +8,39 @@ import custom_admin_site
 class OrderAdmin(admin.ModelAdmin):
 
     readonly_fields = (
-        "acknowledgement_notification_sent",
         "delivery",
-        "delivery_date",
-        "delivery_address",
         "status",
         "transaction",
         "customer",
         "products_ordered",
-        "delivery_fee"
     )
+
+    exclude = ["acknowledgement_notification_sent"]
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Conditionally modify form fields when viewing a single instance.
+        """
+        form = super().get_form(request, obj, **kwargs)
+
+        if obj and obj.status == "PENDING_PICKUP":
+            form.base_fields["delivery_date"].widget = forms.HiddenInput()
+            form.base_fields["delivery_address"].widget = forms.HiddenInput()
+            form.base_fields["delivery_fee"].widget = forms.HiddenInput()
+
+        return form
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Conditionally make fields read-only based on object state.
+        """
+        readonly_fields = super().get_readonly_fields(request, obj)
+
+        if obj and obj.status != "PENDING_PICKUP":
+            # Add fields to readonly if the status is not PENDING_PICKUP
+            readonly_fields += ("delivery_date", "delivery_address", "delivery_fee")
+
+        return readonly_fields
 
     def change_view(self, request, object_id: str, form_url="", extra_context=None):
         """
