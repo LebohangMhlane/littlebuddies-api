@@ -56,7 +56,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     def get_orders_as_customer(self, request):
         user_account = request.user.useraccount
         orders = Order.objects.filter(
-            status__in=[Order.PENDING_DELIVERY, Order.DELIVERED],
+            status__in=[Order.PENDING_DELIVERY, Order.PENDING_PICKUP, Order.DELIVERED],
             transaction__customer__id=user_account.pk,
             transaction__status="COMPLETED",
         ).order_by("created")
@@ -65,7 +65,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
 
     def modify_orders_that_had_specials(self, orders):
         for order in orders:
-            for ordered_product in order["ordered_products"]:
+            for ordered_product in order["products_ordered"]:
                 if ordered_product["sale_campaign"]:
                     self._adjust_prices_based_on_sale_campaigns(
                         ordered_product["sale_campaign"], ordered_product
@@ -293,7 +293,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
             self.order_changes["branch"] = BranchSerializer(
                 self.order.transaction.branch, many=False
             ).data
-            self.ordered_products = self.order.ordered_products.all()
+            self.ordered_products = self.order.products_ordered.all()
             self.check_for_items_out_of_stock()
             self.check_for_price_changes()
             self.calculate_the_new_total_price()

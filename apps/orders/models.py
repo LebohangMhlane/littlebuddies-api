@@ -30,7 +30,7 @@ class Order(models.Model):
     # TODO: convert model to fit the one in the mobile app:
     customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name="customer", blank=False, null=True)
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True)
-    ordered_products = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
+    products_ordered = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
     status = models.CharField(max_length=16, choices=order_statuses, default=PAYMENT_PENDING)
     created = models.DateTimeField(auto_now_add=True)
     acknowledged = models.BooleanField(default=False)
@@ -53,7 +53,7 @@ class OrderedProduct(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.branch_product.product.name} - {self.quantity_ordered}"
+        return f"{self.branch_product.global_product.name} - {self.quantity_ordered}"
 
 class CancelledOrder(models.Model):
     CANCELLATION_REASONS = [

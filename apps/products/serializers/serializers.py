@@ -50,10 +50,10 @@ class ProductSerializer(ModelSerializer):
             raise Exception("Failed to create a product")
         return product
 
-class branch_productserializer(ModelSerializer):
+class BranchProductSerializer(ModelSerializer):
     class Meta:
         model = BranchProduct
-        fields = ['id', 'branch_price', 'product', 'branch']  
+        fields = ['id', 'branch_price', 'global_product', 'branch']  
         depth = 2
 
     def is_valid(self, *, raise_exception=False):

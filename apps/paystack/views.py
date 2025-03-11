@@ -1,8 +1,8 @@
+import datetime
 import uuid
 import requests
-import json
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction as trans
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -33,6 +33,7 @@ class InitializePaymentView(APIView):
                 {
                     "success": False,
                     "payment_url": "",
+                    "paystack_reference": "",
                     "message": f"Failed to initialize payment: {e}",
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -42,7 +43,7 @@ class InitializePaymentView(APIView):
         try:
             transaction = Transaction()
             # Generate a unique transaction reference
-            transaction.reference = str(uuid.uuid4())
+            transaction.reference = str(uuid.uuid4()).replace("-", "")[:10]
             transaction.customer = request.user.useraccount
             transaction.branch = branch
             transaction.total_with_service_fee = order_amount
@@ -61,22 +62,27 @@ class InitializePaymentView(APIView):
             merchant_business = transaction.branch.merchant
 
             # create the order:
-            order = Order()
-            order.customer = request.user.useraccount
-            order.transaction = transaction
-            order.status = Order.PAYMENT_PENDING
-            order.delivery = request.data["is_delivery"]
-            order.delivery_fee = merchant_business.delivery_fee
-            order.delivery_date = request.data["delivery_date"]
-            order.delivery_address = request.data["delivery_address"]
-            order.save()
+            with trans.atomic():
+                order = Order()
+                order.customer = request.user.useraccount
+                order.transaction = transaction
+                order.status = Order.PAYMENT_PENDING
+                order.delivery = request.data["is_delivery"]
+                order.delivery_fee = merchant_business.delivery_fee
+                order.delivery_date = request.data["delivery_date"]
+                order.delivery_address = request.data["address"]
+                order.save()
+                order.products_ordered.set(transaction.products_ordered.all())
+                order.save()
 
             return order
         except Exception as e:
             raise Exception(f"Failed to create an order: {e}")
 
-    def create_ordered_products(self, ordered_product_ids, branch, order_amount):
-        with transaction.atomic():
+    def create_ordered_products(
+        self, is_delivery, ordered_product_ids, branch, order_amount
+    ):
+        with trans.atomic():
             products_ordered = []
             previously_processed_order_id = 0
             for id in ordered_product_ids:
@@ -95,7 +101,10 @@ class InitializePaymentView(APIView):
 
                     # find the sale campaign if there is one:
                     sale_campaign = SaleCampaign.objects.filter(
-                        branch_product=branch_product, branch=branch
+                        branch_product=branch_product,
+                        branch=branch,
+                        active=True,
+                        campaign_ends__gte=datetime.datetime.now(),
                     )
                     if sale_campaign.count() > 0:
                         # set the sale_campaign:
@@ -107,7 +116,7 @@ class InitializePaymentView(APIView):
                             sale_campaign.calculate_sale_campaign_price()
                         )
                         # the final price they are buying the product for after sale campaign discount is applied:
-                        ordered_product.order_price = sale_campaign_price 
+                        ordered_product.order_price = sale_campaign_price
                     else:
                         # the original price of the product:
                         ordered_product.order_price = branch_product.branch_price
@@ -126,32 +135,50 @@ class InitializePaymentView(APIView):
 
             # balance the amount:
             # fail this if the amount calculated does not match the order amount:
-            self.balance_the_total_amount(products_ordered, order_amount)
+            self.balance_the_total_amount(is_delivery, products_ordered, order_amount)
 
         return products_ordered
 
-    def balance_the_total_amount(self, products_ordered, order_amount):
-        '''
+    def balance_the_total_amount(self, is_delivery, products_ordered, order_amount):
+        """
         We need to ensure that the calculations done here match the calculations
         done on the mobile app. Stop the payment process if this fails
-        '''
+        """
         try:
             # get the total amount for the whole order minus the delivery fee:
             total_amount_minus_delivery_fee = 0.00
+            total_amount_plus_delivery_fee = 0.00
             for product in products_ordered:
                 # if the product has more than one of itself ordered then calculate the total amount:
                 if product.quantity_ordered > 1:
-                    total_amount_of_all = float(product.order_price * product.quantity_ordered)
+                    total_amount_of_all = float(
+                        product.order_price * product.quantity_ordered
+                    )
                     total_amount_minus_delivery_fee += total_amount_of_all
                 else:
                     total_amount_minus_delivery_fee += float(product.order_price)
             # get the delivery fee:
-            delivery_fee = float(product.branch_product.branch.merchant.delivery_fee)
-            # add the delivery fee to the total amount:
-            total_amount_minus_delivery_fee += delivery_fee
-            # verify that the amounts match:
-            balancing_error_text = "Balancing failed: Total amount calculated does not match the order amount"
-            assert total_amount_minus_delivery_fee == order_amount, balancing_error_text
+            delivery_fee = 0.00
+            if is_delivery:
+                delivery_fee = float(
+                    product.branch_product.branch.merchant.delivery_fee
+                )
+                # add the delivery fee to the total amount:
+                total_amount_plus_delivery_fee = (
+                    total_amount_minus_delivery_fee + delivery_fee
+                )
+                # verify that the amounts match (delivery):
+                balancing_error_text = "Balancing failed: Total amount calculated does not match the order amount"
+                assert (
+                    total_amount_plus_delivery_fee == order_amount
+                ), balancing_error_text
+            else:
+                # verify that the amounts match (pickup):
+                balancing_error_text = "Balancing failed: Total amount calculated does not match the order amount"
+                assert (
+                    total_amount_minus_delivery_fee == order_amount
+                ), balancing_error_text
+
         except Exception as e:
             raise e
 
@@ -166,9 +193,10 @@ class InitializePaymentView(APIView):
             order_amount = float(request.data["amount"])
 
             # create the ordered products:
+            is_delivery = request.data["is_delivery"]
             ordered_product_ids = request.data["ordered_products"]
             products_ordered = self.create_ordered_products(
-                ordered_product_ids, branch, order_amount
+                is_delivery, ordered_product_ids, branch, order_amount
             )
 
             # create the transaction:
@@ -225,6 +253,7 @@ class InitializePaymentView(APIView):
                     {
                         "success": True,
                         "payment_url": response_data["data"]["authorization_url"],
+                        "paystack_reference": response_data["data"]["reference"],
                         "message": "Payment initialized successfully!",
                     },
                     status=status.HTTP_201_CREATED,
@@ -273,7 +302,7 @@ class PaystackWebhookView(APIView):
     def post(self, request):
 
         # the post request data from paystack:
-        payload = json.loads(request.body)
+        payload = request.data
 
         # if the payment was successful:
         if payload.get("event") == "charge.success":
@@ -297,6 +326,15 @@ class PaystackWebhookView(APIView):
                     order.status = "PENDING_DELIVERY"
                 else:
                     order.status = "PENDING_PICKUP"
+                order.save()
+
+                # send a notification to the customer:
+                settings.FIREBASE_APP.send_push_notification(
+                    order.customer.device_token,
+                    f"Order from {order.transaction.branch.merchant.name} placed successfully!",
+                    "You will be notified once the store has acknowledged your order!",
+                    {"test": "data sent via notification"}
+                )
 
             return Response(
                 {"message": "Payment updated successfully"}, status=status.HTTP_200_OK
