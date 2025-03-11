@@ -5,7 +5,7 @@ from .models import Order
 
 
 @receiver(post_save, sender=Order)
-def order_saved_handler(sender, instance:Order, created, **kwargs):
+def order_post_save_handler(sender, instance:Order, created, **kwargs):
     """
     Signal triggered after an Order instance is saved.
 
