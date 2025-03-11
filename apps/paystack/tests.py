@@ -12,9 +12,6 @@ from global_test_config.global_test_config import GlobalTestCaseConfig
 
 class TestPaystack(GlobalTestCaseConfig):
 
-    def test_payment_model(self):
-        pass
-
     def test_initialize_payment_view_success(self):
 
         # first get the url we will use to initialize the payment process:

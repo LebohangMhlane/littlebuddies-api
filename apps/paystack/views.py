@@ -1,4 +1,3 @@
-from decimal import Decimal
 import uuid
 import requests
 import json
@@ -268,15 +267,37 @@ class VerifyPaymentView(APIView):
 
 
 class PaystackWebhookView(APIView):
+
+    permission_classes = []
+
     def post(self, request):
+
+        # the post request data from paystack:
         payload = json.loads(request.body)
 
+        # if the payment was successful:
         if payload.get("event") == "charge.success":
+            # get the payment:
             reference = payload["data"]["reference"]
             payment = Payment.objects.filter(reference=reference).first()
+
             if payment:
+                # update the payment status:
                 payment.paid = True
                 payment.save()
+
+                # update the transaction status:
+                transaction = Transaction.objects.filter(reference=reference).first()
+                transaction.status = "COMPLETED"
+                transaction.save()
+
+                # update the order status:
+                order = Order.objects.filter(transaction=transaction).first()
+                if order.delivery:
+                    order.status = "PENDING_DELIVERY"
+                else:
+                    order.status = "PENDING_PICKUP"
+
             return Response(
                 {"message": "Payment updated successfully"}, status=status.HTTP_200_OK
             )

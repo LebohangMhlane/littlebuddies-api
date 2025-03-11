@@ -14,6 +14,7 @@ def setDate():
 
 class Order(models.Model):
 
+    PENDING_PICKUP = "PENDING_PICKUP"
     PENDING_DELIVERY = "PENDING_DELIVERY"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
