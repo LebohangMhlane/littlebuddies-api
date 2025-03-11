@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Branch, MerchantBusiness
+from apps.merchants.models import Branch, MerchantBusiness, SaleCampaign
 from apps.products.models import BranchProduct, GlobalProduct
 from rest_framework.authtoken.models import Token
 
@@ -10,7 +10,6 @@ from rest_framework.authtoken.models import Token
 
 
 class MockedPaystackResponse:
-
     status_code = 200
     text = "PAYGATE_ID=10011072130&PAY_REQUEST_ID=23B785AE-C96C-32AF-4879-D2C9363DB6E8&REFERENCE=pgtest_123456789&CHECKSUM=b41a77f83a275a849f23e30b4666e837"
 
@@ -44,21 +43,24 @@ class GlobalTestCaseConfig(TestCase):
         )
 
         # create branch products:
-        self.branch_product = self.create_a_branch_product(
+        self.branch_product_1 = self.create_a_branch_product(
             branch=self.branch,
             merchant_user_account=self.merchant_user_account,
             item_number=1,
         )
-        self.branch_product = self.create_a_branch_product(
+        self.branch_product_2 = self.create_a_branch_product(
             branch=self.branch,
             merchant_user_account=self.merchant_user_account,
             item_number=2,
         )
-        self.branch_product = self.create_a_branch_product(
+        self.branch_product_3 = self.create_a_branch_product(
             branch=self.branch,
             merchant_user_account=self.merchant_user_account,
             item_number=3,
         )
+
+        # create a sale campaign:
+        self.create_a_sale_campaign(self.branch_product_2)
 
     def create_a_branch(
         self,
@@ -307,6 +309,13 @@ class GlobalTestCaseConfig(TestCase):
                 return global_product
         except Exception as e:
             print(f"Error creating product: {e}")
+
+    def create_a_sale_campaign(self, branch_product):
+        sale_campaign = SaleCampaign()
+        sale_campaign.branch = branch_product.branch
+        sale_campaign.branch_product = branch_product
+        sale_campaign.percentage_off = 50
+        sale_campaign.save()
 
     def make_date(self, days_from_now):
         date = datetime.now() + timedelta(days=days_from_now)

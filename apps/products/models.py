@@ -28,4 +28,4 @@ class BranchProduct(models.Model):
     created_by = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=False)
 
     def __str__(self) -> str:
-        return f"{self.branch.merchant.name} - Product {self.product.name}"
+        return f"{self.branch.merchant.name} - Product {self.global_product.name}"

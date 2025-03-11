@@ -19,12 +19,16 @@ class Transaction(models.Model):
     ]
 
     reference = models.CharField(max_length=191, blank=False, null=True)
-    customer = models.ForeignKey("accounts.UserAccount", on_delete=models.CASCADE, blank=False)
+    customer = models.ForeignKey(
+        "accounts.UserAccount", on_delete=models.CASCADE, blank=False
+    )
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
     products_ordered = models.ManyToManyField("orders.OrderedProduct", blank=True)
-    total_with_service_fee = models.CharField(default="0.00", max_length=7, blank=False)
-    total_minus_service_fee = models.CharField(
-        default="0.00", max_length=7, blank=False
+    total_with_service_fee = models.DecimalField(
+        blank=False, max_digits=6, decimal_places=2
+    )
+    total_minus_service_fee = models.DecimalField(
+        blank=False, max_digits=6, decimal_places=2
     )
     payment = models.ForeignKey("paystack.Payment", on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")

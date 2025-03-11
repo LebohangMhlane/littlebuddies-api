@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import ROUND_DOWN, Decimal
 import json
 from django.urls import reverse
 import requests
@@ -19,9 +20,9 @@ class TestPaystack(GlobalTestCaseConfig):
         # first get the url we will use to initialize the payment process:
         paystack_initialize_payment_url = reverse("initialize_payment")
 
-        # set the checkout payload:
+        # create the checkout payload:
         order_data = {
-            "amount": "499.99",  # Convert to kobo (or cents)
+            "amount": "195.00",  # Convert to kobo (or cents)
             "ordered_products": [1, 2, 3, 3],
             "branch": 1,
             "is_delivery": True,
@@ -37,38 +38,36 @@ class TestPaystack(GlobalTestCaseConfig):
             HTTP_AUTHORIZATION=f"Token {self.user_token}"
         )
 
-        # if something went wrong:
-        if response.status_code != 201:
-            response_data = response.json()
-            raise Exception(f"Failed to initialize payment: {response_data['message']}")
+        # check the transaction:
+        transaction = Transaction.objects.all()[0]
+        self.assertEqual(transaction.status, "PENDING")
+        decimal_value = Decimal(transaction.total_with_service_fee).quantize(Decimal("0.00"), rounding=ROUND_DOWN)
+        self.assertEqual(str(decimal_value), order_data["amount"])
 
-        # do checks if things went well:
-        else:
-            # check the transaction:
-            transaction = Transaction.objects.all()[0]
-            self.assertEqual(transaction.status, "PENDING")
-            self.assertEqual(transaction.total_with_service_fee, order_data["amount"])
+        # check the payment:
+        payment = Payment.objects.all()[0]
+        self.assertEqual(payment.email, self.customer_user_account.user.email)
+        self.assertFalse(payment.paid)
+        self.assertEqual(str(payment.amount), order_data["amount"])
+        self.assertEqual(payment.reference, transaction.reference)
 
-            # check the payment:
-            payment = Payment.objects.all()[0]
-            self.assertEqual(payment.email, self.customer_user_account.user.email)
-            self.assertFalse(payment.paid)
-            self.assertEqual(str(payment.amount), order_data["amount"])
-            self.assertEqual(payment.reference, transaction.reference)
+        # check payment is attached to transaction:
+        self.assertEqual(transaction.payment, payment)
 
-            # check the order:
-            order = Order.objects.all()[0]
-            self.assertEqual(order.status, "PAYMENT_PENDING")
-            self.assertEqual(order.delivery, True)
-            self.assertEqual(str(order.delivery_fee), "20.00")
+        # check the order:
+        order = Order.objects.all()[0]
+        self.assertEqual(order.status, "PAYMENT_PENDING")
+        self.assertEqual(order.delivery, True)
+        self.assertEqual(str(order.delivery_fee), "20.00")
+        self.assertEqual(order.transaction, transaction)
 
-            # check the response data:
-            response_data = response.json()
-            self.assertEqual(response_data["success"], True)
-            self.assertTrue("payment_url" in response_data)
-            self.assertEqual(
-                response_data["message"], "Payment initialized successfully!"
-            )
+        # check the response data:
+        response_data = response.json()
+        self.assertEqual(response_data["success"], True)
+        self.assertTrue("payment_url" in response_data)
+        self.assertEqual(
+            response_data["message"], "Payment initialized successfully!"
+        )
 
     def test_verify_payment_view(self):
         pass

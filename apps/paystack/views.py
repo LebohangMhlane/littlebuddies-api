@@ -1,7 +1,9 @@
+from decimal import Decimal
 import uuid
 import requests
 import json
 from django.conf import settings
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -20,7 +22,7 @@ class InitializePaymentView(APIView):
     def post(self, request):
         try:
             # prepare the order data, create the ordered products and transaction:
-            transaction = self.prepare_the_order_data(request)
+            transaction = self.process_the_order(request)
 
             # once the order data has been prepared and verified successfully, we can now initialize the payment:
             if transaction:
@@ -74,9 +76,8 @@ class InitializePaymentView(APIView):
         except Exception as e:
             raise Exception(f"Failed to create an order: {e}")
 
-    def prepare_the_order_data(self, request):
-
-        def create_ordered_products():
+    def create_ordered_products(self, ordered_product_ids, branch, order_amount):
+        with transaction.atomic():
             products_ordered = []
             previously_processed_order_id = 0
             for id in ordered_product_ids:
@@ -85,7 +86,6 @@ class InitializePaymentView(APIView):
                     continue
                 else:
                     previously_processed_order_id = id
-
                 try:
                     # get the product:
                     branch_product = BranchProduct.objects.get(id=id, branch=branch)
@@ -94,21 +94,23 @@ class InitializePaymentView(APIView):
                     ordered_product = OrderedProduct()
                     ordered_product.branch_product = branch_product
 
-                    # find the sale campaign if there was one:
+                    # find the sale campaign if there is one:
                     sale_campaign = SaleCampaign.objects.filter(
                         branch_product=branch_product, branch=branch
                     )
-                    if sale_campaign.count() > 0:  # TODO: test sale campaign:
+                    if sale_campaign.count() > 0:
                         # set the sale_campaign:
-                        sale_campaign = sale_campaign.first()
+                        sale_campaign = sale_campaign[0]
                         ordered_product.sale_campaign = sale_campaign
 
                         # set the order price / we must take the sale campaign into account:
                         sale_campaign_price = (
                             sale_campaign.calculate_sale_campaign_price()
                         )
-                        ordered_product.order_price = sale_campaign_price
+                        # the final price they are buying the product for after sale campaign discount is applied:
+                        ordered_product.order_price = sale_campaign_price 
                     else:
+                        # the original price of the product:
                         ordered_product.order_price = branch_product.branch_price
 
                     # set how many items of this product was ordered:
@@ -123,25 +125,52 @@ class InitializePaymentView(APIView):
                 except Exception as e:
                     raise Exception(f"Failed to create ordered product: {e}")
 
-            # TODO: code accounting:
-            # calculate all the total amounts for each product and it must match exactly the total amount of the order price:
-            return products_ordered
+            # balance the amount:
+            # fail this if the amount calculated does not match the order amount:
+            self.balance_the_total_amount(products_ordered, order_amount)
 
+        return products_ordered
+
+    def balance_the_total_amount(self, products_ordered, order_amount):
+        '''
+        We need to ensure that the calculations done here match the calculations
+        done on the mobile app. Stop the payment process if this fails
+        '''
         try:
-            # get the order data from the request:
-            ordered_product_ids = request.data["ordered_products"]
-            branch = request.data["branch"]
+            # get the total amount for the whole order minus the delivery fee:
+            total_amount_minus_delivery_fee = 0.00
+            for product in products_ordered:
+                # if the product has more than one of itself ordered then calculate the total amount:
+                if product.quantity_ordered > 1:
+                    total_amount_of_all = float(product.order_price * product.quantity_ordered)
+                    total_amount_minus_delivery_fee += total_amount_of_all
+                else:
+                    total_amount_minus_delivery_fee += float(product.order_price)
+            # get the delivery fee:
+            delivery_fee = float(product.branch_product.branch.merchant.delivery_fee)
+            # add the delivery fee to the total amount:
+            total_amount_minus_delivery_fee += delivery_fee
+            # verify that the amounts match:
+            balancing_error_text = "Balancing failed: Total amount calculated does not match the order amount"
+            assert total_amount_minus_delivery_fee == order_amount, balancing_error_text
+        except Exception as e:
+            raise e
 
-            # get the order amount from the order data:
-            order_amount = float(request.data["amount"])
-
-            # find the branch the order belongs to:
-            branch = Branch.objects.get(id=branch)
+    def process_the_order(self, request):
+        try:
+            # find the branch this order belongs to:
             # the branch must be active:
+            branch = Branch.objects.get(id=request.data["branch"])
             assert branch.is_active, f"{branch.address} - This branch is not active."
 
-            # get the products ordered:
-            products_ordered = create_ordered_products()
+            # get the order amount for accounting:
+            order_amount = float(request.data["amount"])
+
+            # create the ordered products:
+            ordered_product_ids = request.data["ordered_products"]
+            products_ordered = self.create_ordered_products(
+                ordered_product_ids, branch, order_amount
+            )
 
             # create the transaction:
             transaction = self.create_a_transaction(
@@ -202,7 +231,9 @@ class InitializePaymentView(APIView):
                     status=status.HTTP_201_CREATED,
                 )
         else:
-            raise Exception("Failed to initialize payment")
+            raise Exception(
+                f"Failed to initialize payment: Response from Paystack was not 200. It was returned: {response.status_code}"
+            )
 
 
 class VerifyPaymentView(APIView):
