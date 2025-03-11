@@ -16,7 +16,7 @@ class UserAccount(models.Model):
     password_change_date = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{self.user.username}"
+        return f"{self.user.first_name} {self.user.last_name}"
 
     def save(self, *args, **kwargs):
         self.is_active = self.user.is_active
