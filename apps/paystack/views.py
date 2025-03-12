@@ -112,9 +112,7 @@ class InitializePaymentView(APIView):
                         ordered_product.sale_campaign = sale_campaign
 
                         # set the order price / we must take the sale campaign into account:
-                        sale_campaign_price = (
-                            sale_campaign.calculate_sale_campaign_price()
-                        )
+                        sale_campaign_price = sale_campaign.calculate_sale_campaign_price()
                         # the final price they are buying the product for after sale campaign discount is applied:
                         ordered_product.order_price = sale_campaign_price
                     else:
