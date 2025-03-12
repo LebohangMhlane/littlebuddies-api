@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
-from apps.products.models import BranchProduct, GlobalProduct
+from apps.products.models import BranchProduct
 from apps.accounts.models import UserAccount
 
 def setDate():
@@ -14,6 +14,10 @@ def setDate():
 
 class Order(models.Model):
 
+    class Meta:
+        verbose_name = "Order"
+
+    PENDING_PICKUP = "PENDING_PICKUP"
     PENDING_DELIVERY = "PENDING_DELIVERY"
     DELIVERED = "DELIVERED"
     CANCELLED = "CANCELLED"
@@ -23,19 +27,22 @@ class Order(models.Model):
         PENDING_DELIVERY: "PENDING_DELIVERY",
         DELIVERED: "DELIVERED",
         CANCELLED: "CANCELLED",
+        PENDING_PICKUP: "PENDING_PICKUP",
         PAYMENT_PENDING: "PAYMENT_PENDING"
     }
 
     # TODO: convert model to fit the one in the mobile app:
+    customer = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name="customer", blank=False, null=True)
     transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True)
-    ordered_products = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
+    products_ordered = models.ManyToManyField("orders.OrderedProduct", related_name="ordered_products")
     status = models.CharField(max_length=16, choices=order_statuses, default=PAYMENT_PENDING)
     created = models.DateTimeField(auto_now_add=True)
     acknowledged = models.BooleanField(default=False)
+    acknowledgement_notification_sent = models.BooleanField(default=False)
     delivery = models.BooleanField(default=True)
     delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
-    deliveryDate = models.CharField(max_length=100, blank=False, null=True, default=setDate)
-    address = models.CharField(max_length=191, blank=False, null=True)
+    delivery_date = models.CharField(max_length=100, blank=False, null=True, default=setDate)
+    delivery_address = models.CharField(max_length=191, blank=False, null=True)
 
     def __str__(self) -> str:
         return f"{self.transaction.customer.user.first_name}{self.transaction.customer.user.last_name} from {self.transaction.branch.merchant.name} - {self.transaction.reference}"
@@ -51,7 +58,7 @@ class OrderedProduct(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.branch_product.product.name} - {self.quantity_ordered}"
+        return f"{self.branch_product.global_product.name} - {self.quantity_ordered}"
 
 class CancelledOrder(models.Model):
     CANCELLATION_REASONS = [

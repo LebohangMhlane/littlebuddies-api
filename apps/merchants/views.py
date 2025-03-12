@@ -25,7 +25,7 @@ from apps.orders.models import Order, OrderedProduct
 from apps.accounts.models import UserAccount
 from apps.orders.serializers.order_serializer import OrderSerializer
 from apps.products.models import BranchProduct
-from apps.products.serializers.serializers import branch_productserializer, ProductSerializer
+from apps.products.serializers.serializers import BranchProductSerializer, ProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 import logging
 
@@ -35,9 +35,9 @@ class GetStoreRange(APIView, GlobalViewFunctions):
     
     def get(self, request, **kwargs):
         try:
-            coordinates = kwargs.get('coordinates') # TODO: find out whats going on here
+            coordinates = kwargs.get('coordinates') # TODO: use these coordinates to find stores near the user
             mb = MerchantBusiness.objects.all()
-            sc = SaleCampaign.objects.filter(branch__merchant__in=mb, campaign_ends__gte=datetime.datetime.now())
+            sc = SaleCampaign.objects.filter(branch__merchant__in=mb, campaign_ends__gte=datetime.datetime.now(), active=True)
             sale_campaigns = []
             if sc: 
                 scs = SaleCampaignSerializer(sc, many=True)
@@ -128,10 +128,10 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             if last_order is not None:
                 
                 # get the ordered products from the transaction and order:
-                order_products = list(last_order.ordered_products.select_related(
+                order_products = list(last_order.products_ordered.select_related(
                     'branch_product__product'
                 ).all())
-                transaction_products = list(last_order.transaction.products_purchased.select_related(
+                transaction_products = list(last_order.transaction.products_ordered.select_related(
                     'branch_product__product'
                 ).all())
 
@@ -152,7 +152,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                         }
                         for ordered_product in products_to_use
                     ],
-                    "total": str(last_order.transaction.full_amount)
+                    "total": str(last_order.transaction.final_total)
                 }
 
                 return response
@@ -197,7 +197,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             raise Exception(f"Failed to calculate price changes: {str(e)}")
 
     def _get_branch_products(self, branch):
-        bps = branch_productserializer(
+        bps = BranchProductSerializer(
             BranchProduct.objects.filter(branch=branch), many=True
         )
         return bps

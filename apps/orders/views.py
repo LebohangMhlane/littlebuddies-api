@@ -56,7 +56,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
     def get_orders_as_customer(self, request):
         user_account = request.user.useraccount
         orders = Order.objects.filter(
-            status__in=[Order.PENDING_DELIVERY, Order.DELIVERED],
+            status__in=[Order.PENDING_DELIVERY, Order.PENDING_PICKUP, Order.DELIVERED],
             transaction__customer__id=user_account.pk,
             transaction__status="COMPLETED",
         ).order_by("created")
@@ -65,7 +65,7 @@ class GetAllOrdersView(APIView, GlobalViewFunctions):
 
     def modify_orders_that_had_specials(self, orders):
         for order in orders:
-            for ordered_product in order["ordered_products"]:
+            for ordered_product in order["products_ordered"]:
                 if ordered_product["sale_campaign"]:
                     self._adjust_prices_based_on_sale_campaigns(
                         ordered_product["sale_campaign"], ordered_product
@@ -115,12 +115,11 @@ class CancelOrder(APIView, GlobalViewFunctions):
 
         with transaction.atomic():
             order.status = Order.CANCELLED
-            order.acknowledged = False
             order.save()
 
             def minus_delivery_fee():
                 delivery_fee = order.delivery_fee if order.delivery else 0.00
-                refund_amount = float(order.transaction.full_amount) - float(delivery_fee)
+                refund_amount = float(order.transaction.total_with_service_fee) - float(delivery_fee)
                 return refund_amount
 
             # we can improve by creating an excel file as well
@@ -283,7 +282,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
                 if not "sale_campaign_price" in price_changes
                 else float(price_changes["sale_campaign_price"])
             )
-        self.order_changes["old_total"] = float(self.order.transaction.full_amount)
+        self.order_changes["old_total"] = float(self.order.transaction.final_total)
         self.order_changes["new_total"] = new_order_total
 
     def get(self, request, *args, **kwargs):
@@ -293,7 +292,7 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
             self.order_changes["branch"] = BranchSerializer(
                 self.order.transaction.branch, many=False
             ).data
-            self.ordered_products = self.order.ordered_products.all()
+            self.ordered_products = self.order.products_ordered.all()
             self.check_for_items_out_of_stock()
             self.check_for_price_changes()
             self.calculate_the_new_total_price()

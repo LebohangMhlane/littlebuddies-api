@@ -6,7 +6,7 @@ from django.db.models import F, Case, When, DecimalField, Q, Exists, OuterRef, S
 
 from apps.products.models import BranchProduct
 from apps.merchants.models import SaleCampaign
-from apps.products.serializers.serializers import branch_productserializer
+from apps.products.serializers.serializers import BranchProductSerializer
 from global_view_functions.global_view_functions import GlobalViewFunctions
 
 class ProductSearchView(APIView, GlobalViewFunctions):
@@ -26,13 +26,13 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 raise Exception("A search query was not specified.")
 
             current_date = datetime.now().date()
-            filters = Q(product__name__icontains=query, in_stock=True, is_active=True)
+            filters = Q(global_product__name__icontains=query, in_stock=True, is_active=True)
 
             if store_ids:
                 filters &= Q(branch__merchant__id__in=store_ids)
 
             products = BranchProduct.objects.select_related(
-                'product', 'branch', 'branch__merchant'
+                'global_product', 'branch', 'branch__merchant'
             ).filter(filters)
 
             if not products.exists():
@@ -62,7 +62,7 @@ class ProductSearchView(APIView, GlobalViewFunctions):
                 )
             ).order_by('final_price')
 
-            serializer = branch_productserializer(products, many=True)
+            serializer = BranchProductSerializer(products, many=True)
             serialized_data = serializer.data
 
             for product_data, product in zip(serialized_data, products):

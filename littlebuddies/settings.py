@@ -55,23 +55,23 @@ DEBUG = True
 
 FIREBASE_APP = FirebaseApp()
 
-# Paygate stuff
-
-PAYGATE_INITIATE_PAYMENT_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
+# Paystack stuff
+PAYSTACK_SECRET_KEY = "sk_test_8d7f4a2a27d5fd71a22a1590dde35b2d61fe6895"
 
 # server stuff
 DEVELOPEMENT_URL = (
     "https://3f63-41-10-122-84.ngrok-free.app"  # using ngrok server during development
 )
 
-APP_URL = "54.160.249.30"
+# Google Cloud instance url
+APP_URL = "http://34.35.70.196"
 
 if DEBUG:
     SERVER_URL = DEVELOPEMENT_URL
 else:
     SERVER_URL = f"http://{APP_URL}"
 
-ALLOWED_HOSTS = ["10.0.0.104", "localhost", APP_URL, DEVELOPEMENT_URL.split('/')[-1], '127.0.0.1']
+ALLOWED_HOSTS = eval(os.environ.get("ALLOWED_HOSTS"))
 
 # Email stuff
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -109,9 +109,9 @@ INSTALLED_APPS = [
     'apps.products',
     'apps.merchants',
     'apps.accounts',
-    'apps.paygate',
     'apps.transactions',
     'apps.orders',
+    'apps.paystack',
     'apps.integrations',
     'apps.price_comparison',
     'apps.discounts',
@@ -174,6 +174,7 @@ DATABASES = {
         "PASSWORD": "ThepasswordisLittlebuddies1!",
         "HOST": "34.35.76.83",  # Replace with your MySQL host, e.g., '127.0.0.1'
         "PORT": "3306",
+        "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
 }
 

@@ -226,19 +226,7 @@ class AdminTests(TestCase):
             is_active=True,
             device_token=f"device_token_{merchant_name}"  
         )
-        
-        merchant = MerchantBusiness.objects.create(
-            logo="test_logo.png",
-            user_account=user_account,
-            name=merchant_name,
-            email=f"{merchant_name.lower().replace(' ', '')}@test.com",
-            address="Test Address",
-            paygate_reference="test_reference",
-            paygate_id=f"PG_{merchant_name.lower().replace(' ', '')}",
-            paygate_secret="test_secret",
-            fernet_token="test_token"
-        )
-        
+
         branch = Branch.objects.create(
             merchant=merchant,
             is_active=True,

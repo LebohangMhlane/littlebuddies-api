@@ -31,7 +31,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 class BranchProductAdmin(admin.ModelAdmin):
     list_display = (
-        "product",
+        "global_product",
         "branch",
         "branch_price",
         "in_stock",

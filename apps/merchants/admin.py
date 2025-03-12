@@ -26,18 +26,22 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
             "user_account",
         ]
 
-    def get_readonly_fields(self, request, obj=None):
-        if request.user.useraccount.is_super_user:
-            return []
-        return [
-            "name",
-            "email",
-            "address",
-            "is_active",
-            "paygate_reference",
-            "delivery_fee",
-            "closing_time",
-        ]
+    exclude = (
+        "fernet_token",
+        "paygate_secret",
+        "logo",
+        "paygate_id",
+        "user_account",
+    )
+
+    readonly_fields = (
+        "name",
+        "email",
+        "address",
+        "is_active",
+        "delivery_fee",
+        "closing_time",
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -52,7 +56,7 @@ class BranchAdmin(admin.ModelAdmin):
         "merchant",
     )
 
-    readonly_fields = ("merchant", "address", "area")
+    readonly_fields = ("merchant", "address")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

@@ -1,9 +1,7 @@
 from django.db import models
-# from django.dispatch import receiver
-# from django.db.models.signals import post_save
 
 from apps.accounts.models import UserAccount
-from apps.merchants.models import Branch, MerchantBusiness
+from apps.merchants.models import Branch
 
 
 class Transaction(models.Model):
@@ -20,21 +18,22 @@ class Transaction(models.Model):
         ("CUSTOMER_CANCELLED", "Customer Cancelled"),
     ]
 
-    payRequestId = models.CharField(max_length=36, blank=False, null=True)
     reference = models.CharField(max_length=191, blank=False, null=True)
-    customer = models.ForeignKey("accounts.UserAccount", on_delete=models.CASCADE, blank=False)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
-    products_purchased = models.ManyToManyField("orders.OrderedProduct", blank=True)
-    numberOfProducts = models.PositiveIntegerField(default=0)
-    full_amount = models.CharField(default="0.00", max_length=7, blank=False)
-    amount_minus_service_fee = models.CharField(
-        default="0.00", max_length=7, blank=False
+    customer = models.ForeignKey(
+        "accounts.UserAccount", on_delete=models.CASCADE, blank=False
     )
-    service_fee = models.DecimalField(default="0.00", decimal_places=2, max_digits=10, blank=False)
-    discountTotal = models.PositiveIntegerField(default=0, blank=False)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=False)
+    products_ordered = models.ManyToManyField("orders.OrderedProduct", blank=True)
+    total_with_service_fee = models.DecimalField(
+        blank=False, max_digits=6, decimal_places=2
+    )
+    total_minus_service_fee = models.DecimalField(
+        blank=False, max_digits=6, decimal_places=2
+    )
+    payment = models.ForeignKey("paystack.Payment", on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
-    dateCreated = models.DateTimeField(auto_now_add=True)
-    dateCompleted = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         customer_name = (
@@ -46,7 +45,7 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         super(Transaction, self).save(*args, **kwargs)
 
-    def getTransactionStatus(self):
+    def get_transaction_status(self):
         return self.status
 
 
