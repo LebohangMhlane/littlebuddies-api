@@ -6,3 +6,7 @@
 db.sqlite3
 _pycahce_
 /__pycache__
+migrations
+apps/*/migrations
+*/migrations
+apps/discounts/migrations
