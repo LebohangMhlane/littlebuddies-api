@@ -5,6 +5,25 @@ from apps.products.models import BranchProduct, GlobalProduct
 from apps.merchants.models import Branch
 from apps.accounts.models import UserAccount
 
+class GlobalProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'recommended_retail_price']
+    
+    def get_readonly_fields(self, request, obj=None):
+        if not request.user.is_superuser:
+            return [field.name for field in self.model._meta.fields]
+        return self.readonly_fields
+    
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return True
+    
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'recommended_retail_price', 'display_photo')
     search_fields = ('name', 'description')
