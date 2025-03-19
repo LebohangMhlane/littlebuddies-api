@@ -5,6 +5,25 @@ from apps.products.models import BranchProduct, GlobalProduct
 from apps.merchants.models import Branch
 from apps.accounts.models import UserAccount
 
+class GlobalProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'recommended_retail_price']
+    
+    def get_readonly_fields(self, request, obj=None):
+        if not request.user.useraccount.is_super_user:
+            return [field.name for field in self.model._meta.fields]
+        return self.readonly_fields
+    
+    def has_change_permission(self, request, obj=None):
+        if request.user.useraccount.is_super_user:
+            return True
+        return True
+    
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'recommended_retail_price', 'display_photo')
     search_fields = ('name', 'description')
@@ -21,7 +40,7 @@ class ProductAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.useraccount.is_super_user:
             return qs
         try:
             user_account = request.user.useraccount
@@ -62,7 +81,15 @@ class BranchProductAdmin(admin.ModelAdmin):
                 kwargs["initial"] = request.user
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    # TODO: set read only fields:
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(self.readonly_fields)
+        
+        if obj:
+            # fields that shouldn't be editable after creation
+            readonly_fields.append("branch")
+            readonly_fields.append("product")
+            
+        return readonly_fields
 
     def save_model(self, request, obj, form, change):
         if not change:  
