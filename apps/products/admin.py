@@ -8,6 +8,16 @@ from apps.accounts.models import UserAccount
 class GlobalProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'recommended_retail_price']
     
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.useraccount.is_super_user:
+            return qs
+        try:
+            user_account = request.user.useraccount
+            return qs.filter(created_by=user_account)
+        except UserAccount.DoesNotExist:
+            return qs.none()
+    
     def get_readonly_fields(self, request, obj=None):
         if not request.user.useraccount.is_super_user:
             return [field.name for field in self.model._meta.fields]
@@ -16,13 +26,27 @@ class GlobalProductAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        return True
+        if obj and obj.created_by == request.user.useraccount:
+            return True
+        return False
     
     def has_add_permission(self, request):
         return request.user.useraccount.is_super_user
     
     def has_delete_permission(self, request, obj=None):
-        return request.user.useraccount.is_super_user
+        if request.user.useraccount.is_super_user:
+            return True
+        if obj and obj.created_by == request.user.useraccount:
+            return True
+        return False
+    
+    def has_view_permission(self, request, obj=None):
+        return True  
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  
+            obj.created_by = request.user.useraccount
+        super().save_model(request, obj, form, change)
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'recommended_retail_price', 'display_photo')

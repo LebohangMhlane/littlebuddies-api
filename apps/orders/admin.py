@@ -74,6 +74,6 @@ class OrderAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
 
-custom_admin_site.custom_admin_site.register(Order, OrderAdmin)
-custom_admin_site.custom_admin_site.register(OrderedProduct)
-custom_admin_site.custom_admin_site.register(CancelledOrder)
+admin.site.register(Order, OrderAdmin)
+admin.site.register(OrderedProduct)
+admin.site.register(CancelledOrder)
