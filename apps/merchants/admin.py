@@ -65,6 +65,15 @@ class BranchAdmin(admin.ModelAdmin):
             return qs
         return qs.filter(merchant__user_account__user=request.user)
 
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+
 class SaleCampaignAdmin(admin.ModelAdmin):
     list_display = (
         "branch_product",
