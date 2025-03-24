@@ -8,15 +8,10 @@ from apps.accounts.models import UserAccount
 class GlobalProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'recommended_retail_price']
     
+    # Remove filtering in get_queryset
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.useraccount.is_super_user:
-            return qs
-        try:
-            user_account = request.user.useraccount
-            return qs.filter(created_by=user_account)
-        except UserAccount.DoesNotExist:
-            return qs.none()
+        return qs  # Return all products regardless of creator
     
     def get_readonly_fields(self, request, obj=None):
         if not request.user.useraccount.is_super_user:
@@ -26,19 +21,17 @@ class GlobalProductAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        if obj and obj.created_by == request.user.useraccount:
-            return True
-        return False
+        # Remove the creator check - allow any user to change any product
+        return True
     
     def has_add_permission(self, request):
-        return request.user.useraccount.is_super_user
+        return True  # Allow all users to add products
     
     def has_delete_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        if obj and obj.created_by == request.user.useraccount:
-            return True
-        return False
+        # Remove the creator check - allow any user to delete any product
+        return True
     
     def has_view_permission(self, request, obj=None):
         return True  
@@ -62,15 +55,10 @@ class ProductAdmin(admin.ModelAdmin):
         return "No photo"
     display_photo.short_description = 'Photo'
     
+    # Remove filtering in get_queryset
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.useraccount.is_super_user:
-            return qs
-        try:
-            user_account = request.user.useraccount
-            return qs.filter(branchproduct__branch__merchant__user_account=user_account).distinct()
-        except UserAccount.DoesNotExist:
-            return qs.none()
+        return qs  
 
 class BranchProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -86,13 +74,7 @@ class BranchProductAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.useraccount.is_super_user:
-            return qs
-        try:
-            user_account = request.user.useraccount
-            return qs.filter(branch__merchant__user_account=user_account)
-        except UserAccount.DoesNotExist:
-            return qs.none()
+        return qs  
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not request.user.useraccount.is_super_user:
