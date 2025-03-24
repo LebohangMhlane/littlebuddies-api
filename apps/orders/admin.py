@@ -100,6 +100,7 @@ class OrderedProductAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = list(self.readonly_fields)
 
+        # no one should be able to edit a ordered product:
         if obj:  
             readonly_fields.extend(
                 [
@@ -111,6 +112,15 @@ class OrderedProductAdmin(admin.ModelAdmin):
             )
 
         return readonly_fields
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj = ...):
+        return False
+    
+    def has_delete_permission(self, request, obj = ...):
+        return False
 
 
 custom_admin_site.register(Order, OrderAdmin)
