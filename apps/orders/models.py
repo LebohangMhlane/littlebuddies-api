@@ -47,7 +47,6 @@ class Order(models.Model):
     def __str__(self) -> str:
         return f"{self.transaction.customer.user.first_name}{self.transaction.customer.user.last_name} from {self.transaction.branch.merchant.name} - {self.transaction.reference}"
 
-
 class OrderedProduct(models.Model):
 
     branch_product = models.ForeignKey(BranchProduct, on_delete=models.CASCADE, blank=False, null=True)
