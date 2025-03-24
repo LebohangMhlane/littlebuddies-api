@@ -8,9 +8,6 @@ class CustomAdminSite(AdminSite):
     site_header = ("Littlebuddies Management Dashboard")  
     site_title = "Management Dashboard"  
     index_title = "Welcome to Littlebuddies"  
-    
-    def set_apps_to_hide(self):
-        return ["accounts", "authtoken", "auth"]
 
     def set_models_to_hide(self):
         return []
@@ -33,7 +30,7 @@ class CustomAdminSite(AdminSite):
         return filtered_app_list
 
     def hide_apps_from_merchants(self, app_list):
-        apps_to_hide = self.set_apps_to_hide()
+        apps_to_hide = ["accounts", "authtoken", "auth"]
         filtered_app_list = [
             app for app in app_list if app["app_label"] not in apps_to_hide
         ]
