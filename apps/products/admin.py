@@ -87,7 +87,7 @@ class BranchProductAdmin(admin.ModelAdmin):
         if obj:
             # fields that shouldn't be editable after creation
             readonly_fields.append("branch")
-            readonly_fields.append("product")
+            readonly_fields.append("global_product")
             
         return readonly_fields
 
