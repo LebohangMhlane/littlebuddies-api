@@ -377,9 +377,16 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             user_account = request.user.useraccount
-            user_account_settings = AccountSetting.objects.get(
+
+            # find the users account settings or create them if they don't exist:
+            user_account_settings = AccountSetting.objects.filter(
                 user_account=user_account
             )
+            if not user_account_settings:
+                user_account_settings = self.create_user_account_settings(user_account)
+            else:
+                user_account_settings = user_account_settings.first()
+
             num_of_orders_placed = Order.objects.filter(
                 transaction__customer=user_account,
                 transaction__status="COMPLETED",
@@ -421,6 +428,16 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "error": f"Failed to get account settings: {e.args[0]}",
                 }
             )
+
+    def create_user_account_settings(user_account):
+        try:
+            account_settings = AccountSetting()
+            account_settings.full_name = user_account.user.get_full_name()
+            account_settings.user_account = user_account
+            account_settings.save()
+            return account_settings
+        except Exception as e:
+            return Exception(f"Failed to create user account settings: {e.args[0]}")
 
     def determine_favourite_store(self):
         pass
