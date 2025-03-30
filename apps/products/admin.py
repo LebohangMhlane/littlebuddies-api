@@ -11,7 +11,7 @@ class GlobalProductAdmin(admin.ModelAdmin):
     # Remove filtering in get_queryset
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs  # Return all products regardless of creator
+        return qs  
     
     def get_readonly_fields(self, request, obj=None):
         if not request.user.useraccount.is_super_user:
@@ -21,20 +21,22 @@ class GlobalProductAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        # Remove the creator check - allow any user to change any product
-        return True
+        return False
     
     def has_add_permission(self, request):
-        return True  # Allow all users to add products
+        if request.user.useraccount.is_super_user:
+            return True
+        return False  
     
     def has_delete_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        # Remove the creator check - allow any user to delete any product
-        return True
+        return False
     
-    def has_view_permission(self, request, obj=None):
-        return True  
+    def has_add_permission(self, request):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False  
     
     def save_model(self, request, obj, form, change):
         if not change:  
@@ -52,7 +54,7 @@ class ProductAdmin(admin.ModelAdmin):
                 obj.photo.url, 
                 obj.photo.url   
             )
-        return "No photo"
+        return format_html('<span>No photo</span>')
     display_photo.short_description = 'Photo'
     
     # Remove filtering in get_queryset
@@ -74,6 +76,8 @@ class BranchProductAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        if not request.user.useraccount.is_super_user:
+            return qs.filter(branch__merchant__user_account=request.user.useraccount)
         return qs  
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
