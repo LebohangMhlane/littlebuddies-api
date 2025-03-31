@@ -30,7 +30,7 @@ class CustomAdminSite(AdminSite):
         return filtered_app_list
 
     def hide_apps_from_merchants(self, app_list):
-        apps_to_hide = ["accounts", "authtoken", "auth"]
+        apps_to_hide = ["accounts", "authtoken", "auth", "paystack"]
         filtered_app_list = [
             app for app in app_list if app["app_label"] not in apps_to_hide
         ]
