@@ -83,12 +83,12 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
                 )
         except Exception as e:
             exception = e.args[0]
-            displayableException = self.determine_exception(exception)
+            displayable_exception = self.determine_exception(exception)
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create account",
-                    "error": displayableException
+                    "error": displayable_exception
                 },
                 status=500,
             )
