@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from apps.app_manager.models import AppManager
+from custom_admin_site import custom_admin_site
+
+
+custom_admin_site.register(AppManager)
