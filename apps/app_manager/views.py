@@ -7,6 +7,8 @@ from apps.app_manager.serializers import AppManagerSerializer
 
 class AppManagerView(APIView):
 
+    permission_classes = []
+
     def get(self, request, *args, **kwargs):
 
         """
