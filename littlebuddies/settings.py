@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'apps.discounts',
     'apps.merchant_dashboard',
     'apps.merchant_wallets',
+    'apps.app_manager',
     'whitenoise.runserver_nostatic'
 ]
 

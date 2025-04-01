@@ -69,25 +69,26 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
     def post(self, request, *args, **kwargs):
         user_account = None
         try:
-            user_account = self._start_registration_process(receivedData=request.data)
-            authToken = Token.objects.get(user__id=user_account["user"]["id"])
-            self.send_activation_email(user_account, request)
-            return Response(
-                {
-                    "success": True,
-                    "message": "Account created successfully",
-                    "user_account": user_account,
-                    "loginToken": authToken.key,
-                }
-            )
+            with transaction.atomic():
+                user_account = self._start_registration_process(receivedData=request.data)
+                auth_token = Token.objects.get(user__id=user_account["user"]["id"])
+                # self.send_activation_email(user_account, request) # TODO: Enable Google API to activate this feature.
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Account created successfully",
+                        "user_account": user_account,
+                        "login_token": auth_token.key,
+                    }
+                )
         except Exception as e:
             exception = e.args[0]
-            displayableException = self.determine_exception(exception)
+            displayable_exception = self.determine_exception(exception)
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create account",
-                    "error": displayableException
+                    "error": displayable_exception
                 },
                 status=500,
             )
