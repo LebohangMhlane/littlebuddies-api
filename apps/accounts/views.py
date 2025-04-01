@@ -72,7 +72,7 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
             with transaction.atomic():
                 user_account = self._start_registration_process(receivedData=request.data)
                 authToken = Token.objects.get(user__id=user_account["user"]["id"])
-                self.send_activation_email(user_account, request)
+                # self.send_activation_email(user_account, request) # TODO: Enable Google API to activate this feature.
                 return Response(
                     {
                         "success": True,
