@@ -43,6 +43,11 @@ urlpatterns = [
         include("apps.paystack.urls"),
         name="paystack",
     ),
+    path(
+        "app_manager/",
+        include("apps.app_manager.urls"),
+        name="app_manager",
+    ),
 ]
 
 if settings.DEBUG:

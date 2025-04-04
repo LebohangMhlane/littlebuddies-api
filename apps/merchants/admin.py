@@ -14,7 +14,15 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         "address",
         "is_active",
     )
-    
+
+    exclude = (
+        "fernet_token",
+        "paygate_secret",
+        "logo",
+        "paygate_id",
+        "user_account",
+    )
+
     def get_exclude(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return []
@@ -26,22 +34,17 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
             "user_account",
         ]
 
-    exclude = (
-        "fernet_token",
-        "paygate_secret",
-        "logo",
-        "paygate_id",
-        "user_account",
-    )
-
-    readonly_fields = (
-        "name",
-        "email",
-        "address",
-        "is_active",
-        "delivery_fee",
-        "closing_time",
-    )
+    def get_readonly_fields(self, request, obj=...):
+        if request.user.useraccount.is_super_user:
+            return ()
+        return (
+            "name",
+            "email",
+            "address",
+            "is_active",
+            "delivery_fee",
+            "closing_time",
+        )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -64,6 +67,15 @@ class BranchAdmin(admin.ModelAdmin):
             self.readonly_fields = ()
             return qs
         return qs.filter(merchant__user_account__user=request.user)
+
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
 
 class SaleCampaignAdmin(admin.ModelAdmin):
     list_display = (

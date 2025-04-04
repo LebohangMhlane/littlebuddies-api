@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'apps.discounts',
     'apps.merchant_dashboard',
     'apps.merchant_wallets',
+    'apps.app_manager',
     'whitenoise.runserver_nostatic'
 ]
 
@@ -154,6 +155,7 @@ WSGI_APPLICATION = 'littlebuddies.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# NOTE: DO NOT PUSH LOCAL DATABASE SETTINGS TO YOUR BRANCH:
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.mysql",

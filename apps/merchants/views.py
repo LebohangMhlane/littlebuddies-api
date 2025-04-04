@@ -126,7 +126,7 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
             )
 
             if last_order is not None:
-                
+
                 # get the ordered products from the transaction and order:
                 order_products = list(last_order.products_ordered.select_related(
                     'branch_product__product'
@@ -135,24 +135,26 @@ class GetNearestBranch(APIView, GlobalViewFunctions):
                     'branch_product__product'
                 ).all())
 
-                # get the products to use from eithe the transaction or the order:
+                # get the products to use from either the transaction or the order:
                 products_to_use = order_products if order_products else transaction_products
                 # prepare the last order data:
                 response = {
                     "id": last_order.id,
-                    "date": datetime.datetime.strftime(last_order.created, "%Y-%m-%d %H:%M:%S"),
+                    "date": datetime.datetime.strftime(
+                        last_order.created, "%Y-%m-%d %H:%M:%S"
+                    ),
                     "items": [
                         {
                             "product_id": ordered_product.branch_product.id,
-                            "name": ordered_product.branch_product.product.name,
+                            "name": ordered_product.branch_product.global_product.name,
                             "quantity": ordered_product.quantity_ordered,
                             "price_at_time": str(ordered_product.order_price),
-                            "description": ordered_product.branch_product.product.description,
-                            "image": ordered_product.branch_product.product.image
+                            "description": ordered_product.branch_product.global_product.description,
+                            "image": ordered_product.branch_product.global_product.image,
                         }
                         for ordered_product in products_to_use
                     ],
-                    "total": str(last_order.transaction.final_total)
+                    "total": str(last_order.transaction.final_total),
                 }
 
                 return response

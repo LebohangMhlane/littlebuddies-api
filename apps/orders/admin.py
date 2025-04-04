@@ -3,6 +3,7 @@ from django.contrib import admin
 from apps.orders.models import CancelledOrder, Order, OrderedProduct
 from custom_admin_site import custom_admin_site
 
+
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'status', 'created', 'acknowledged', 'delivery')
     list_filter = ('status', 'acknowledged', 'delivery')
@@ -51,8 +52,7 @@ class OrderAdmin(admin.ModelAdmin):
         
         # For pickup orders, create fieldsets that exclude delivery fields
         if obj and not obj.delivery:
-            fields = [field for field in self.get_fields(request, obj) 
-                     if field not in ['delivery_fee', 'delivery_date', 'delivery_address']]
+            fields = [field for field in self.get_fields(request, obj) if field not in ['delivery_fee', 'delivery_date', 'delivery_address']]
             return [(None, {'fields': fields})]
             
         return fieldsets
@@ -74,6 +74,61 @@ class OrderAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
 
+<<<<<<< HEAD
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderedProduct)
 admin.site.register(CancelledOrder)
+=======
+class OrderedProductAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "branch_product",
+        "sale_campaign",
+        "quantity_ordered",
+        "order_price",
+    )
+    list_filter = ("quantity_ordered", "order_price")
+    search_fields = (
+        "branch_product",
+        "quantity_ordered",
+        "order_price",
+    )
+    readonly_fields = ()
+    exclude = []
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.useraccount.is_super_user:
+            return qs
+        return qs.filter(branch_product__branch__merchant__user_account=request.user.useraccount)
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(self.readonly_fields)
+
+        # no one should be able to edit a ordered product:
+        if obj:  
+            readonly_fields.extend(
+                [
+                    "branch_product",
+                    "sale_campaign",
+                    "quantity_ordered",
+                    "order_price",
+                ]
+            )
+
+        return readonly_fields
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj = ...):
+        return False
+    
+    def has_delete_permission(self, request, obj = ...):
+        return False
+
+
+custom_admin_site.register(Order, OrderAdmin)
+custom_admin_site.register(OrderedProduct, OrderedProductAdmin)
+custom_admin_site.register(CancelledOrder)
+>>>>>>> 293e0ca77e1a84d13177238d7f844cf49cbc0449

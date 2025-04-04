@@ -16,18 +16,6 @@ class UserAccountAdmin(ModelAdmin):
         "is_merchant",
         "is_super_user",
     )
-    readonly_fields = (
-        "address",
-        "phone_number",
-        "phone_number_verified",
-        "email_verified",
-        "is_merchant",
-        "is_super_user",
-        "is_active",
-        "password_change_date",
-        "device_token",
-        "user",
-    )
 
     def _check_permissions(self, user):
         user_account = user
@@ -40,6 +28,24 @@ class UserAccountAdmin(ModelAdmin):
             return super().get_queryset(request)
         else:
             raise PermissionError("You do not have permission to access this page")
+
+    def get_readonly_fields(self, request, obj = ...):
+        readonly_fields = (
+            "address",
+            "phone_number",
+            "phone_number_verified",
+            "email_verified",
+            "is_merchant",
+            "is_super_user",
+            "is_active",
+            "password_change_date",
+            "device_token",
+            "user",
+        )
+        if request.user.useraccount.is_super_user:
+            return ()
+        else:
+            return readonly_fields
 
 custom_admin_site.register(User)
 
