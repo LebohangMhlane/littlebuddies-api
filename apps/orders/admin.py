@@ -74,11 +74,6 @@ class OrderAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
 
-<<<<<<< HEAD
-admin.site.register(Order, OrderAdmin)
-admin.site.register(OrderedProduct)
-admin.site.register(CancelledOrder)
-=======
 class OrderedProductAdmin(admin.ModelAdmin):
 
     list_display = (
@@ -131,4 +126,3 @@ class OrderedProductAdmin(admin.ModelAdmin):
 custom_admin_site.register(Order, OrderAdmin)
 custom_admin_site.register(OrderedProduct, OrderedProductAdmin)
 custom_admin_site.register(CancelledOrder)
->>>>>>> 293e0ca77e1a84d13177238d7f844cf49cbc0449
