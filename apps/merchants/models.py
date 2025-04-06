@@ -84,7 +84,7 @@ class SaleCampaign(models.Model):
         verbose_name_plural = "Sale Campaigns"
 
     def __str__(self) -> str:
-        return f"{self.branch.merchant.name} - {self.branch} - sale campaign"
+        return f"{self.branch}"
 
     def clean(self):
         if self.percentage_off > 50:
