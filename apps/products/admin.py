@@ -104,5 +104,5 @@ class BranchProductAdmin(admin.ModelAdmin):
             obj.created_by = request.user.useraccount
         super().save_model(request, obj, form, change)
 
-custom_admin_site.register(GlobalProduct, ProductAdmin)
+custom_admin_site.register(GlobalProduct, GlobalProductAdmin)
 custom_admin_site.register(BranchProduct, BranchProductAdmin)
