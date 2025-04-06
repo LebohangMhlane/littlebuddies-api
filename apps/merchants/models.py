@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from datetime import time
 
 from django.db import models
@@ -8,6 +8,8 @@ from django.conf import settings
 from cryptography.fernet import Fernet as fernet
 
 from apps.accounts.models import UserAccount
+from django.core.exceptions import ValidationError
+
 
 class MerchantBusiness(models.Model):
 
@@ -61,10 +63,14 @@ def default_campaign_end_date():
     return datetime.now() + timedelta(days=5)
 
 class SaleCampaign(models.Model):
-
     active = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
+
     percentage_off = models.PositiveIntegerField(blank=False)
+    delayed_percentage_off = models.PositiveIntegerField(blank=False, default=0)
+
+    last_updated = models.DateTimeField(auto_now=True)
+
     branch_product = models.ForeignKey(
         "products.BranchProduct",
         on_delete=models.CASCADE,
@@ -78,8 +84,30 @@ class SaleCampaign(models.Model):
         verbose_name_plural = "Sale Campaigns"
 
     def __str__(self) -> str:
-        return f"{self.branch.merchant.name} - {self.branch} - sale campaign"
+        return f"{self.branch}"
+
+    def clean(self):
+        if self.percentage_off > 50:
+            raise ValidationError("Sale campaign discount cannot exceed 50%.")
+
+    def save(self, *args, **kwargs):
+        if self.pk:  # if this is an update
+            old = SaleCampaign.objects.get(pk=self.pk)
+            if old.percentage_off != self.percentage_off:
+                self.delayed_percentage_off = self.percentage_off
+                self.percentage_off = old.percentage_off
+        self.full_clean()
+        super(SaleCampaign, self).save(*args, **kwargs)
+
+    # TODO: determine the best time to trigger this method:
+    def apply_delayed_changes(self):
+        """Call this method to apply pending changes if 24 hours have passed."""
+        if self.delayed_percentage_off != self.percentage_off:
+            if timezone.now() >= self.last_updated + timedelta(hours=24):
+                self.percentage_off = self.delayed_percentage_off
+                self.save(update_fields=["percentage_off"])
 
     def calculate_sale_campaign_price(self):
+        # Always calculate based on the current active percentage_off
         branch_price = self.branch_product.branch_price
         return round(branch_price - (branch_price * self.percentage_off / 100), 2)

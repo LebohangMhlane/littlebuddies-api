@@ -11,3 +11,4 @@ migrations
 apps/*/migrations
 */migrations
 apps/discounts/migrations
+.env

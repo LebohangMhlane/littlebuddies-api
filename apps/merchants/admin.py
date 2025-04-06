@@ -51,6 +51,21 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         if request.user.useraccount.is_super_user:
             return qs
         return qs.filter(user_account__user=request.user)
+    
+    def has_add_permission(self, request):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
+    
+    def has_delete_permission(self, request, obj = ...):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
+    
+    def has_change_permission(self, request, obj = ...):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
 
 class BranchAdmin(admin.ModelAdmin):
     list_display = (
@@ -85,6 +100,8 @@ class SaleCampaignAdmin(admin.ModelAdmin):
         "campaign_ends",
     )
 
+    exclude = ("delayed_percentage_off",)
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.useraccount.is_super_user:
@@ -102,7 +119,7 @@ class SaleCampaignAdmin(admin.ModelAdmin):
                     branch__merchant__user_account__user=request.user
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
+    
 custom_admin_site.register(MerchantBusiness, MerchantBusinessAdmin)
 custom_admin_site.register(Branch, BranchAdmin)
 custom_admin_site.register(SaleCampaign, SaleCampaignAdmin)

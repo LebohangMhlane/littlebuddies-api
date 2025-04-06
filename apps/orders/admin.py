@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin
 from apps.orders.models import CancelledOrder, Order, OrderedProduct
 from custom_admin_site import custom_admin_site
+from django.utils.html import format_html
 
 
 class OrderAdmin(admin.ModelAdmin):
@@ -81,8 +82,9 @@ class OrderedProductAdmin(admin.ModelAdmin):
         "sale_campaign",
         "quantity_ordered",
         "order_price",
+        "display_photo",
     )
-    list_filter = ("quantity_ordered", "order_price")
+    list_filter = ("quantity_ordered", "order_price",)
     search_fields = (
         "branch_product",
         "quantity_ordered",
@@ -115,12 +117,23 @@ class OrderedProductAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False
-    
+
     def has_change_permission(self, request, obj = ...):
         return False
-    
+
     def has_delete_permission(self, request, obj = ...):
         return False
+
+    def display_photo(self, obj):
+        if obj.branch_product.global_product.photo:
+            return format_html(
+                '<a href="{}" target="_blank"><img src="{}" width="50" height="50" style="object-fit: cover;" /></a>',
+                obj.branch_product.global_product.photo.url,
+                obj.branch_product.global_product.photo.url,
+            )
+        return format_html("<span>No photo</span>")
+
+    display_photo.short_description = "Photo"
 
 
 custom_admin_site.register(Order, OrderAdmin)
