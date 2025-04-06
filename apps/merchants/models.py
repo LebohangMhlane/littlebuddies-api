@@ -8,6 +8,8 @@ from django.conf import settings
 from cryptography.fernet import Fernet as fernet
 
 from apps.accounts.models import UserAccount
+from django.core.exceptions import ValidationError
+
 
 class MerchantBusiness(models.Model):
 
@@ -79,6 +81,14 @@ class SaleCampaign(models.Model):
 
     def __str__(self) -> str:
         return f"{self.branch.merchant.name} - {self.branch} - sale campaign"
+
+    def clean(self):
+        if self.percentage_off > 50:
+            raise ValidationError("Sale campaign discount cannot exceed 50%.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # This will call the clean method
+        super(SaleCampaign, self).save(*args, **kwargs)
 
     def calculate_sale_campaign_price(self):
         branch_price = self.branch_product.branch_price
