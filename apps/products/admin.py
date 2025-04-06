@@ -5,6 +5,7 @@ from apps.products.models import BranchProduct, GlobalProduct
 from apps.merchants.models import Branch
 from apps.accounts.models import UserAccount
 
+
 class GlobalProductAdmin(admin.ModelAdmin):
     list_display = ["name", "category", "recommended_retail_price", "display_photo"]
 
@@ -62,8 +63,8 @@ class BranchProductAdmin(admin.ModelAdmin):
         "in_stock",
         "is_active",
     )
-    list_filter = ("in_stock", "is_active", "branch")
-    search_fields = ("product__name", "store_reference")
+    list_filter = ("in_stock", "is_active", "branch",)
+    search_fields = ("product__name", "store_reference",)
     readonly_fields = ("created_by",)
 
     def get_queryset(self, request):
