@@ -267,11 +267,11 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
         for ordered_product in self.ordered_products:
             if not ordered_product.branch_product.in_stock:
                 self.order_changes["out_of_stock"][ordered_product.id] = {
-                    "name": ordered_product.branch_product.product.name,
+                    "name": ordered_product.branch_product.global_product.name,
                 }
             if not ordered_product.branch_product.is_active:
                 self.order_changes["no_longer_sold"][ordered_product.id] = {
-                    "name": ordered_product.branch_product.product.name,
+                    "name": ordered_product.branch_product.global_product.name,
                 }
 
     def calculate_the_new_total_price(self):
@@ -299,5 +299,3 @@ class checkForOrderChangesView(APIView, GlobalViewFunctions):
             return self.return_successful_response()
         except Exception as e:
             return self.return_failed_response(error_message=e.args[0])
-
-

@@ -93,12 +93,10 @@ class BranchProductAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = list(self.readonly_fields)
-        
-        if obj:
-            # fields that shouldn't be editable after creation
-            readonly_fields.append("branch")
-            readonly_fields.append("product")
-            
+
+        if obj and not request.user.useraccount.is_super_user:
+            pass # doing nothing here for now:
+
         return readonly_fields
 
     def save_model(self, request, obj, form, change):

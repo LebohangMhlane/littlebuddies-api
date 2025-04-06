@@ -69,25 +69,26 @@ class RegistrationView(APIView, GlobalViewFunctions, SerializerFunctions):
     def post(self, request, *args, **kwargs):
         user_account = None
         try:
-            user_account = self._start_registration_process(receivedData=request.data)
-            authToken = Token.objects.get(user__id=user_account["user"]["id"])
-            self.send_activation_email(user_account, request)
-            return Response(
-                {
-                    "success": True,
-                    "message": "Account created successfully",
-                    "user_account": user_account,
-                    "loginToken": authToken.key,
-                }
-            )
+            with transaction.atomic():
+                user_account = self._start_registration_process(receivedData=request.data)
+                auth_token = Token.objects.get(user__id=user_account["user"]["id"])
+                # self.send_activation_email(user_account, request) # TODO: Enable Google API to activate this feature.
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Account created successfully",
+                        "user_account": user_account,
+                        "login_token": auth_token.key,
+                    }
+                )
         except Exception as e:
             exception = e.args[0]
-            displayableException = self.determine_exception(exception)
+            displayable_exception = self.determine_exception(exception)
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create account",
-                    "error": displayableException
+                    "error": displayable_exception
                 },
                 status=500,
             )
@@ -377,9 +378,16 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
     def get(self, request, **kwargs):
         try:
             user_account = request.user.useraccount
-            user_account_settings = AccountSetting.objects.get(
+
+            # find the users account settings or create them if they don't exist:
+            user_account_settings = AccountSetting.objects.filter(
                 user_account=user_account
             )
+            if not user_account_settings:
+                user_account_settings = self.create_user_account_settings(user_account)
+            else:
+                user_account_settings = user_account_settings.first()
+
             num_of_orders_placed = Order.objects.filter(
                 transaction__customer=user_account,
                 transaction__status="COMPLETED",
@@ -421,6 +429,16 @@ class AccountSettingsView(APIView, GlobalViewFunctions):
                     "error": f"Failed to get account settings: {e.args[0]}",
                 }
             )
+
+    def create_user_account_settings(user_account):
+        try:
+            account_settings = AccountSetting()
+            account_settings.full_name = user_account.user.get_full_name()
+            account_settings.user_account = user_account
+            account_settings.save()
+            return account_settings
+        except Exception as e:
+            return Exception(f"Failed to create user account settings: {e.args[0]}")
 
     def determine_favourite_store(self):
         pass

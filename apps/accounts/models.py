@@ -6,7 +6,7 @@ class UserAccount(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=191, blank=True, unique=False)
-    phone_number = models.PositiveIntegerField(blank=False, null=True, unique=True)
+    phone_number = models.CharField(blank=False, null=True, unique=True, max_length=10)
     phone_number_verified = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     is_merchant = models.BooleanField(default=False)
