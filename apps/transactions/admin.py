@@ -16,7 +16,7 @@ class TransactionAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.useraccount.is_super_user:
             return True
-        return True
+        return False
     
     def has_add_permission(self, request):
         return request.user.useraccount.is_super_user
