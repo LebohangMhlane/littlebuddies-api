@@ -51,6 +51,21 @@ class MerchantBusinessAdmin(admin.ModelAdmin):
         if request.user.useraccount.is_super_user:
             return qs
         return qs.filter(user_account__user=request.user)
+    
+    def has_add_permission(self, request):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
+    
+    def has_delete_permission(self, request, obj = ...):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
+    
+    def has_change_permission(self, request, obj = ...):
+        if request.user.useraccount.is_super_user:
+            return True
+        return False
 
 class BranchAdmin(admin.ModelAdmin):
     list_display = (
