@@ -55,6 +55,7 @@ class OrderedProduct(models.Model):
     order_price = models.DecimalField(
         null=True, blank=False, decimal_places=2, max_digits=10, default=0.00
     )
+    ordered_by = models.ForeignKey(UserAccount, on_delete=models.SET_NULL, blank=False, null=True)
 
     def __str__(self) -> str:
         return f"{self.branch_product.global_product.name} - {self.quantity_ordered}"
