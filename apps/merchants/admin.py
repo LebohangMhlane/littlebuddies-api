@@ -120,6 +120,15 @@ class SaleCampaignAdmin(admin.ModelAdmin):
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+    
+    def has_change_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+    
 custom_admin_site.register(MerchantBusiness, MerchantBusinessAdmin)
 custom_admin_site.register(Branch, BranchAdmin)
 custom_admin_site.register(SaleCampaign, SaleCampaignAdmin)
