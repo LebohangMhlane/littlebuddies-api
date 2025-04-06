@@ -99,6 +99,7 @@ class SaleCampaign(models.Model):
         self.full_clean()
         super(SaleCampaign, self).save(*args, **kwargs)
 
+    # TODO: determine the best time to trigger this method:
     def apply_delayed_changes(self):
         """Call this method to apply pending changes if 24 hours have passed."""
         if self.delayed_percentage_off != self.percentage_off:
