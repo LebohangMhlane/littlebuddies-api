@@ -135,7 +135,18 @@ class OrderedProductAdmin(admin.ModelAdmin):
 
     display_photo.short_description = "Photo"
 
+class CancelledOrderAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, request, obj=None):
+        # Start with all fields being read-only
+        readonly_fields = [field.name for field in CancelledOrder._meta.fields]
+        
+        # If the user is a superuser, remove the read-only restriction
+        if request.user.is_superuser:
+            readonly_fields = []
+
+        return readonly_fields
+
 
 custom_admin_site.register(Order, OrderAdmin)
 custom_admin_site.register(OrderedProduct, OrderedProductAdmin)
-custom_admin_site.register(CancelledOrder)
+custom_admin_site.register(CancelledOrder, CancelledOrderAdmin)

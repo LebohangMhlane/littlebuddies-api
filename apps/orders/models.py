@@ -1,6 +1,7 @@
 import datetime
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
 
 from apps.merchants.models import SaleCampaign
 from apps.transactions.models import Transaction
@@ -73,8 +74,9 @@ class CancelledOrder(models.Model):
     cancelled_at = models.DateTimeField(default=timezone.now)
     reason = models.CharField(max_length=50, choices=CANCELLATION_REASONS)
     additional_notes = models.TextField(blank=True)
-    refund_initiated = models.BooleanField(default=False)
+    refunded = models.BooleanField(default=False)
     refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    refund_date = models.DateField(null=True, blank=True)
     
     class Meta:
         ordering = ['-cancelled_at']
@@ -85,6 +87,14 @@ class CancelledOrder(models.Model):
     @property
     def cancellation_duration(self):
         return self.cancelled_at - self.order.created_at
+    
+    def save(self, *args, **kwargs):
+        # Automatically set refund_date when "refunded" is checked.
+        if self.refunded and not self.refund_date:
+            self.refund_date = setDate().date()
+        elif not self.refunded:
+            self.refund_date = None
+        super().save(*args, **kwargs)
 
 def record_cancellation(order, user_account, reason='CUSTOMER_REQUEST', notes='', refund_amount=None):
     cancellation = CancelledOrder.objects.create(
@@ -93,6 +103,6 @@ def record_cancellation(order, user_account, reason='CUSTOMER_REQUEST', notes=''
         reason=reason,
         additional_notes=notes,
         refund_amount=refund_amount,
-        refund_initiated=bool(refund_amount)
+        refunded=bool(refund_amount)
     )
     return cancellation
