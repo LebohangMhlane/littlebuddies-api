@@ -1,6 +1,6 @@
 /.pytest_cache
 /.vscode
-*.pyc
+*.*.pyc
 .pyc
 *.sqlite3
 *.cpython-311.pyc
