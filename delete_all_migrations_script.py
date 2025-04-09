@@ -1,5 +1,4 @@
 import os
-import glob
 
 def delete_migration_files():
     for root, dirs, files in os.walk(os.getcwd()):

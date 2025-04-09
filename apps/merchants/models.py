@@ -88,7 +88,7 @@ class SaleCampaign(models.Model):
 
     def clean(self):
         if self.percentage_off > 50:
-            raise ValidationError("Sale campaign discount cannot exceed 50%.")
+            raise ValidationError({'percentage_off': "Sale campaign discount cannot exceed 50%."})
 
     def save(self, *args, **kwargs):
         if self.pk:  # if this is an update
