@@ -12,15 +12,47 @@ from django.core.exceptions import ValidationError
 
 
 class MerchantBusiness(models.Model):
-
-    logo = models.CharField(max_length=120, blank=False, null=True)
-    user_account = models.OneToOneField("accounts.UserAccount", on_delete=models.CASCADE)
-    name = models.CharField(max_length=120, blank=False)
-    email = models.EmailField(max_length=120, blank=False)
-    address = models.CharField(max_length=120, blank=False)
-    is_active = models.BooleanField(default=True)
-    delivery_fee = models.DecimalField(max_digits=50, decimal_places=2, null=True, blank=True)
-    closing_time = models.TimeField(default=time(16, 30))
+    logo = models.CharField(
+        max_length=120,
+        blank=False,
+        null=True,
+        help_text="Enter your business logo image/name."
+    )
+    user_account = models.OneToOneField(
+        "accounts.UserAccount",
+        on_delete=models.CASCADE,
+        help_text="Each business must be linked to a merchant account."
+    )
+    name = models.CharField(
+        max_length=120,
+        blank=False,
+        help_text="This is the name of your business that customers will see."
+    )
+    email = models.EmailField(
+        max_length=120,
+        blank=False,
+        help_text="Used for order notifications and customer communication."
+    )
+    address = models.CharField(
+        max_length=120,
+        blank=False,
+        help_text="Your business address or main operating location."
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="If unchecked, your business will be hidden from customers."
+    )
+    delivery_fee = models.DecimalField(
+        max_digits=50,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Flat delivery fee that will be charged to customers per order."
+    )
+    closing_time = models.TimeField(
+        default=time(16, 30),
+        help_text="Orders will not be accepted after this time."
+    )
 
     class Meta:
         verbose_name = "a business"
@@ -46,10 +78,20 @@ class MerchantBusiness(models.Model):
 
 
 class Branch(models.Model):
-
-    is_active = models.BooleanField(default=False)
-    address = models.CharField(max_length=120)
-    merchant = models.ForeignKey(MerchantBusiness, on_delete=models.CASCADE, null=True)
+    is_active = models.BooleanField(
+        default=False,
+        help_text="Enable this branch to allow it to receive orders."
+    )
+    address = models.CharField(
+        max_length=120,
+        help_text="Physical location of this branch. Make sure it's clear for deliveries."
+    )
+    merchant = models.ForeignKey(
+        MerchantBusiness,
+        on_delete=models.CASCADE,
+        null=True,
+        help_text="This branch is associated with the selected business."
+    )
 
     class Meta:
         verbose_name = "a branch"
@@ -63,19 +105,40 @@ def default_campaign_end_date():
     return datetime.now() + timedelta(days=5)
 
 class SaleCampaign(models.Model):
-    active = models.BooleanField(default=True)
-    branch = models.ForeignKey(Branch, blank=False, null=True, on_delete=models.CASCADE)
-
-    percentage_off = models.PositiveIntegerField(blank=False)
-    delayed_percentage_off = models.PositiveIntegerField(blank=False, default=0)
-
-    last_updated = models.DateTimeField(auto_now=True)
-
+    active = models.BooleanField(
+        default=True,
+        help_text="If unchecked, this campaign will not apply any discounts."
+    )
+    branch = models.ForeignKey(
+        Branch,
+        blank=False,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text="Select the branch where this discount campaign will apply."
+    )
+    percentage_off = models.PositiveIntegerField(
+        blank=False,
+        help_text="Discount percentage to apply on the product price (max 50%)."
+    )
+    delayed_percentage_off = models.PositiveIntegerField(
+        blank=False,
+        default=0,
+        help_text="Use this to schedule a future discount. It will apply after 24 hours."
+    )
+    last_updated = models.DateTimeField(
+        auto_now=True,
+        help_text="Automatically updated whenever changes are made to this campaign."
+    )
     branch_product = models.ForeignKey(
         "products.BranchProduct",
         on_delete=models.CASCADE,
         null=True,
         blank=False,
+        help_text="Choose the specific product from a branch that this campaign targets."
+    )
+    campaign_ends = models.DateField(
+        default=default_campaign_end_date,
+        help_text="Date when the campaign will stop applying discounts."
     )
     campaign_ends = models.DateField(default=default_campaign_end_date)
 
