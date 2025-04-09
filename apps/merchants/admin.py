@@ -100,32 +100,7 @@ class SaleCampaignAdmin(admin.ModelAdmin):
         "campaign_ends",
     )
 
-    exclude = ("delayed_percentage_off",)
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.useraccount.is_super_user:
-            return qs
-        return qs.filter(branch__merchant__user_account__user=request.user)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.useraccount.is_super_user:
-            if db_field.name == "branch":
-                kwargs["queryset"] = Branch.objects.filter(
-                    merchant__user_account__user=request.user
-                )
-            elif db_field.name == "branch_product":
-                kwargs["queryset"] = BranchProduct.objects.filter(
-                    branch__merchant__user_account__user=request.user
-                )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-    
-    def has_add_permission(self, request):
-        return request.user.useraccount.is_super_user
-    
-    def has_change_permission(self, request, obj=None):
-        return request.user.useraccount.is_super_user
-    
+    exclude = ("delayed_percentage_off",)    
     def has_delete_permission(self, request, obj=None):
         return request.user.useraccount.is_super_user
     

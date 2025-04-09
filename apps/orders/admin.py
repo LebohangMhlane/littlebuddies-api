@@ -15,7 +15,6 @@ class OrderAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
 
-        # Hide delivery-related fields for pickup orders
         if obj and not obj.delivery:  # If it's a pickup order
             if "delivery_fee" in form.base_fields:
                 form.base_fields["delivery_fee"].widget = forms.HiddenInput()
@@ -29,7 +28,7 @@ class OrderAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = list(self.readonly_fields)
         
-        if obj:  # editing an existing object
+        if obj:  
             readonly_fields.extend([
                 'transaction',
                 'customer',
@@ -38,7 +37,6 @@ class OrderAdmin(admin.ModelAdmin):
                 'delivery',
             ])
             
-            # Make delivery-related fields read-only if it's a delivery order
             if obj.delivery:
                 readonly_fields.extend([
                     'delivery_fee',
@@ -51,7 +49,6 @@ class OrderAdmin(admin.ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         
-        # For pickup orders, create fieldsets that exclude delivery fields
         if obj and not obj.delivery:
             fields = [field for field in self.get_fields(request, obj) if field not in ['delivery_fee', 'delivery_date', 'delivery_address']]
             return [(None, {'fields': fields})]
@@ -73,8 +70,16 @@ class OrderAdmin(admin.ModelAdmin):
                 instance.save()
 
         return super().change_view(request, object_id, form_url, extra_context)
-
-
+    
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+    
+    def has_change_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+    
 class OrderedProductAdmin(admin.ModelAdmin):
 
     list_display = (
@@ -135,7 +140,27 @@ class OrderedProductAdmin(admin.ModelAdmin):
 
     display_photo.short_description = "Photo"
 
+class CancelledOrderAdmin(admin.ModelAdmin):
+    list_display = ('order', 'cancelled_by', 'cancelled_at', 'reason', 'refund_initiated')
+    list_filter = ('reason', 'refund_initiated', 'cancelled_at')
+    search_fields = ('order__transaction__reference', 'additional_notes')
+    readonly_fields = ('cancelled_at',)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.useraccount.is_super_user:
+            return qs
+        return qs.filter(order__transaction__branch__merchant__user_account=request.user.useraccount)
+    
+    def has_add_permission(self, request):
+        return request.user.useraccount.is_super_user
+    
+    def has_change_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
+    
+    def has_delete_permission(self, request, obj=None):
+        return request.user.useraccount.is_super_user
 
+custom_admin_site.register(CancelledOrder, CancelledOrderAdmin)
 custom_admin_site.register(Order, OrderAdmin)
 custom_admin_site.register(OrderedProduct, OrderedProductAdmin)
-custom_admin_site.register(CancelledOrder)
