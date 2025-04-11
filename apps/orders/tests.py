@@ -413,5 +413,4 @@ class CancelOrderTests(TestCase):
         self.assertEqual(cancelled_order.reason, "CUSTOMER_REQUEST")
         self.assertEqual(cancelled_order.additional_notes, "Test cancellation")
         self.assertEqual(cancelled_order.refund_amount, Decimal("100.00"))
-        self.assertTrue(cancelled_order.refund_initiated)
 

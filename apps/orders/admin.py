@@ -141,8 +141,8 @@ class OrderedProductAdmin(admin.ModelAdmin):
     display_photo.short_description = "Photo"
 
 class CancelledOrderAdmin(admin.ModelAdmin):
-    list_display = ('order', 'cancelled_by', 'cancelled_at', 'reason', 'refund_initiated')
-    list_filter = ('reason', 'refund_initiated', 'cancelled_at')
+    list_display = ('order', 'cancelled_by', 'cancelled_at', 'reason',)
+    list_filter = ('reason', 'cancelled_at')
     search_fields = ('order__transaction__reference', 'additional_notes')
     readonly_fields = ('cancelled_at',)
     
