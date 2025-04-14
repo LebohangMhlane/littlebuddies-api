@@ -84,7 +84,7 @@ class Branch(models.Model):
     )
     address = models.CharField(
         max_length=120,
-        help_text="Physical location of this branch. Make sure it's clear for deliveries."
+        help_text="Physical location of this branch. Make sure it's clear for pickup not deliveries. No one delivers to the branches."
     )
     merchant = models.ForeignKey(
         MerchantBusiness,
