@@ -4,13 +4,13 @@
 
 It is called Littlebuddies. It is a Uber-Eats type of app catered towards the Pet shop industry rather than the food industry.
 
-What users can do?
+API functionality:
 
-- Users can shop from a variety of stores near their device location.
-- Users can place orders and make payments via credit card through Paystack which has been integrated in the backend.
-- Once an order is placed, the store will receive the order using the backend I created and the store may acknowledge the order which will send a notification to the users mobile device.
-- The user will also receive notices about their order via email, including receipts.
-- The store will then deliver the ordered goods to the customer.
+- Authentication using JWT.
+- API built using Django rest framework.
+- Uses a MySQL database.
+- Pytest is used for testing.
+- Google MAPS API integrated.
 
 ### This is a licensed product.
 
